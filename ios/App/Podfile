@@ -1,0 +1,65 @@
+require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+
+platform :ios, '15.0'
+use_frameworks!
+
+# workaround to avoid Xcode caching of Pods that requires
+# Product -> Clean Build Folder after new Cordova plugins installed
+# Requires CocoaPods 1.6 or newer
+install! 'cocoapods', :disable_input_output_paths => true
+
+def capacitor_pods
+  pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorCommunityAppleSignIn', :path => '../../node_modules/@capacitor-community/apple-sign-in'
+  pod 'CapacitorCommunityHttp', :path => '../../node_modules/@capacitor-community/http'
+  pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
+  pod 'CapacitorBrowser', :path => '../../node_modules/@capacitor/browser'
+  pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
+  pod 'CapacitorDevice', :path => '../../node_modules/@capacitor/device'
+  pod 'CapacitorLocalNotifications', :path => '../../node_modules/@capacitor/local-notifications'
+  pod 'CapacitorStatusBar', :path => '../../node_modules/@capacitor/status-bar'
+  pod 'CodetrixStudioCapacitorGoogleAuth', :path => '../../node_modules/@codetrix-studio/capacitor-google-auth'
+  pod 'RevenuecatPurchasesCapacitor', :path => '../../node_modules/@revenuecat/purchases-capacitor'
+end
+
+def notification_pods
+  pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorLocalNotifications', :path => '../../node_modules/@capacitor/local-notifications'
+end
+
+target 'App' do
+  capacitor_pods
+  # Add your Pods here
+end
+
+post_install do |installer|
+  assertDeploymentTarget(installer)
+  
+  # Ensure UserNotifications framework is properly linked for notifications
+  installer.pods_project.targets.each do |target|
+    if target.name == 'Capacitor' || target.name == 'CapacitorLocalNotifications'
+      target.build_configurations.each do |config|
+        config.build_settings['OTHER_LDFLAGS'] ||= ['$(inherited)']
+        unless config.build_settings['OTHER_LDFLAGS'].include?('-framework UserNotifications')
+          config.build_settings['OTHER_LDFLAGS'] << '-framework UserNotifications'
+        end
+        unless config.build_settings['OTHER_LDFLAGS'].include?('-framework AVFoundation')
+          config.build_settings['OTHER_LDFLAGS'] << '-framework AVFoundation'
+        end
+      end
+    end
+  end
+  
+  # Copy notification sound to app bundle
+  # This ensures the sound file is available when notifications are triggered
+  app_target = installer.pods_project.targets.find { |target| target.name == 'App' }
+  if app_target
+    source_sound = File.expand_path('../../scripts/notification.wav', __FILE__)
+    if File.exist?(source_sound)
+      app_target.build_configurations.each do |config|
+        config.build_settings['COPY_PHASE_STRIP'] = 'NO'
+      end
+    end
+  end
+end

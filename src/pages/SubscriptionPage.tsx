@@ -497,42 +497,6 @@ const SubscriptionPage: React.FC = () => {
           )}
         </div>
 
-        {/* Cancel Subscription Section */}
-        {((isPremium && subscription?.status === 'active' && subscription?.auto_renewal === true) || 
-          subscription?.status === 'payment_failed') && (
-          <div className="neu-card p-6 border border-destructive/20">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-              <div className="space-y-3 flex-1">
-                <div>
-                  <h3 className="font-semibold text-base mb-1">Cancelar suscripción</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {subscription?.status === 'payment_failed' ? (
-                      <>
-                        Si cancelas ahora, volverás al plan <strong>gratuito inmediatamente</strong> y perderás el acceso a las funciones premium.
-                        Si prefieres mantener el acceso, usa el botón "Actualizar método de pago" arriba.
-                      </>
-                    ) : (
-                      'Si cancelas tu suscripción, seguirás teniendo acceso premium hasta la fecha de expiración.'
-                    )}
-                  </p>
-                </div>
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowCancelDialog(true)}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/30"
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  {subscription?.status === 'payment_failed' 
-                    ? 'Cancelar permanentemente y volver a Free' 
-                    : 'Cancelar renovación automática'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Subscription Already Cancelled - Not Expired Yet */}
         {isPremium && 
          subscription?.status === 'active' && 

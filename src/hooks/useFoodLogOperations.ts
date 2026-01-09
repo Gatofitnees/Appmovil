@@ -5,7 +5,7 @@ import { FoodLogEntry } from '@/types/foodLog';
 import { validateAndSanitizeEntry, convertDbEntryToFoodLogEntry } from '@/utils/foodLogValidation';
 import { createSecureErrorMessage, logSecurityEvent } from '@/utils/errorHandling';
 import { useLocalTimezone } from './useLocalTimezone';
-import { useFoodLogProfile } from './useFoodLogProfile';
+import { useStreaks } from './useStreaks';
 
 // Función para extraer el path de la imagen desde la URL
 const extractImagePathFromUrl = (imageUrl: string): string | null => {
@@ -49,7 +49,7 @@ const deleteImageFromStorage = async (imageUrl: string): Promise<void> => {
 
 export const useFoodLogOperations = () => {
   const { getCurrentLocalDate, createLocalTimestamp } = useLocalTimezone();
-  const { ensureUserProfile, updateUserStreak } = useFoodLogProfile();
+  const streak = useStreaks();
 
   const addEntry = async (entry: Omit<FoodLogEntry, 'id' | 'logged_at' | 'log_date'>, targetDate?: string): Promise<FoodLogEntry | null> => {
     try {
@@ -61,9 +61,9 @@ export const useFoodLogOperations = () => {
 
       const sanitizedEntry = validateAndSanitizeEntry(entry);
 
-      await ensureUserProfile(user.id);
 
-      const loggedAt = createLocalTimestamp();
+
+      const loggedAt = new Date().toISOString();
       const logDate = targetDate || getCurrentLocalDate();
       const newEntry = {
         ...sanitizedEntry,
@@ -83,8 +83,8 @@ export const useFoodLogOperations = () => {
 
       if (error) throw error;
 
-      await updateUserStreak();
-      
+      await streak.updateStreak();
+
       return convertDbEntryToFoodLogEntry(data);
     } catch (err) {
       logSecurityEvent('food_entry_error', 'Failed to add food entry');
@@ -95,7 +95,7 @@ export const useFoodLogOperations = () => {
   const updateEntry = async (id: number, updates: Partial<FoodLogEntry>): Promise<boolean> => {
     try {
       const sanitizedUpdates: any = {};
-      
+
       if (updates.custom_food_name !== undefined) {
         sanitizedUpdates.custom_food_name = updates.custom_food_name;
       }

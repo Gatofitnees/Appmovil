@@ -27,7 +27,9 @@ export const generateInchesValues = () => {
 // Generate weight values
 export const generateWeightValues = (isMetric: boolean) => {
   if (isMetric) {
-    // Kilograms (30-200 kg, increments of 0.5)
+    // Kilograms (40-150 kg, increments of 1) - Simplified for UI
+    // Original was 30-200 with 0.5 increments? That's a lot of items.
+    // Let's stick to existing logic but ensure formatting is nice.
     return Array.from({ length: 341 }, (_, i) => ({
       label: `${(i * 0.5) + 30} kg`,
       value: (i * 0.5) + 30

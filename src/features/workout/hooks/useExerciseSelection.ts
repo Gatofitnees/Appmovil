@@ -7,7 +7,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 export const useExerciseSelection = () => {
   const { muscleGroups, equipmentTypes } = useExerciseFilterOptions();
-  
+
   const {
     searchTerm,
     setSearchTerm,
@@ -24,40 +24,45 @@ export const useExerciseSelection = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const { 
-    data, 
-    fetchNextPage, 
-    hasNextPage, 
-    isFetchingNextPage, 
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading: loading,
   } = usePaginatedExercises({ searchTerm: debouncedSearchTerm, muscleFilters, equipmentFilters });
 
   const filteredExercises = data?.pages.flatMap(page => page.data) ?? [];
-  const exerciseCount = data?.pages[0]?.count ?? 0;
+  const totalExerciseCount = data?.pages[0]?.totalCount ?? 0;
 
-  const { 
-    handleExerciseDetails, 
-    handleNavigateBack: baseHandleNavigateBack, 
+  const {
+    handleExerciseDetails,
+    handleNavigateBack: baseHandleNavigateBack,
     handleCreateExercise,
-    handleAddExercises: baseHandleAddExercises 
+    handleAddExercises: baseHandleAddExercises
   } = useExerciseNavigation();
 
   const handleExerciseSelect = (id: number) => {
-    setSelectedExercises(prev => 
+    setSelectedExercises(prev =>
       prev.includes(id) ? prev.filter(exId => exId !== id) : [...prev, id]
     );
   };
-  
+
   const handleMuscleFilterToggle = (muscle: string) => {
-    setMuscleFilters(prev => 
+    setMuscleFilters(prev =>
       prev.includes(muscle) ? prev.filter(m => m !== muscle) : [...prev, muscle]
     );
   };
 
   const handleEquipmentFilterToggle = (equipment: string) => {
-    setEquipmentFilters(prev => 
+    setEquipmentFilters(prev =>
       prev.includes(equipment) ? prev.filter(e => e !== equipment) : [...prev, equipment]
     );
+  };
+
+  const handleClearFilters = () => {
+    setMuscleFilters([]);
+    setEquipmentFilters([]);
   };
 
   const handleNavigateBack = () => {
@@ -71,7 +76,7 @@ export const useExerciseSelection = () => {
 
   return {
     filteredExercises,
-    exerciseCount,
+    exerciseCount: totalExerciseCount,
     selectedExercises,
     muscleGroups,
     equipmentTypes,
@@ -89,6 +94,7 @@ export const useExerciseSelection = () => {
     handleNavigateBack,
     handleCreateExercise,
     handleAddExercises,
+    handleClearFilters,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage

@@ -25,7 +25,7 @@ const ACHIEVEMENTS: Achievement[] = [
 const DesiredAchievements: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("DesiredAchievements must be used within OnboardingContext");
   }
@@ -38,13 +38,13 @@ const DesiredAchievements: React.FC = () => {
   const toggleAchievement = (achievementId: string) => {
     const updatedAchievements = [...currentAchievements];
     const index = updatedAchievements.indexOf(achievementId);
-    
+
     if (index === -1) {
       updatedAchievements.push(achievementId);
     } else {
       updatedAchievements.splice(index, 1);
     }
-    
+
     updateData({ achievements: updatedAchievements });
   };
 
@@ -57,7 +57,7 @@ const DesiredAchievements: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4">
         Más allá de los números, ¿qué te gustaría lograr?
       </h1>
-      
+
       <p className="text-muted-foreground mb-8">
         Selecciona todos los que apliquen
       </p>
@@ -66,18 +66,16 @@ const DesiredAchievements: React.FC = () => {
         {ACHIEVEMENTS.map((achievement) => (
           <div
             key={achievement.id}
-            className={`flex items-center space-x-3 rounded-lg p-4 transition-all cursor-pointer ${
-              currentAchievements.includes(achievement.id.toString())
-                ? "bg-primary/10 neu-button-active"
-                : "bg-secondary/20 neu-button hover:bg-secondary/30"
-            }`}
+            className={`flex items-center space-x-3 rounded-lg p-4 transition-all cursor-pointer border ${currentAchievements.includes(achievement.id.toString())
+              ? "bg-primary/10 border-primary"
+              : "bg-secondary/20 border-white/5 hover:bg-secondary/30"
+              }`}
             onClick={() => toggleAchievement(achievement.id.toString())}
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              currentAchievements.includes(achievement.id.toString())
-                ? "bg-primary text-white"
-                : "bg-secondary/30 text-muted-foreground"
-            }`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentAchievements.includes(achievement.id.toString())
+              ? "bg-primary text-white"
+              : "bg-secondary/30 text-muted-foreground"
+              }`}>
               {achievement.icon}
             </div>
             <div className="flex-1 font-medium">
@@ -90,7 +88,7 @@ const DesiredAchievements: React.FC = () => {
         ))}
       </div>
 
-      <OnboardingNavigation 
+      <OnboardingNavigation
         onNext={handleNext}
         nextDisabled={currentAchievements.length === 0}
       />

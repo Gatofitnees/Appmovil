@@ -1,18 +1,22 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Target, Calendar, Dumbbell } from 'lucide-react';
+import { ArrowLeft, Save, Target, Calendar as CalendarIcon, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import DateSelectorModal from '@/components/profile/DateSelectorModal';
 import { useProfileContext } from '@/contexts/ProfileContext';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const UserInformationPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile, updateProfile } = useProfileContext();
-  
+
   const [formData, setFormData] = useState({
     main_goal: profile?.main_goal || '',
     trainings_per_week: profile?.trainings_per_week || '',
@@ -22,8 +26,9 @@ const UserInformationPage: React.FC = () => {
     gender: profile?.gender || '',
     date_of_birth: profile?.date_of_birth || ''
   });
-  
+
   const [saving, setSaving] = useState(false);
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -31,7 +36,7 @@ const UserInformationPage: React.FC = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    
+
     const updates: any = {};
     Object.entries(formData).forEach(([key, value]) => {
       if (value !== '' && value !== null) {
@@ -67,6 +72,10 @@ const UserInformationPage: React.FC = () => {
     { value: 'leopard', label: 'Rápido' } // Fixed: was 'fast'
   ];
 
+  const handleDateSelect = (date: Date) => {
+    handleInputChange('date_of_birth', format(date, 'yyyy-MM-dd'));
+  };
+
   return (
     <div className="min-h-screen pt-6 pb-24 px-4 max-w-md mx-auto">
       {/* Header */}
@@ -79,9 +88,9 @@ const UserInformationPage: React.FC = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        
+
         <h1 className="text-xl font-bold">Información del Usuario</h1>
-        
+
         <Button
           onClick={handleSave}
           disabled={saving}
@@ -97,10 +106,10 @@ const UserInformationPage: React.FC = () => {
         {/* Información personal */}
         <Card className="p-4">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+            <CalendarIcon className="h-5 w-5 text-primary" />
             Información Personal
           </h3>
-          
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="gender">Género</Label>
@@ -114,21 +123,38 @@ const UserInformationPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
-            <div>
+
+            <div className="flex flex-col gap-2">
               <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
-              <Input
+              <Button
                 id="birthDate"
-                type="date"
-                value={formData.date_of_birth}
-                onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                variant={"outline"}
+                onClick={() => setIsDateModalOpen(true)}
+                className={cn(
+                  "w-full pl-3 text-left font-normal bg-background border-input hover:bg-accent hover:text-accent-foreground",
+                  !formData.date_of_birth && "text-muted-foreground"
+                )}
+              >
+                {formData.date_of_birth ? (
+                  format(new Date(formData.date_of_birth), "P", { locale: es })
+                ) : (
+                  <span>Selecciona una fecha</span>
+                )}
+                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+              </Button>
+
+              <DateSelectorModal
+                isOpen={isDateModalOpen}
+                onClose={() => setIsDateModalOpen(false)}
+                onSelect={handleDateSelect}
+                initialDate={formData.date_of_birth ? new Date(formData.date_of_birth) : undefined}
               />
             </div>
-            
+
             <div>
               <Label htmlFor="experience">Experiencia previa con apps de fitness</Label>
-              <Select 
-                value={formData.previous_app_experience === null ? '' : formData.previous_app_experience.toString()} 
+              <Select
+                value={formData.previous_app_experience === null ? '' : formData.previous_app_experience.toString()}
                 onValueChange={(value) => handleInputChange('previous_app_experience', value === 'true')}
               >
                 <SelectTrigger>
@@ -149,7 +175,7 @@ const UserInformationPage: React.FC = () => {
             <Target className="h-5 w-5" />
             Objetivos y Entrenamiento
           </h3>
-          
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="mainGoal">Objetivo Principal</Label>
@@ -166,7 +192,7 @@ const UserInformationPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="trainingsPerWeek">Entrenamientos por semana</Label>
               <Input
@@ -179,7 +205,7 @@ const UserInformationPage: React.FC = () => {
                 placeholder="3"
               />
             </div>
-            
+
             <div>
               <Label htmlFor="targetPace">Ritmo objetivo</Label>
               <Select value={formData.target_pace} onValueChange={(value) => handleInputChange('target_pace', value)}>
@@ -195,7 +221,7 @@ const UserInformationPage: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="targetKgPerWeek">Meta kg por semana</Label>
               <Input

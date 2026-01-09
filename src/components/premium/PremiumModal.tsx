@@ -100,17 +100,17 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                   <div className="mb-2">
                     <span className="text-sm text-muted-foreground line-through">${yearlyPlan.price_usd}/año</span>
                   </div>
-                  
+
                   {/* Main price */}
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <span className="text-5xl font-black text-primary animate-pulse">
-                      $2.50
+                      $3.33
                     </span>
                     <div className="text-lg text-muted-foreground font-medium">
                       /mes
                     </div>
                   </div>
-                  
+
                   <p className="text-sm text-primary font-semibold">
                     Solo pagando anualmente
                   </p>

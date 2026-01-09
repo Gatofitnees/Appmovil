@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Star, Zap, Crown, CheckCircle, CreditCard, Ban } from 'lucide-react';
 import Button from '@/components/Button';
 import { SubscriptionPlan } from '@/hooks/subscription/types';
 import { PayPalCheckoutModal } from './PayPalCheckoutModal';
+import { InAppPurchaseButton } from './InAppPurchaseButton';
+import { Capacitor } from '@capacitor/core';
 
 interface PremiumPlanCardProps {
   plan: SubscriptionPlan;
@@ -29,7 +31,15 @@ export const PremiumPlanCard: React.FC<PremiumPlanCardProps> = ({
   onPayPalSuccess
 }) => {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [isNativePlatform, setIsNativePlatform] = useState(false);
   const monthlyEquivalent = plan.plan_type === 'yearly' ? (plan.price_usd / 12).toFixed(2) : null;
+
+  // Detectar si es plataforma nativa
+  useEffect(() => {
+    const platform = Capacitor.getPlatform();
+    const isNative = platform === 'ios' || platform === 'android';
+    setIsNativePlatform(isNative);
+  }, []);
 
   const handleOpenCheckout = () => {
     if (!isLoading) {
@@ -184,27 +194,41 @@ export const PremiumPlanCard: React.FC<PremiumPlanCardProps> = ({
 
         {/* Action Button */}
         <div className="space-y-2">
-          <Button
-            onClick={!isCurrentPlan && !isDisabled ? handleOpenCheckout : undefined}
-            disabled={isCurrentPlan || isDisabled || isLoading}
-            className={`w-full py-3 text-base font-semibold ${getButtonStyles()}`}
-            size="lg"
-          >
-            {getButtonContent()}
-          </Button>
+          {isNativePlatform && !isCurrentPlan && !isDisabled ? (
+            // Usar compra in-app para plataformas nativas
+            <InAppPurchaseButton
+              planType={plan.plan_type as 'monthly' | 'yearly'}
+              planName={plan.name}
+              onSuccess={handleCheckoutSuccess}
+              disabled={isLoading}
+              className="w-full py-3 text-base font-semibold"
+            />
+          ) : (
+            // Usar PayPal para web
+            <Button
+              onClick={!isCurrentPlan && !isDisabled ? handleOpenCheckout : undefined}
+              disabled={isCurrentPlan || isDisabled || isLoading}
+              className={`w-full py-3 text-base font-semibold ${getButtonStyles()}`}
+              size="lg"
+            >
+              {getButtonContent()}
+            </Button>
+          )}
           {isDisabled && disabledReason && (
             <p className="text-xs text-muted-foreground text-center">{disabledReason}</p>
           )}
         </div>
 
-        <PayPalCheckoutModal
-          isOpen={showCheckoutModal}
-          onClose={() => setShowCheckoutModal(false)}
-          planType={plan.plan_type as 'monthly' | 'yearly'}
-          planName={plan.name}
-          originalPrice={plan.price_usd}
-          onSuccess={handleCheckoutSuccess}
-        />
+        {!isNativePlatform && (
+          <PayPalCheckoutModal
+            isOpen={showCheckoutModal}
+            onClose={() => setShowCheckoutModal(false)}
+            planType={plan.plan_type as 'monthly' | 'yearly'}
+            planName={plan.name}
+            originalPrice={plan.price_usd}
+            onSuccess={handleCheckoutSuccess}
+          />
+        )}
       </div>
     </div>
   );

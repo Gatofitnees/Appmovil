@@ -13,10 +13,10 @@ interface AvatarProps {
   isAsesorado?: boolean;
 }
 
-const Avatar: React.FC<AvatarProps> = ({ 
-  src, 
-  name, 
-  progress = 0, 
+const Avatar: React.FC<AvatarProps> = ({
+  src,
+  name,
+  progress = 0,
   size = "md",
   className,
   isPremium = false,
@@ -48,15 +48,15 @@ const Avatar: React.FC<AvatarProps> = ({
   const ringStrokeWidth = size === "sm" ? 2 : 3;
 
   // Log para debug
-  console.log('Avatar Debug:', { src, name, imageError, imageLoaded, isPremium });
+
 
   const handleImageError = () => {
-    console.log('Avatar image error for:', src);
+
     setImageError(true);
   };
 
   const handleImageLoad = () => {
-    console.log('Avatar image loaded successfully for:', src);
+
     setImageLoaded(true);
     setImageError(false);
   };
@@ -67,14 +67,13 @@ const Avatar: React.FC<AvatarProps> = ({
 
   return (
     <div className={cn("relative inline-flex", className)}>
-      <ProgressRing 
-        progress={progress} 
-        size={ringSize} 
-        strokeWidth={ringStrokeWidth} 
+      <ProgressRing
+        progress={progress}
+        size={ringSize}
       />
-      {/* Premium golden ring */}
-      {isPremium && (
-        <div 
+      {/* Premium golden ring - Hidden if isAsesorado is true to prioritize red border */}
+      {isPremium && !isAsesorado && (
+        <div
           className="absolute inset-0 rounded-full border-2 border-gradient-to-r from-yellow-400 to-orange-500"
           style={{
             background: 'linear-gradient(45deg, #fbbf24, #f59e0b)',
@@ -85,10 +84,10 @@ const Avatar: React.FC<AvatarProps> = ({
           <div className="w-full h-full rounded-full bg-background" />
         </div>
       )}
-      
+
       {/* Asesorado red ring */}
       {isAsesorado && (
-        <div 
+        <div
           className="absolute inset-0 rounded-full border-2"
           style={{
             background: 'linear-gradient(45deg, #ef4444, #dc2626)',
@@ -102,8 +101,8 @@ const Avatar: React.FC<AvatarProps> = ({
       <div
         className={cn(
           "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary flex items-center justify-center overflow-hidden",
-          isPremium ? "border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" : 
-          isAsesorado ? "border-2 border-red-500 shadow-lg shadow-red-500/20" : "border border-black/10",
+          isAsesorado ? "border-2 border-red-500 shadow-lg shadow-red-500/20" :
+            isPremium ? "border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" : "border border-black/10",
           sizeClasses[size]
         )}
       >
@@ -124,12 +123,12 @@ const Avatar: React.FC<AvatarProps> = ({
           <span className="font-medium text-gray-200">{initials}</span>
         )}
       </div>
-      
-      {/* Premium Crown - Positioned at top-right corner, rotated 45 degrees */}
-      {isPremium && (
+
+      {/* Premium Crown - Hidden if isAsesorado is true */}
+      {isPremium && !isAsesorado && (
         <div className="absolute -top-1 -right-1 z-10">
           <div className="relative">
-            <Crown 
+            <Crown
               className={cn(
                 crownSizes[size],
                 "text-yellow-400 transform rotate-45 drop-shadow-lg"
@@ -139,7 +138,7 @@ const Avatar: React.FC<AvatarProps> = ({
               }}
             />
             {/* Subtle glow effect */}
-            <Crown 
+            <Crown
               className={cn(
                 crownSizes[size],
                 "absolute top-0 left-0 text-yellow-300 transform rotate-45 opacity-60"
@@ -151,12 +150,12 @@ const Avatar: React.FC<AvatarProps> = ({
           </div>
         </div>
       )}
-      
-      {/* Asesorado Crown - Red version */}
-      {isAsesorado && (
+
+      {/* Asesorado Crown - Red version - Hidden per user request */}
+      {false && isAsesorado && (
         <div className="absolute -top-1 -right-1 z-10">
           <div className="relative">
-            <Crown 
+            <Crown
               className={cn(
                 crownSizes[size],
                 "text-red-500 transform rotate-45 drop-shadow-lg"
@@ -166,7 +165,7 @@ const Avatar: React.FC<AvatarProps> = ({
               }}
             />
             {/* Subtle glow effect */}
-            <Crown 
+            <Crown
               className={cn(
                 crownSizes[size],
                 "absolute top-0 left-0 text-red-400 transform rotate-45 opacity-60"

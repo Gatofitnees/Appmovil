@@ -9,7 +9,7 @@ import { useLocation } from "react-router-dom";
 
 const SelectExercisesPage: React.FC = () => {
   const location = useLocation();
-  
+
   const {
     filteredExercises,
     exerciseCount,
@@ -30,11 +30,12 @@ const SelectExercisesPage: React.FC = () => {
     handleNavigateBack,
     handleCreateExercise,
     handleAddExercises,
+    handleClearFilters,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
   } = useExerciseSelection();
-  
+
   // Effect to set previously selected IDs from location state
   useEffect(() => {
     if (location.state && location.state.currentExercises) {
@@ -47,7 +48,7 @@ const SelectExercisesPage: React.FC = () => {
   return (
     <div className="min-h-screen pb-24 max-w-md mx-auto">
       {/* Header with Search and Filters */}
-      <ExerciseSelectionHeader 
+      <ExerciseSelectionHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         muscleGroups={muscleGroups}
@@ -57,16 +58,17 @@ const SelectExercisesPage: React.FC = () => {
         onMuscleFilterToggle={handleMuscleFilterToggle}
         onEquipmentFilterToggle={handleEquipmentFilterToggle}
         onNavigateBack={handleNavigateBack}
+        onClearFilters={handleClearFilters}
       />
 
       {/* Exercise List with Actions */}
       <div className="p-4">
-        <ExerciseListActions 
+        <ExerciseListActions
           exerciseCount={exerciseCount}
           onCreateExercise={handleCreateExercise}
         />
 
-        <ExerciseList 
+        <ExerciseList
           exercises={filteredExercises}
           selectedExercises={selectedExercises}
           onSelectExercise={handleExerciseSelect}
@@ -80,7 +82,7 @@ const SelectExercisesPage: React.FC = () => {
       </div>
 
       {/* Floating Button for Selected Exercises */}
-      <SelectionFloatingButton 
+      <SelectionFloatingButton
         selectedCount={selectedExercises.length}
         onAddExercises={handleAddExercises}
       />

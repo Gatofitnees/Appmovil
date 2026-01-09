@@ -10,7 +10,7 @@ import { OnboardingContext } from "../OnboardingFlow";
 const PreviousExperience: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("PreviousExperience must be used within OnboardingContext");
   }
@@ -42,7 +42,7 @@ const PreviousExperience: React.FC = () => {
             He usado otras apps de fitness regularmente
           </p>
         </SelectableCard>
-        
+
         <SelectableCard
           selected={data.previousAppExperience === false}
           onSelect={() => handleSelect(false)}
@@ -55,7 +55,7 @@ const PreviousExperience: React.FC = () => {
         </SelectableCard>
       </div>
 
-      <OnboardingNavigation 
+      <OnboardingNavigation
         onNext={handleNext}
         nextDisabled={data.previousAppExperience === null}
       />

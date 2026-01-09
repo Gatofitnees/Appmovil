@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { 
+import {
   WorkoutHeader,
   ExerciseList,
   ExerciseStatistics,
@@ -12,16 +12,18 @@ import { useActiveWorkout } from "@/features/workout/hooks/useActiveWorkout";
 import { useWorkoutCache } from "@/features/workout/hooks/useWorkoutCache";
 import DiscardChangesDialog from "@/features/workout/components/dialogs/DiscardChangesDialog";
 import { Button } from "@/components/ui/button";
+import { WorkoutSummaryModal } from "@/features/workout/components/WorkoutSummaryModal";
+import ReorderSheet from "@/features/workout/components/sheets/ReorderSheet";
 
 const ActiveWorkoutPage: React.FC = () => {
   const { routineId } = useParams<{ routineId: string }>();
   const location = useLocation();
   const { loadWorkoutCache } = useWorkoutCache();
-  
+
   // Check if we're recovering from cache
   const cachedData = location.state?.fromCache ? loadWorkoutCache() : null;
   const cachedStartTime = cachedData?.startTime;
-  
+
   const {
     routine,
     exercises,
@@ -41,13 +43,20 @@ const ActiveWorkoutPage: React.FC = () => {
     confirmDiscardChanges,
     cancelDiscardChanges,
     setShowStatsDialog,
-    handleToggleReorderMode
+    handleToggleReorderMode,
+    // Summary
+    showSummary,
+    summaryStats,
+    xpGained,
+    finalDuration,
+    handleCloseSummary,
+    moveExercise
   } = useActiveWorkout(routineId ? parseInt(routineId) : undefined, cachedStartTime);
 
   if (loading) {
     return <LoadingSkeleton onBack={handleBack} />;
   }
-  
+
   if (!routine) {
     return <RoutineNotFound onBack={handleBack} />;
   }
@@ -58,7 +67,7 @@ const ActiveWorkoutPage: React.FC = () => {
   return (
     <div className="min-h-screen pt-6 pb-24 px-4 max-w-md mx-auto">
       {/* Header */}
-      <WorkoutHeader 
+      <WorkoutHeader
         routineName={routine.name}
         isReorderMode={isReorderMode}
         isSaving={isSaving}
@@ -66,7 +75,7 @@ const ActiveWorkoutPage: React.FC = () => {
         onToggleReorder={handleToggleReorderMode}
         onSave={handleSaveWorkout}
       />
-      
+
       {/* Workout Info */}
       <div className="mb-6 p-3 bg-secondary/20 rounded-lg text-sm">
         <div className="flex items-center justify-between">
@@ -74,11 +83,11 @@ const ActiveWorkoutPage: React.FC = () => {
           <span>Tiempo estimado: {routine.estimated_duration_minutes || 30} min</span>
         </div>
       </div>
-      
+
       {/* Exercise List */}
-      <ExerciseList 
+      <ExerciseList
         exercises={exercises}
-        isReorderMode={isReorderMode}
+        isReorderMode={false} // Disable inline reorder in favor of Sheet
         routineId={routineId}
         onReorderDrag={handleReorderDrag}
         onInputChange={handleInputChange}
@@ -88,11 +97,11 @@ const ActiveWorkoutPage: React.FC = () => {
         onShowStats={(exerciseId) => setShowStatsDialog(exerciseId)}
         onAddExercise={handleAddExercise}
       />
-      
+
       {/* Save button (only at the bottom of the exercise list) */}
       {exercises.length > 0 && (
         <div className="mt-6 mb-20">
-          <Button 
+          <Button
             variant="default"
             className="w-full"
             onClick={handleSaveWorkout}
@@ -102,10 +111,10 @@ const ActiveWorkoutPage: React.FC = () => {
           </Button>
         </div>
       )}
-      
+
       {/* Statistics Dialog */}
       {currentStatsExercise && showStatsDialog && (
-        <ExerciseStatistics 
+        <ExerciseStatistics
           exerciseId={currentStatsExercise.id}
           exerciseName={currentStatsExercise.name}
           showStatsDialog={true}
@@ -113,11 +122,29 @@ const ActiveWorkoutPage: React.FC = () => {
         />
       )}
 
+      {/* Reorder Sheet */}
+      <ReorderSheet
+        open={isReorderMode}
+        onOpenChange={(open) => !open && handleToggleReorderMode()}
+        exercises={exercises}
+        onMoveExercise={moveExercise}
+        onSave={handleToggleReorderMode}
+      />
+
       {/* Discard Changes Dialog */}
       <DiscardChangesDialog
         open={showDiscardDialog}
         onOpenChange={cancelDiscardChanges}
         onConfirm={confirmDiscardChanges}
+      />
+
+      {/* Summary Modal */}
+      <WorkoutSummaryModal
+        isOpen={showSummary}
+        onClose={handleCloseSummary}
+        stats={summaryStats}
+        xpGained={xpGained}
+        durationMinutes={finalDuration}
       />
     </div>
   );

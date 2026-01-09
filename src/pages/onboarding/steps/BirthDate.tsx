@@ -6,27 +6,27 @@ import OnboardingNavigation from "@/components/onboarding/OnboardingNavigation";
 import { OnboardingContext } from "../OnboardingFlow";
 import DateSelectors from "@/components/onboarding/birth-date/DateSelectors";
 import DateDisplay from "@/components/onboarding/birth-date/DateDisplay";
-import { 
-  calculateAge, 
-  generateDaysValues, 
-  generateMonthsValues, 
-  generateYearsValues 
+import {
+  calculateAge,
+  generateDaysValues,
+  generateMonthsValues,
+  generateYearsValues
 } from "@/components/onboarding/birth-date/DateUtils";
 
 const BirthDate: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("BirthDate must be used within OnboardingContext");
   }
 
   const { data, updateData } = context;
-  
+
   // Calculate min/max dates (16-100 years old range)
   const maxDate = new Date();
   maxDate.setFullYear(maxDate.getFullYear() - 16);
-  
+
   const minDate = new Date();
   minDate.setFullYear(minDate.getFullYear() - 100);
 
@@ -40,9 +40,9 @@ const BirthDate: React.FC = () => {
     // Default fallback date
     return new Date(maxDate.getFullYear() - 9, 5, 15);
   };
-  
+
   const initialDate = getInitialDate();
-  
+
   const [day, setDay] = useState(initialDate.getDate());
   const [month, setMonth] = useState(initialDate.getMonth());
   const [year, setYear] = useState(initialDate.getFullYear());
@@ -58,27 +58,27 @@ const BirthDate: React.FC = () => {
       // Validate day based on month/year
       let adjustedDay = day;
       const daysInMonth = new Date(year, month + 1, 0).getDate();
-      
+
       if (day > daysInMonth) {
         adjustedDay = daysInMonth;
       }
-      
+
       const birthDate = new Date(year, month, adjustedDay);
-      
+
       // Validate date is within range
       if (birthDate > maxDate) {
         return; // Too young
       }
-      
+
       if (birthDate < minDate) {
         return; // Too old
       }
-      
+
       updateData({ dateOfBirth: birthDate });
     } catch (e) {
       console.error("Invalid date:", e);
     }
-  }, [day, month, year, maxDate, minDate, updateData]);
+  }, [day, month, year]);
 
   const handleNext = () => {
     navigate("/onboarding/main-goal");
@@ -102,14 +102,14 @@ const BirthDate: React.FC = () => {
         />
 
         {data.dateOfBirth && (
-          <DateDisplay 
-            date={data.dateOfBirth instanceof Date ? data.dateOfBirth : new Date(data.dateOfBirth)} 
-            age={calculateAge(data.dateOfBirth instanceof Date ? data.dateOfBirth : new Date(data.dateOfBirth))} 
+          <DateDisplay
+            date={data.dateOfBirth instanceof Date ? data.dateOfBirth : new Date(data.dateOfBirth)}
+            age={calculateAge(data.dateOfBirth instanceof Date ? data.dateOfBirth : new Date(data.dateOfBirth))}
           />
         )}
       </div>
 
-      <OnboardingNavigation 
+      <OnboardingNavigation
         onNext={handleNext}
         nextDisabled={!data.dateOfBirth}
       />

@@ -3,14 +3,22 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Exercise } from '@/features/workout/types';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const fetchExercises = async ({ pageParam = 0, queryKey }: any) => {
   const [_key, { searchTerm, muscleFilters, equipmentFilters }] = queryKey;
-  
+
+  // Get total count of all exercises
+  let countQuery = supabase
+    .from('exercises')
+    .select('*', { count: 'exact', head: true });
+
+  const { count: totalCount } = await countQuery;
+
+  // Get filtered exercises
   let query = supabase
     .from('exercises')
-    .select('*', { count: 'exact' });
+    .select('*');
 
   if (searchTerm) {
     const searchCondition = `name.ilike.%${searchTerm}%,muscle_group_main.ilike.%${searchTerm}%`;
@@ -32,17 +40,17 @@ const fetchExercises = async ({ pageParam = 0, queryKey }: any) => {
 
   query = query.range(from, to).order('name', { ascending: true });
 
-  const { data, error, count } = await query;
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching exercises:", error);
     throw error;
   }
-  
+
   return {
     data: data as Exercise[],
     nextPage: data.length === PAGE_SIZE ? pageParam + 1 : undefined,
-    count: count ?? 0,
+    totalCount: totalCount ?? 0,
   };
 };
 

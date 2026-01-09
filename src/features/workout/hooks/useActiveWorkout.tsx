@@ -12,10 +12,10 @@ export function useActiveWorkout(routineId: number | undefined, cachedStartTime?
   const location = useLocation();
   const { routine, exerciseDetails, loading } = useRoutineDetail(routineId);
   const { saveWorkoutCache, clearCache, loadWorkoutCache } = useWorkoutCache();
-  
+
   // Load cached data if available
   const cachedData = location.state?.fromCache ? loadWorkoutCache() : null;
-  
+
   const {
     exercises,
     showStatsDialog,
@@ -29,7 +29,8 @@ export function useActiveWorkout(routineId: number | undefined, cachedStartTime?
     addTemporaryExercises,
     clearTemporaryExercises,
     baseExercises,
-    temporaryExercises
+    temporaryExercises,
+    moveExercise
   } = useExerciseData(exerciseDetails, routineId, cachedData);
 
   // Debounce exercises to avoid too frequent cache updates
@@ -37,7 +38,12 @@ export function useActiveWorkout(routineId: number | undefined, cachedStartTime?
 
   const {
     isSaving,
-    handleSaveWorkout: originalSaveWorkout
+    handleSaveWorkout: originalSaveWorkout,
+    showSummary,
+    summaryStats,
+    xpGained,
+    finalDuration,
+    handleCloseSummary
   } = useSaveWorkout(routine, workoutStartTime, exercises, clearTemporaryExercises, routineId, clearCache);
 
   const {
@@ -53,10 +59,10 @@ export function useActiveWorkout(routineId: number | undefined, cachedStartTime?
   useEffect(() => {
     if (routine && routineId && debouncedExercises.length > 0) {
       // Only save if there's actual data (at least one set with weight or reps)
-      const hasData = debouncedExercises.some(ex => 
+      const hasData = debouncedExercises.some(ex =>
         ex.sets.some(set => set.weight || set.reps)
       );
-      
+
       if (hasData) {
         console.log('💾 Auto-saving workout to cache...');
         saveWorkoutCache(
@@ -75,7 +81,7 @@ export function useActiveWorkout(routineId: number | undefined, cachedStartTime?
     if (location.state?.selectedExercises && location.state?.isTemporary) {
       console.log("Processing selected temporary exercises:", location.state.selectedExercises);
       addTemporaryExercises(location.state.selectedExercises);
-      
+
       // Clear the state immediately to prevent re-adding on re-renders
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -116,6 +122,11 @@ export function useActiveWorkout(routineId: number | undefined, cachedStartTime?
     exercises,
     loading,
     isSaving,
+    showSummary,
+    summaryStats,
+    xpGained,
+    finalDuration,
+    handleCloseSummary,
     showStatsDialog,
     showDiscardDialog,
     isReorderMode,
@@ -125,6 +136,7 @@ export function useActiveWorkout(routineId: number | undefined, cachedStartTime?
     handleBack,
     handleSaveWorkout,
     handleReorderDrag,
+    moveExercise,
     handleViewExerciseDetails,
     handleAddExercise,
     confirmDiscardChanges,

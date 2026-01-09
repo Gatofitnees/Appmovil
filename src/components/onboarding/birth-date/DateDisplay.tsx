@@ -10,7 +10,7 @@ interface DateDisplayProps {
 
 const DateDisplay: React.FC<DateDisplayProps> = ({ date, age }) => {
   return (
-    <div className="mt-8 text-center p-6 rounded-xl bg-secondary/20 neu-card">
+    <div className="mt-8 text-center p-6 rounded-xl bg-secondary/20 border border-white/5 backdrop-blur-sm">
       <p className="text-sm text-muted-foreground mb-1">Tu edad</p>
       <p className="text-3xl font-bold text-primary">
         {age} años

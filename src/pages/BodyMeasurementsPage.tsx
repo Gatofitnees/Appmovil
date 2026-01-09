@@ -1,17 +1,17 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Weight, Ruler, Target } from 'lucide-react';
+import { ArrowLeft, Save, Weight, Ruler, Target, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { useProfileContext } from '@/contexts/ProfileContext';
 
 const BodyMeasurementsPage: React.FC = () => {
   const navigate = useNavigate();
   const { profile, updateProfile } = useProfileContext();
-  
+
   const [formData, setFormData] = useState({
     current_weight_kg: profile?.current_weight_kg || '',
     height_cm: profile?.height_cm || '',
@@ -22,7 +22,8 @@ const BodyMeasurementsPage: React.FC = () => {
     leg_circumference_cm: profile?.leg_circumference_cm || '',
     abdomen_circumference_cm: profile?.abdomen_circumference_cm || ''
   });
-  
+
+  const [recalculateMacros, setRecalculateMacros] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
@@ -31,7 +32,7 @@ const BodyMeasurementsPage: React.FC = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    
+
     const updates: any = {};
     Object.entries(formData).forEach(([key, value]) => {
       if (value !== '') {
@@ -39,7 +40,7 @@ const BodyMeasurementsPage: React.FC = () => {
       }
     });
 
-    const success = await updateProfile(updates);
+    const success = await updateProfile(updates, !recalculateMacros);
     if (success) {
       navigate('/profile');
     }
@@ -68,28 +69,55 @@ const BodyMeasurementsPage: React.FC = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        
+
         <h1 className="text-xl font-bold">Medidas Corporales</h1>
-        
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          size="sm"
-          className="px-3"
-        >
-          <Save className="h-4 w-4 mr-1" />
-          {saving ? 'Guardando...' : 'Guardar'}
-        </Button>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/profile/progress')}
+            className="h-9 w-9"
+          >
+            <TrendingUp className="h-5 w-5" />
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            size="sm"
+            className="px-3"
+          >
+            <Save className="h-4 w-4 mr-1" />
+            {saving ? 'Guardando...' : 'Guardar'}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-6">
+        {/* Switch Recalcular Macros */}
+        <Card className="p-4 flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="recalc-macros" className="text-base font-semibold">
+              Calcular nuevas macros
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Recalcular plan nutricional con nuevas medidas
+            </p>
+          </div>
+          <Switch
+            id="recalc-macros"
+            checked={recalculateMacros}
+            onCheckedChange={setRecalculateMacros}
+          />
+        </Card>
+
         {/* Medidas básicas */}
         <Card className="p-4">
           <h3 className="font-semibold mb-4 flex items-center gap-2">
             <Weight className="h-5 w-5" />
             Medidas Básicas
           </h3>
-          
+
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -102,7 +130,7 @@ const BodyMeasurementsPage: React.FC = () => {
                   placeholder="70"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="height">Altura (cm)</Label>
                 <Input
@@ -114,7 +142,7 @@ const BodyMeasurementsPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="bodyFat">% Graso</Label>
@@ -126,7 +154,7 @@ const BodyMeasurementsPage: React.FC = () => {
                   placeholder="15"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="targetWeight">Peso Objetivo (kg)</Label>
                 <Input
@@ -138,7 +166,7 @@ const BodyMeasurementsPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             {calculateBMI() && (
               <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">IMC Calculado</p>
@@ -154,7 +182,7 @@ const BodyMeasurementsPage: React.FC = () => {
             <Ruler className="h-5 w-5" />
             Circunferencias (cm)
           </h3>
-          
+
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -167,7 +195,7 @@ const BodyMeasurementsPage: React.FC = () => {
                   placeholder="100"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="arm">Brazo</Label>
                 <Input
@@ -179,7 +207,7 @@ const BodyMeasurementsPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="leg">Pierna</Label>
@@ -191,7 +219,7 @@ const BodyMeasurementsPage: React.FC = () => {
                   placeholder="55"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="abdomen">Abdomen</Label>
                 <Input

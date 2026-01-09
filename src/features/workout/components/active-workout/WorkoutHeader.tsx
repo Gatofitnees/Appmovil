@@ -33,25 +33,23 @@ export const WorkoutHeader: React.FC<WorkoutHeaderProps> = ({
         </Button>
         <h1 className="text-xl font-semibold">{routineName}</h1>
       </div>
-      
-      <div className="flex space-x-2">
-        <Button 
+
+      <div className="flex space-x-2 flex-shrink-0">
+        <Button
           variant={isReorderMode ? "secondary" : "outline"}
           size="sm"
           onClick={onToggleReorder}
         >
           {isReorderMode ? "Terminar" : "Reordenar"}
         </Button>
-        
-        <Button 
-          variant="default"
-          size="sm"
+
+        <button
           onClick={onSave}
           disabled={isSaving}
+          className={`p-2 rounded-full ${isSaving ? 'opacity-50' : 'hover:bg-secondary/40'}`}
         >
-          <Save className="h-4 w-4 mr-1" />
-          {isSaving ? "Guardando..." : "Guardar"}
-        </Button>
+          <Save className="h-6 w-6 text-primary" />
+        </button>
       </div>
     </div>
   );

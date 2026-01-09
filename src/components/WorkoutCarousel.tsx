@@ -13,7 +13,7 @@ interface WorkoutSummary {
   date?: string;
 }
 
-type CarouselItem = 
+type CarouselItem =
   | { type: 'promo' }
   | { type: 'workout'; data: WorkoutSummary };
 
@@ -26,6 +26,7 @@ interface WorkoutCarouselProps {
 const WorkoutCarouselContent: React.FC<WorkoutCarouselProps> = ({ items, children, onSlideChange }) => {
   const { api } = useCarousel();
 
+  // Handle listeners and syncing
   useEffect(() => {
     if (!api || !onSlideChange) return;
 
@@ -35,20 +36,27 @@ const WorkoutCarouselContent: React.FC<WorkoutCarouselProps> = ({ items, childre
       onSlideChange(currentIndex);
     };
 
-    // Set initial index immediately
-    setTimeout(() => onSlideChange(0), 0);
-
-    // Listen for slide changes - using both events for better sync
+    // Listen for slide changes
     api.on('select', onSelect);
     api.on('settle', onSelect);
-    api.on('pointerUp', onSelect); // Additional event for better responsiveness
+    // api.on('pointerUp', onSelect); // Removing pointerUp as it might be too aggressive/redundant with select
 
     return () => {
       api.off('select', onSelect);
       api.off('settle', onSelect);
-      api.off('pointerUp', onSelect);
+      // api.off('pointerUp', onSelect);
     };
   }, [api, onSlideChange]);
+
+  // Set initial index ONLY when api first becomes available
+  useEffect(() => {
+    if (!api || !onSlideChange) return;
+
+    // Check if we already have a selected index (e.g. from internal state)
+    // but usually on mount we want to ensure we sync with parent
+    onSlideChange(api.selectedScrollSnap());
+
+  }, [api]); // Intentionally omitting onSlideChange to avoid re-syncing just because the handler changed reference (though useCallback in parent fixes that too)
 
   return (
     <CarouselContent className="-ml-2 md:-ml-4">
@@ -71,17 +79,14 @@ const WorkoutCarousel: React.FC<WorkoutCarouselProps> = ({ items, children, onSl
   }
 
   return (
-    <Carousel 
-      className="w-full" 
-      opts={{ 
+    <Carousel
+      className="w-full"
+      opts={{
         loop: false,
-        duration: 25, // Slightly slower for better control
-        dragFree: false, // Disable free dragging to enforce snapping
-        skipSnaps: false, // Always snap to slides
         align: 'start',
         containScroll: 'trimSnaps', // Better boundary handling
-        slidesToScroll: 1, // Only scroll one slide at a time
-        inViewThreshold: 0.8 // Require 80% visibility to consider slide "in view"
+        skipSnaps: true, // Allow scrolling through multiple slides on fast swipe
+        dragFree: false, // Snap to slides
       }}
     >
       <WorkoutCarouselContent items={items} onSlideChange={onSlideChange}>

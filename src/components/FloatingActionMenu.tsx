@@ -13,8 +13,8 @@ interface FloatingActionMenuProps {
   isPremium?: boolean;
 }
 
-const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({ 
-  onCreateRoutine, 
+const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
+  onCreateRoutine,
   onCreateProgram,
   onOpenGatofitPrograms,
   isAsesorado = false,
@@ -37,86 +37,87 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
   };
 
   return (
-    <div className="fixed right-4 bottom-20 z-30">
+    <div
+      className="fixed right-4 z-50"
+      style={{ bottom: 'calc(6rem + var(--safe-area-inset-bottom))' }}
+    >
       {/* Background overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm -z-10"
           onClick={() => setIsOpen(false)}
         />
       )}
-      
+
       {/* Action buttons */}
       <div className="flex flex-col items-center gap-3 mb-4">
         {/* Gatofit Programs button - Shown to all non-asesorado users */}
         {!isAsesorado && (
-          <div 
+          <div
             className={cn(
               "transition-all duration-300 transform relative",
               isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-4 opacity-0 scale-95 pointer-events-none"
             )}
           >
-          <button
-            onClick={() => {
-              if (isPremium) {
-                onOpenGatofitPrograms();
-              } else {
-                setShowGatofitPremiumModal(true);
-              }
-              setIsOpen(false);
-            }}
-            className="relative flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all duration-200 hover:scale-110 overflow-hidden group"
-            style={{
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-              boxShadow: '0 0 20px rgba(59, 130, 246, 0.4), 0 0 40px rgba(139, 92, 246, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)'
-            }}
-          >
-            {/* Galactic aura border */}
-            <div 
-              className="absolute inset-0 rounded-full opacity-75 animate-pulse"
+            <button
+              onClick={() => {
+                if (isPremium) {
+                  onOpenGatofitPrograms();
+                } else {
+                  setShowGatofitPremiumModal(true);
+                }
+                setIsOpen(false);
+              }}
+              className="relative flex items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all duration-200 hover:scale-110 overflow-hidden group"
               style={{
-                background: 'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6)',
-                padding: '2px'
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                boxShadow: '0 0 20px rgba(59, 130, 246, 0.4), 0 0 40px rgba(139, 92, 246, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1)'
               }}
             >
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-purple-600" />
-            </div>
-            
-            {/* Inner content with full circular image */}
-            <div className="relative z-10 w-10 h-10 rounded-full overflow-hidden bg-white">
-              <img 
-                src={branding.logoImageUrl}
-                alt={`${branding.companyName} Logo`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            
-            {/* Lock overlay for free users */}
-            {!isPremium && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-full">
-                <Lock className="h-6 w-6 text-white" />
+              {/* Galactic aura border */}
+              <div
+                className="absolute inset-0 rounded-full opacity-75 animate-pulse"
+                style={{
+                  background: 'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6)',
+                  padding: '2px'
+                }}
+              >
+                <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-purple-600" />
               </div>
-            )}
-          </button>
-          <span className="absolute right-16 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs text-foreground whitespace-nowrap shadow-lg border border-border/50">
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold drop-shadow-sm" style={{
-              textShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)'
-            }}>
-              Programas {branding.companyName}
+
+              {/* Inner content with full circular image */}
+              <div className="relative z-10 w-10 h-10 rounded-full overflow-hidden bg-white">
+                <img
+                  src={branding.logoImageUrl}
+                  alt={`${branding.companyName} Logo`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Lock overlay for free users */}
+              {!isPremium && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-full">
+                  <Lock className="h-6 w-6 text-white" />
+                </div>
+              )}
+            </button>
+            <span className="absolute right-16 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs text-foreground whitespace-nowrap shadow-lg border border-border/50">
+              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-bold drop-shadow-sm" style={{
+                textShadow: '0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)'
+              }}>
+                Programas {branding.companyName}
+              </span>
             </span>
-          </span>
-        </div>
+          </div>
         )}
 
-        {/* Create Program button - Always visible for asesorados */}
-        <div 
+        {/* Create Program button - Only visible when menu is open */}
+        <div
           className={cn(
             "transition-all duration-300 transform",
-            isAsesorado 
+            isOpen
               ? "translate-y-0 opacity-100 scale-100"
-              : isOpen 
-                ? "translate-y-0 opacity-100 scale-100" 
-                : "translate-y-4 opacity-0 scale-95 pointer-events-none"
+              : "translate-y-4 opacity-0 scale-95 pointer-events-none"
           )}
         >
           <button
@@ -132,7 +133,7 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
           >
             <Calendar className="h-6 w-6" />
           </button>
-          {(isOpen || isAsesorado) && (
+          {isOpen && (
             <span className="absolute right-16 top-1/2 -translate-y-1/2 bg-background/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs text-foreground whitespace-nowrap shadow-lg border border-border/50">
               Crear Programación
             </span>
@@ -140,7 +141,7 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         </div>
 
         {/* Create Routine button */}
-        <div 
+        <div
           className={cn(
             "transition-all duration-300 transform",
             isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-4 opacity-0 scale-95 pointer-events-none"
@@ -170,7 +171,7 @@ const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         onClick={toggleMenu}
         className={cn(
           "flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-300 text-white",
-          isOpen 
+          isOpen
             ? !branding.hasCoach && "bg-red-500 hover:bg-red-600 rotate-45"
             : !branding.hasCoach && "bg-blue-500 hover:bg-blue-600 hover:scale-110",
           isOpen && "rotate-45",

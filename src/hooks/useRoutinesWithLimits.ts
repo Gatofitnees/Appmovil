@@ -1,12 +1,13 @@
-
 import { useState, useCallback } from 'react';
 import { useRoutines } from '@/hooks/useRoutines';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useRoutinesWithLimits = () => {
+  const { user } = useAuth();
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const routinesHook = useRoutines();
   const { isPremium, isAsesorado } = useSubscription();
@@ -15,7 +16,7 @@ export const useRoutinesWithLimits = () => {
 
   const createRoutine = useCallback(async (routineData: any) => {
     const limitCheck = await checkRoutineLimit(isPremium);
-    
+
     if (!limitCheck.canProceed) {
       showLimitReachedToast('routines');
       setShowPremiumModal(true);
@@ -23,7 +24,6 @@ export const useRoutinesWithLimits = () => {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
 
       const { data, error } = await supabase
@@ -37,13 +37,13 @@ export const useRoutinesWithLimits = () => {
         .single();
 
       if (error) throw error;
-      
+
       if (data && !isPremium) {
         await incrementUsage('routines');
       }
 
       await routinesHook.refetch();
-      
+
       return data;
     } catch (error) {
       console.error('Error creating routine:', error);
@@ -54,11 +54,10 @@ export const useRoutinesWithLimits = () => {
       });
       return null;
     }
-  }, [checkRoutineLimit, isPremium, showLimitReachedToast, incrementUsage, routinesHook.refetch, toast]);
+  }, [checkRoutineLimit, isPremium, showLimitReachedToast, incrementUsage, routinesHook.refetch, toast, user]);
 
   const deleteRoutine = useCallback(async (routineId: number) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
 
       const { data: routine, error: fetchError } = await supabase
@@ -68,7 +67,7 @@ export const useRoutinesWithLimits = () => {
         .single();
 
       if (fetchError) throw fetchError;
-      
+
       if (routine.user_id !== user.id) {
         throw new Error('No tienes permisos para eliminar esta rutina');
       }
@@ -85,7 +84,7 @@ export const useRoutinesWithLimits = () => {
       }
 
       await routinesHook.refetch();
-      
+
       toast({
         title: "Rutina eliminada",
         description: "La rutina ha sido eliminada correctamente",
@@ -101,11 +100,10 @@ export const useRoutinesWithLimits = () => {
       });
       return false;
     }
-  }, [isPremium, routinesHook.refetch, toast]);
+  }, [isPremium, routinesHook.refetch, toast, user]);
 
   const decrementUsage = useCallback(async (type: 'routines') => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
 
       const { error } = await supabase.rpc('increment_usage_counter', {
@@ -115,13 +113,13 @@ export const useRoutinesWithLimits = () => {
       });
 
       if (error) throw error;
-      
+
       return true;
     } catch (error) {
       console.error('Error decrementing usage:', error);
       return false;
     }
-  }, []);
+  }, [user]);
 
   const getRoutineUsageInfo = useCallback(async () => {
     const limitCheck = await checkRoutineLimit(isPremium);

@@ -4,6 +4,7 @@ import { ArrowLeft, Settings, Share2, User, Calendar, TrendingUp, CheckCircle, I
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
 import { useProfileContext } from '@/contexts/ProfileContext';
 import { useUserStats } from '@/hooks/useUserStats';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,15 +15,20 @@ import BodyMeasurements from '@/components/profile/BodyMeasurements';
 import UserInformation from '@/components/profile/UserInformation';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useStreaks } from '@/hooks/useStreaks';
+import RankBadge from '@/components/RankBadge';
+import ExperienceBar from '@/components/ExperienceBar';
+import { getExperienceProgress } from '@/utils/rankSystem';
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, loading, updateProfile } = useProfileContext();
   const { stats, loading: statsLoading } = useUserStats(user?.id);
-  const { isPremium } = useSubscription();
+  const { isPremium, isAsesorado } = useSubscription();
+  const { streakData } = useStreaks();
   const { toast } = useToast();
-  
+
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
@@ -45,7 +51,7 @@ const ProfilePage: React.FC = () => {
 
   const handleUsernameChange = async (value: string) => {
     setUsername(value);
-    
+
     if (value && value !== profile?.username) {
       await checkUsernameAvailability(value);
     } else {
@@ -94,7 +100,7 @@ const ProfilePage: React.FC = () => {
     }
 
     const profileUrl = `${window.location.origin}/public-profile/${user?.id}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -126,9 +132,9 @@ const ProfilePage: React.FC = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          
+
           <h1 className="text-xl font-bold">Mi Perfil</h1>
-          
+
           <div className="flex gap-2">
             <Skeleton className="w-8 h-8" />
             <Skeleton className="w-8 h-8" />
@@ -172,9 +178,9 @@ const ProfilePage: React.FC = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        
+
         <h1 className="text-xl font-bold">Mi Perfil</h1>
-        
+
         <div className="flex gap-2">
           <Button
             variant="ghost"
@@ -184,7 +190,7 @@ const ProfilePage: React.FC = () => {
           >
             <Share2 className="h-5 w-5" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -211,6 +217,7 @@ const ProfilePage: React.FC = () => {
           userName={displayName}
           onAvatarUpdate={handleAvatarUpdate}
           isPremium={isPremium}
+          isAsesorado={isAsesorado}
         />
       </div>
 
@@ -252,13 +259,38 @@ const ProfilePage: React.FC = () => {
           )}
         </div>
 
-        <Button 
+        <Button
           onClick={handleSave}
           disabled={saving || usernameAvailable === false}
           className="w-full"
         >
           {saving ? 'Guardando...' : 'Guardar cambios'}
         </Button>
+
+        {/* Level & Experience Section */}
+        {streakData && (
+          <Card className="mt-6 p-4">
+            <div className="grid grid-cols-[1fr,auto] items-center mb-2">
+              <span className="font-semibold text-lg">Nivel {streakData.current_level}</span>
+              <span className="text-sm text-muted-foreground">
+                {getExperienceProgress(streakData.total_experience).currentLevelXP} / {getExperienceProgress(streakData.total_experience).nextLevelXP} XP
+              </span>
+            </div>
+
+            <ExperienceBar
+              totalExperience={streakData.total_experience}
+              className="h-3 mb-3"
+            />
+
+            <div className="flex justify-center mt-2">
+              <RankBadge
+                level={streakData.current_level}
+                size="md"
+                showLevelWithRank
+              />
+            </div>
+          </Card>
+        )}
       </div>
 
       {/* Body Measurements Section */}
@@ -277,7 +309,7 @@ const ProfilePage: React.FC = () => {
       {/* Navigation Buttons */}
       <div className="mt-6 space-y-3">
         <h3 className="text-lg font-semibold">Gestionar Información</h3>
-        
+
         <Button
           variant="outline"
           className="w-full justify-start"
@@ -286,7 +318,7 @@ const ProfilePage: React.FC = () => {
           <User className="h-5 w-5 mr-3" />
           Editar Medidas Corporales
         </Button>
-        
+
         <Button
           variant="outline"
           className="w-full justify-start"
@@ -295,7 +327,7 @@ const ProfilePage: React.FC = () => {
           <Info className="h-5 w-5 mr-3" />
           Editar Información del Usuario
         </Button>
-        
+
         <Button
           variant="outline"
           className="w-full justify-start"
@@ -304,7 +336,7 @@ const ProfilePage: React.FC = () => {
           <Calendar className="h-5 w-5 mr-3" />
           Calendario
         </Button>
-        
+
         <Button
           variant="outline"
           className="w-full justify-start"

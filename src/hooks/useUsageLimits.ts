@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 
 export interface UsageLimits {
@@ -18,6 +19,7 @@ export interface LimitCheck {
 }
 
 export const useUsageLimits = () => {
+  const { user } = useAuth();
   const [usage, setUsage] = useState<UsageLimits | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -25,11 +27,7 @@ export const useUsageLimits = () => {
   const fetchUsage = useCallback(async () => {
     try {
       setIsLoading(true);
-      
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      console.log('🔍 [USAGE LIMITS] Fetching usage for user:', user.id);
 
       const { data, error } = await supabase.rpc('get_user_weekly_usage', {
         user_id: user.id
@@ -39,12 +37,9 @@ export const useUsageLimits = () => {
         console.error('❌ [USAGE LIMITS] Error fetching usage:', error);
         throw error;
       }
-      
-      console.log('📊 [USAGE LIMITS] Raw usage data:', data);
 
       if (data && data.length > 0) {
         setUsage(data[0]);
-        console.log('✅ [USAGE LIMITS] Usage set:', data[0]);
       } else {
         await createInitialUsageRecord(user.id);
         // Recursive call after creating initial record
@@ -55,7 +50,7 @@ export const useUsageLimits = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   const createInitialUsageRecord = async (userId: string) => {
     try {
@@ -63,9 +58,7 @@ export const useUsageLimits = () => {
       const dayOfWeek = weekStart.getDay();
       const diff = weekStart.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
       weekStart.setDate(diff);
-      
-      console.log('📅 [USAGE LIMITS] Creating initial record for week start:', weekStart.toISOString().split('T')[0]);
-      
+
       const { error } = await supabase
         .from('usage_limits')
         .insert({
@@ -80,8 +73,7 @@ export const useUsageLimits = () => {
         console.error('❌ [USAGE LIMITS] Error creating initial usage record:', error);
         throw error;
       }
-      
-      console.log('✅ [USAGE LIMITS] Initial usage record created');
+
     } catch (error) {
       console.error('❌ [USAGE LIMITS] Error creating initial usage record:', error);
     }
@@ -89,10 +81,7 @@ export const useUsageLimits = () => {
 
   const incrementUsage = useCallback(async (type: 'routines' | 'nutrition_photos' | 'ai_chat_messages') => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuario no autenticado');
-
-      console.log(`📈 [USAGE LIMITS] Incrementing ${type} for user:`, user.id);
 
       // Incrementar en base de datos
       const { data, error } = await supabase.rpc('increment_usage_counter', {
@@ -106,25 +95,23 @@ export const useUsageLimits = () => {
         throw error;
       }
 
-      console.log('✅ [USAGE LIMITS] Usage incremented successfully in DB:', data);
-      
       // Refetch inmediato para sincronizar estado
       await fetchUsage();
-      
+
       return true;
     } catch (error) {
       console.error('❌ [USAGE LIMITS] Error incrementing usage:', error);
       return false;
     }
-  }, [fetchUsage]);
+  }, [user, fetchUsage]); // Added user to dependency array
 
   const checkLimitWithoutFetch = useCallback((
     type: 'routines' | 'nutrition_photos' | 'ai_chat_messages',
     isPremium: boolean
   ): LimitCheck => {
     const limits = {
-      routines: 5,
-      nutrition_photos: 10,
+      routines: 3,
+      nutrition_photos: 5,
       ai_chat_messages: 3
     };
 
@@ -146,14 +133,6 @@ export const useUsageLimits = () => {
     const currentUsage = usage ? usage[fieldMap[type]] || 0 : 0;
     const limit = limits[type];
     const isOverLimit = currentUsage >= limit;
-
-    console.log(`🔍 [USAGE LIMITS] Check limit for ${type}:`, {
-      currentUsage,
-      limit,
-      isOverLimit,
-      canProceed: !isOverLimit,
-      hasUsageData: !!usage
-    });
 
     return {
       canProceed: !isOverLimit,
@@ -177,8 +156,8 @@ export const useUsageLimits = () => {
 
   const showLimitReachedToast = useCallback((type: 'routines' | 'nutrition_photos' | 'ai_chat_messages') => {
     const messages = {
-      routines: 'Has alcanzado el límite de 5 rutinas. Actualiza a Premium para crear rutinas ilimitadas.',
-      nutrition_photos: 'Has usado tus 10 fotos semanales. Actualiza a Premium para fotos ilimitadas.',
+      routines: 'Has alcanzado el límite de 3 rutinas. Actualiza a Premium para crear rutinas ilimitadas.',
+      nutrition_photos: 'Has usado tus 5 fotos semanales. Actualiza a Premium para fotos ilimitadas.',
       ai_chat_messages: 'Has usado tus 3 chats semanales de IA. Actualiza a Premium para chats ilimitados.'
     };
 

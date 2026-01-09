@@ -9,6 +9,7 @@ export const useOptimizedSubscription = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
+  const [isAsesorado, setIsAsesorado] = useState(false);
   const { toast } = useToast();
   const { checkUserPremiumStatus: checkCachedPremiumStatus } = useSubscriptionCache();
 
@@ -26,12 +27,12 @@ export const useOptimizedSubscription = () => {
 
       if (error) {
         console.error('Error fetching subscription:', error);
-        
+
         // Si hay error, asegurar que el usuario tenga una suscripción
         const { error: ensureError } = await supabase.rpc('ensure_user_subscription', {
           p_user_id: user.id
         });
-        
+
         if (ensureError) {
           console.error('Error ensuring subscription:', ensureError);
         } else {
@@ -41,9 +42,10 @@ export const useOptimizedSubscription = () => {
             .select('*')
             .eq('user_id', user.id)
             .maybeSingle();
-          
+
           if (retryData) {
             setSubscription(retryData);
+            setIsAsesorado(retryData.plan_type === 'asesorados' && retryData.status === 'active');
             setIsPremium((retryData.plan_type === 'monthly' || retryData.plan_type === 'yearly' || retryData.plan_type === 'asesorados') && retryData.status === 'active');
           }
         }
@@ -52,22 +54,24 @@ export const useOptimizedSubscription = () => {
 
       if (data) {
         setSubscription(data);
+        setIsAsesorado(data.plan_type === 'asesorados' && data.status === 'active');
         setIsPremium((data.plan_type === 'monthly' || data.plan_type === 'yearly' || data.plan_type === 'asesorados') && data.status === 'active');
       } else {
         // No existe suscripción, crear una
         await supabase.rpc('ensure_user_subscription', {
           p_user_id: user.id
         });
-        
+
         // Obtener la suscripción recién creada
         const { data: newData } = await supabase
           .from('user_subscriptions')
           .select('*')
           .eq('user_id', user.id)
           .single();
-        
+
         if (newData) {
           setSubscription(newData);
+          setIsAsesorado(false);
           setIsPremium(false); // Nueva suscripción siempre es free
         }
       }
@@ -88,17 +92,17 @@ export const useOptimizedSubscription = () => {
         .order('price_usd');
 
       if (error) throw error;
-      
+
       const transformedPlans: SubscriptionPlan[] = (data || [])
         .filter(plan => plan.plan_type !== 'free')
         .map(plan => ({
           ...plan,
           plan_type: plan.plan_type as 'monthly' | 'yearly',
-          features: typeof plan.features === 'string' 
+          features: typeof plan.features === 'string'
             ? JSON.parse(plan.features)
             : plan.features as { routines_limit: number; nutrition_photos_weekly: number; ai_chat_messages_weekly: number; }
         }));
-      
+
       setPlans(transformedPlans);
     } catch (error) {
       console.error('Error fetching plans:', error);
@@ -174,7 +178,7 @@ export const useOptimizedSubscription = () => {
             }
           }
         );
-        
+
         if (error) throw error;
 
         if (!data?.approvalUrl) {
@@ -195,7 +199,7 @@ export const useOptimizedSubscription = () => {
 
         // Redirigir a PayPal para aprobar
         window.location.href = data.approvalUrl;
-        
+
         return true;
       }
 
@@ -284,12 +288,12 @@ export const useOptimizedSubscription = () => {
       if (error) throw error;
 
       await fetchSubscriptionData();
-      
+
       toast({
         title: "Cambio cancelado",
         description: "Continuarás con tu plan actual sin cambios",
       });
-      
+
       return { success: true };
     } catch (error) {
       console.error('Error canceling scheduled plan change:', error);
@@ -321,7 +325,7 @@ export const useOptimizedSubscription = () => {
       if (error) throw error;
 
       await fetchSubscriptionData();
-      
+
       toast({
         title: "Suscripción pausada",
         description: "Tu suscripción se ha pausado correctamente",
@@ -358,7 +362,7 @@ export const useOptimizedSubscription = () => {
       if (error) throw error;
 
       await fetchSubscriptionData();
-      
+
       toast({
         title: "Suscripción reactivada",
         description: "Tu suscripción se ha reactivado correctamente",
@@ -393,7 +397,7 @@ export const useOptimizedSubscription = () => {
       if (error) throw error;
 
       await fetchSubscriptionData();
-      
+
       toast({
         title: "Suscripción cancelada",
         description: "Tu suscripción se ha cancelado correctamente",
@@ -418,6 +422,7 @@ export const useOptimizedSubscription = () => {
     plans,
     isLoading,
     isPremium,
+    isAsesorado,
     hasScheduledChange,
     checkPremiumStatus,
     checkUserPremiumStatus: checkCachedPremiumStatus,

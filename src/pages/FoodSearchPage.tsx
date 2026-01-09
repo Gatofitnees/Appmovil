@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Search, Filter, Save } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { StatusBar } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -21,7 +23,7 @@ const FoodSearchPage: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
-  
+
   const debouncedQuery = useDebounce(searchQuery, 500);
   const { searchFoods, results, isLoading, error, loadMoreFoods, hasMore } = useFoodSearch();
   const {
@@ -36,6 +38,35 @@ const FoodSearchPage: React.FC = () => {
   const { saveFoods, isSaving } = useFoodSaving(selectedDate);
 
   useEffect(() => {
+    // Hide status bar on mount
+    const hideStatusBar = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await StatusBar.hide();
+        } catch (e) {
+          console.error('Error hiding status bar:', e);
+        }
+      }
+    };
+
+    hideStatusBar();
+
+    return () => {
+      // Show status bar on unmount
+      const showStatusBar = async () => {
+        if (Capacitor.isNativePlatform()) {
+          try {
+            await StatusBar.show();
+          } catch (e) {
+            console.error('Error showing status bar:', e);
+          }
+        }
+      };
+      showStatusBar();
+    };
+  }, []);
+
+  useEffect(() => {
     // Always search - if no query/filters, it will load default foods
     const allFilters = Object.keys(macroFilters).length > 0 || selectedCategories.length > 0 ? { ...macroFilters, categories: selectedCategories } : undefined;
     searchFoods(debouncedQuery, allFilters);
@@ -44,7 +75,7 @@ const FoodSearchPage: React.FC = () => {
   // Infinite scroll handler
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    
+
     // Load more when scrolled to bottom (with some buffer)
     if (scrollHeight - scrollTop <= clientHeight * 1.5 && hasMore && !isLoading && !debouncedQuery.trim() && Object.keys(macroFilters).length === 0 && selectedCategories.length === 0) {
       loadMoreFoods();
@@ -73,7 +104,10 @@ const FoodSearchPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b z-10">
+      <div
+        className="sticky top-0 bg-background/60 backdrop-blur-md supports-[backdrop-filter]:bg-background/30 border-b z-10 transition-all duration-300"
+        style={{ paddingTop: selectedFoods.length > 0 ? 'calc(env(safe-area-inset-top) + 48px)' : 'calc(env(safe-area-inset-top) + 16px)' }}
+      >
         <div className="flex items-center gap-4 p-4">
           <Button
             variant="ghost"
@@ -105,7 +139,7 @@ const FoodSearchPage: React.FC = () => {
             </Button>
           )}
         </div>
-        
+
         {/* Selection Header */}
         {selectedFoods.length > 0 && (
           <FoodSelectionHeader
@@ -115,7 +149,7 @@ const FoodSearchPage: React.FC = () => {
             isSaving={isSaving}
           />
         )}
-        
+
         {/* Search Input */}
         <div className="px-4 pb-4">
           <div className="flex items-center gap-2">
@@ -178,7 +212,7 @@ const FoodSearchPage: React.FC = () => {
                   onQuantityChange={(quantity) => updateQuantity(food.id, quantity)}
                 />
               ))}
-              
+
               {/* Loading more indicator */}
               {isLoading && results.length > 0 && (
                 <div className="text-center py-4">
@@ -186,7 +220,7 @@ const FoodSearchPage: React.FC = () => {
                   <p className="text-sm text-muted-foreground mt-2">Cargando más alimentos...</p>
                 </div>
               )}
-              
+
               {/* End of results indicator */}
               {!hasMore && results.length > 0 && !searchQuery.trim() && Object.keys(macroFilters).length === 0 && selectedCategories.length === 0 && (
                 <div className="text-center py-4">

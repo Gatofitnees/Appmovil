@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import ExerciseItem from "./ExerciseItem";
 import Button from "@/components/Button";
 import { Loader2 } from "lucide-react";
@@ -49,46 +49,68 @@ const ExerciseList: React.FC<ExerciseListProps> = ({
   return (
     <div className="space-y-3 pb-8">
       {exercises && exercises.length > 0 ? (
-        exercises.map(exercise => {
-          // Check if this exercise is already in the routine
-          const isAlreadySelected = previouslySelectedIds.includes(exercise.id);
-          
-          return (
-            <ExerciseItem 
-              key={exercise.id}
-              exercise={exercise}
-              isSelected={selectedExercises.includes(exercise.id)}
-              onSelect={onSelectExercise}
-              onViewDetails={onViewDetails}
-              isAlreadyInRoutine={isAlreadySelected} // Pass this flag to the ExerciseItem
-            />
-          );
-        })
+        <>
+          {exercises.map(exercise => {
+            // Check if this exercise is already in the routine
+            const isAlreadySelected = previouslySelectedIds.includes(exercise.id);
+            
+            return (
+              <ExerciseItem 
+                key={exercise.id}
+                exercise={exercise}
+                isSelected={selectedExercises.includes(exercise.id)}
+                onSelect={onSelectExercise}
+                onViewDetails={onViewDetails}
+                isAlreadyInRoutine={isAlreadySelected}
+              />
+            );
+          })}
+
+          {/* Infinite scroll trigger */}
+          {hasNextPage && <InfiniteScrollTrigger onVisible={fetchNextPage} isLoading={isFetchingNextPage} />}
+        </>
       ) : !loading ? (
         <div className="text-center py-8 text-muted-foreground">
           No se encontraron ejercicios
         </div>
       ) : null}
+    </div>
+  );
+};
 
-      {hasNextPage && (
-        <div className="flex justify-center mt-6">
-          <Button
-            variant="secondary"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-            className="w-full"
-          >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Cargando...
-              </>
-            ) : (
-              "Cargar más"
-            )}
-          </Button>
-        </div>
-      )}
+// Invisible trigger component for infinite scroll
+interface InfiniteScrollTriggerProps {
+  onVisible: () => void;
+  isLoading: boolean;
+}
+
+const InfiniteScrollTrigger: React.FC<InfiniteScrollTriggerProps> = ({ onVisible, isLoading }) => {
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !isLoading) {
+          onVisible();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [onVisible, isLoading]);
+
+  return (
+    <div ref={observerTarget} className="flex justify-center py-6">
+      {isLoading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />}
     </div>
   );
 };

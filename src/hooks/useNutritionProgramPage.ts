@@ -32,11 +32,11 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
     if (nutritionPlan?.meals && !initialized) {
       const initialOptions: Record<string, number> = {};
       const initialQuantities: Record<string, number> = {};
-      
+
       nutritionPlan.meals.forEach(meal => {
         if (meal.options && meal.options.length > 0) {
           initialOptions[meal.id] = 0; // Select first option by default
-          
+
           // Only initialize quantities for the selected option (first option by default)
           const selectedOption = meal.options[0];
           selectedOption.ingredients?.forEach(ingredient => {
@@ -44,7 +44,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
           });
         }
       });
-      
+
       setSelectedOptions(initialOptions);
       setIngredientQuantities(initialQuantities);
       setInitialized(true);
@@ -53,19 +53,19 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
 
   const handleOptionSelect = useCallback((mealId: string, optionIndex: number) => {
     if (!nutritionPlan?.meals) return;
-    
+
     const meal = nutritionPlan.meals.find(m => m.id === mealId);
     if (!meal?.options) return;
-    
+
     const selectedOption = meal.options[optionIndex];
     if (!selectedOption) return;
-    
+
     // Perform all state updates atomically
     setSelectedOptions(prev => ({
       ...prev,
       [mealId]: optionIndex
     }));
-    
+
     setCheckedIngredients(prev => {
       const newChecked = { ...prev };
       // Clear all ingredients for this meal
@@ -76,22 +76,22 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
       });
       return newChecked;
     });
-    
+
     setIngredientQuantities(prev => {
       const newQuantities = { ...prev };
-      
+
       // Clear all ingredient quantities for this meal
       meal.options.forEach(option => {
         option.ingredients?.forEach(ingredient => {
           delete newQuantities[ingredient.id];
         });
       });
-      
+
       // Set quantities for the newly selected option
       selectedOption.ingredients?.forEach(ingredient => {
         newQuantities[ingredient.id] = ingredient.quantity_grams;
       });
-      
+
       return newQuantities;
     });
   }, [nutritionPlan]);
@@ -113,14 +113,14 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
   const convertIngredientToFoodLogEntry = (ingredient: AdminNutritionIngredient, quantity: number, customName?: string): Omit<FoodLogEntry, 'id' | 'logged_at' | 'log_date'> => {
     // Calculate scaled macros based on quantity
     const scale = quantity / ingredient.quantity_grams;
-    
+
     // Get the appropriate food name, with custom name override
-    const foodName = customName || 
-                    ingredient.custom_food_name || 
-                    ingredient.food_items?.name || 
-                    ingredient.recipe_name || 
-                    'Alimento del plan nutricional';
-    
+    const foodName = customName ||
+      ingredient.custom_food_name ||
+      ingredient.food_items?.name ||
+      ingredient.recipe_name ||
+      'Alimento del plan nutricional';
+
     return {
       food_item_id: ingredient.food_items?.id || null,
       meal_type: 'breakfast', // Default to breakfast, can be improved to detect from meal context
@@ -155,7 +155,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
     try {
       // Collect ingredients to save (either specific ones or all checked ones)
       const ingredientsToSave: { ingredient: AdminNutritionIngredient; quantity: number }[] = [];
-      
+
       if (specificIngredients) {
         // Save only the specific ingredients passed (for recipe save)
         specificIngredients.forEach(ingredient => {
@@ -169,7 +169,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
         nutritionPlan.meals.forEach(meal => {
           const selectedOptionIndex = selectedOptions[meal.id] || 0;
           const selectedOption = meal.options?.[selectedOptionIndex];
-          
+
           if (selectedOption?.ingredients) {
             selectedOption.ingredients.forEach(ingredient => {
               if (checkedIngredients[ingredient.id]) {
@@ -195,7 +195,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
         try {
           const foodLogEntry = convertIngredientToFoodLogEntry(ingredient, quantity, customName);
           const result = await addEntry(foodLogEntry);
-          
+
           if (result) {
             savedCount++;
           } else {
@@ -213,7 +213,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
           description: `Se guardaron ${savedCount} alimento${savedCount > 1 ? 's' : ''} en ${isToday ? 'tu registro de hoy' : dateDisplay}.`,
           variant: "default"
         });
-        
+
         // Clear selections for saved ingredients
         if (specificIngredients) {
           const newCheckedIngredients = { ...checkedIngredients };
@@ -251,7 +251,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
 
   const handleOpenSaveModal = useCallback(() => {
     if (!nutritionPlan?.meals) return;
-    
+
     // Check if there are selected ingredients
     const hasSelected = nutritionPlan.meals.some(meal => {
       const selectedOptionIndex = selectedOptions[meal.id] || 0;
@@ -273,7 +273,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
 
   const handleSaveWithName = useCallback(async (customName?: string) => {
     setShowSaveModal(false);
-    
+
     if (!nutritionPlan?.meals) return;
 
     setSaving(true);
@@ -288,11 +288,11 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
     try {
       // Collect all checked ingredients
       const ingredientsToSave: { ingredient: AdminNutritionIngredient; quantity: number }[] = [];
-      
+
       nutritionPlan.meals.forEach(meal => {
         const selectedOptionIndex = selectedOptions[meal.id] || 0;
         const selectedOption = meal.options?.[selectedOptionIndex];
-        
+
         if (selectedOption?.ingredients) {
           selectedOption.ingredients.forEach(ingredient => {
             if (checkedIngredients[ingredient.id]) {
@@ -319,24 +319,24 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
       let totalCarbs = 0;
       let totalFat = 0;
       let totalQuantity = 0;
-      
+
       const ingredients: any[] = [];
       const ingredientsList: string[] = [];
 
       for (const { ingredient, quantity } of ingredientsToSave) {
         const scale = quantity / ingredient.quantity_grams;
-        
+
         totalCalories += ingredient.calories_per_serving * scale;
         totalProtein += ingredient.protein_g_per_serving * scale;
         totalCarbs += ingredient.carbs_g_per_serving * scale;
         totalFat += ingredient.fats_g_per_serving * scale;
         totalQuantity += quantity;
-        
-        const ingredientName = ingredient.custom_food_name || 
-                             ingredient.food_items?.name || 
-                             ingredient.recipe_name || 
-                             'Ingrediente del plan';
-        
+
+        const ingredientName = ingredient.custom_food_name ||
+          ingredient.food_items?.name ||
+          ingredient.recipe_name ||
+          'Ingrediente del plan';
+
         ingredients.push({
           name: ingredientName,
           grams: quantity,
@@ -370,7 +370,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
           title: "¡Comida guardada!",
           description: `${mealName} se ha guardado en ${isToday ? 'tu registro de hoy' : dateDisplay} con ${ingredientsToSave.length} ingredientes`,
         });
-        
+
         // Clear all selections after successful save
         setCheckedIngredients({});
         // Navigate back to nutrition page
@@ -393,13 +393,13 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
 
   const getSelectedIngredients = useCallback(() => {
     if (!nutritionPlan?.meals) return [];
-    
+
     const selectedIngredients: AdminNutritionIngredient[] = [];
-    
+
     nutritionPlan.meals.forEach(meal => {
       const selectedOptionIndex = selectedOptions[meal.id] || 0;
       const selectedOption = meal.options?.[selectedOptionIndex];
-      
+
       if (selectedOption?.ingredients) {
         selectedOption.ingredients.forEach(ingredient => {
           if (checkedIngredients[ingredient.id]) {
@@ -408,7 +408,7 @@ export const useNutritionProgramPage = (selectedDate: Date) => {
         });
       }
     });
-    
+
     return selectedIngredients;
   }, [nutritionPlan, selectedOptions, checkedIngredients]);
 

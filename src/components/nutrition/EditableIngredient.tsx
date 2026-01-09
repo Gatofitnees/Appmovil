@@ -115,7 +115,7 @@ export const EditableIngredient: React.FC<EditableIngredientProps> = ({
         <div className="flex flex-col gap-2">
           {/* Fila superior: Calorías */}
           <div className="flex items-center gap-2">
-            <FlatIcon name="ss-flame" size={12} style={{ color: '#fb923c' }} />
+            <img src="/flame.svg" alt="Calories" className="w-3 h-3 brightness-0 invert -translate-y-0.5" />
             {editingField === 'calories' ? (
               <Input
                 value={tempValue}

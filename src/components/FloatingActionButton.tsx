@@ -9,7 +9,10 @@ interface FloatingActionButtonProps {
 
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onClick }) => {
   return (
-    <div className="fixed right-4 bottom-20 z-30">
+    <div
+      className="fixed right-4 z-50"
+      style={{ bottom: 'calc(6rem + var(--safe-area-inset-bottom))' }}
+    >
       <Button
         variant="primary"
         className="rounded-full h-14 w-14 shadow-lg"

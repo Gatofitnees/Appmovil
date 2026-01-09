@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Button from "@/components/Button";
@@ -21,6 +22,7 @@ const OnboardingNavigation: React.FC<OnboardingNavigationProps> = ({
   loading = false,
 }) => {
   const navigate = useNavigate();
+  const [isMounted, setIsMounted] = useState(false);
 
   const handleBack = () => {
     if (onBack) {
@@ -36,37 +38,53 @@ const OnboardingNavigation: React.FC<OnboardingNavigationProps> = ({
     }
   };
 
-  return (
-    <div 
-      className="fixed bottom-0 left-0 right-0 p-4 bg-background backdrop-blur-md border-t border-white/5 z-[100]"
-      style={{
-        paddingBottom: `calc(1rem + var(--safe-area-inset-bottom))`,
-        paddingLeft: `calc(1rem + var(--safe-area-inset-left))`,
-        paddingRight: `calc(1rem + var(--safe-area-inset-right))`,
-      }}
-    >
-      <div className="max-w-md mx-auto space-y-4">
-        <Button
-          onClick={handleNext}
-          disabled={nextDisabled || loading}
-          variant="primary"
-          className="w-full py-3 px-4 h-auto"
-        >
-          {loading ? "Cargando..." : nextLabel}
-        </Button>
+  // Memoize style to prevent unnecessary recalculations
+  const navStyle = useMemo(() => ({
+    paddingBottom: `calc(2.5rem + var(--safe-area-inset-bottom))`,
+    paddingLeft: `calc(1rem + var(--safe-area-inset-left))`,
+    paddingRight: `calc(1rem + var(--safe-area-inset-right))`,
+  }), []);
 
-        {showBack && (
-          <button
-            onClick={handleBack}
-            className="flex items-center justify-center py-2 w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+  // Avoid SSR/transform jitter by mounting into the document body
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted || typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <>
+      {/* Bottom overlay mask to prevent underlying content from showing through */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-[180] pointer-events-none"
+        style={{
+          height: "140px",
+          background:
+            "linear-gradient(to top, rgba(var(--background-rgb, 20,27,36),1) 65%, rgba(var(--background-rgb, 20,27,36),0.85) 88%, rgba(var(--background-rgb, 20,27,36),0.6) 100%)",
+        }}
+      />
+
+      <div
+        className="fixed bottom-0 left-0 right-0 p-4 bg-background backdrop-blur-md border-t border-white/5 z-[200]"
+        style={navStyle}
+      >
+        <div className="max-w-md mx-auto space-y-4">
+          <Button
+            onClick={handleNext}
+            disabled={nextDisabled || loading}
+            variant="primary"
+            className="w-full py-3 px-4 h-auto"
           >
-            <ArrowLeft size={16} className="mr-2" />
-            Atrás
-          </button>
-        )}
+            {loading ? "Cargando..." : nextLabel}
+          </Button>
+
+
+        </div>
       </div>
-    </div>
-  );
+    </>
+    , document.body);
 };
 
 export default OnboardingNavigation;

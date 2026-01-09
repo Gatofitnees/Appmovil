@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { validateWebhookResponse, RateLimiter } from '@/utils/securityValidation';
 import { sanitizeFoodName, validateCalories, validateMacronutrient } from '@/utils/validation';
 import { FoodLogEntry } from './useFoodLog';
+import { useStreaks } from './useStreaks';
 
 // Rate limiter for food entries (max 20 entries per minute)
 const foodEntryLimiter = new RateLimiter(20, 60000);
@@ -12,6 +13,7 @@ const foodEntryLimiter = new RateLimiter(20, 60000);
 export const useSecureFoodLog = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const streak = useStreaks();
 
   const secureAddEntry = async (entry: Omit<FoodLogEntry, 'id' | 'logged_at' | 'log_date'>): Promise<FoodLogEntry | null> => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -87,9 +89,7 @@ export const useSecureFoodLog = () => {
       if (error) throw error;
 
       // Update user streak
-      await supabase.rpc('update_user_streak', {
-        p_user_id: user.id
-      });
+      await streak.updateStreak();
 
       const returnEntry: FoodLogEntry = {
         id: data.id,

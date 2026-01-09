@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Tab {
@@ -23,8 +23,22 @@ const TabMenu: React.FC<TabMenuProps> = ({
   tabClassName,
 }) => {
   const [activeTab, setActiveTab] = useState(defaultTab || tabs[0].id);
+  const lastClickRef = useRef<number>(0);
+
+  // Sincroniza si cambia defaultTab desde el padre
+  useEffect(() => {
+    if (defaultTab && defaultTab !== activeTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab]);
 
   const handleTabChange = (tabId: string) => {
+    // Evita re-clicks muy rápidos que puedan causar doble render
+    const now = Date.now();
+    if (now - (lastClickRef.current || 0) < 250) return;
+    lastClickRef.current = now;
+
+    if (tabId === activeTab) return; // no hagas nada si ya está activo
     setActiveTab(tabId);
     onChange && onChange(tabId);
   };

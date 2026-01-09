@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createSecureErrorMessage, logSecurityEvent } from "@/utils/errorHandling";
 import { useAutoProfileSetup } from "@/hooks/useAutoProfileSetup";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import { useAppleAuth } from "@/hooks/useAppleAuth";
 
 interface AuthContextProps {
   session: Session | null;
@@ -19,6 +20,10 @@ interface AuthContextProps {
     data: any | null;
   }>;
   signInWithGoogle: () => Promise<{
+    error: any | null;
+    data: any | null;
+  }>;
+  signInWithApple: () => Promise<{
     error: any | null;
     data: any | null;
   }>;
@@ -42,6 +47,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
   const { signInWithGoogle: googleSignIn, loading: googleLoading } = useGoogleAuth();
+  const { signInWithApple: appleSignIn, loading: appleLoading } = useAppleAuth();
 
   // Auto-setup profile for Google users
   useAutoProfileSetup(user);
@@ -64,7 +70,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      
+
       // Log authentication events for security monitoring
       if (_event === 'SIGNED_IN') {
         logSecurityEvent('user_signed_in', 'User authentication successful', session?.user?.id);
@@ -122,7 +128,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         title: "Cuenta creada",
         description: "Por favor, verifica tu email",
       });
-      
+
       logSecurityEvent('user_registered', 'New user registration', data.user?.id);
       return { error: null, data };
     } catch (err: any) {
@@ -197,30 +203,65 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }
   };
 
+  const signInWithApple = async () => {
+    try {
+      logSecurityEvent('apple_signin_initiated', 'Apple OAuth initiated');
+      return await appleSignIn();
+    } catch (err: any) {
+      const secureError = createSecureErrorMessage(err, 'auth');
+      logSecurityEvent('apple_signin_error', err.message);
+      toast({
+        title: "Error",
+        description: secureError,
+        variant: "destructive",
+      });
+      return { error: err, data: null };
+    }
+  };
+
   const signOut = async () => {
     try {
       const userId = user?.id;
-      await supabase.auth.signOut();
+
+      // Clear local state immediately for faster UI response
+      setUser(null);
+      setSession(null);
+
+      // Log security event before signout
       logSecurityEvent('user_signout', 'User initiated signout', userId);
+
+      // Show toast immediately
       toast({
         title: "Sesión cerrada",
         description: "Has cerrado sesión exitosamente",
       });
+
+      // Perform signout in background without awaiting
+      // This prevents the UI from being blocked
+      supabase.auth.signOut().catch((err) => {
+        logSecurityEvent('signout_error', 'Error during background signout');
+        console.error('Error signing out (background):', err);
+      });
+
     } catch (err) {
       logSecurityEvent('signout_error', 'Error during signout');
       console.error('Error signing out:', err);
+      // Still clear state even if there's an error
+      setUser(null);
+      setSession(null);
     }
   };
 
-  const value = {
+  const value = React.useMemo(() => ({
     session,
     user,
     signUp,
     signIn,
     signInWithGoogle,
+    signInWithApple,
     signOut,
-    loading: loading || googleLoading,
-  };
+    loading: loading || googleLoading || appleLoading,
+  }), [session, user, loading, googleLoading, appleLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

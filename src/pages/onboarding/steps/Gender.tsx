@@ -1,7 +1,5 @@
-
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Users, Heart } from "lucide-react";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import OnboardingNavigation from "@/components/onboarding/OnboardingNavigation";
 import SelectableCard from "@/components/onboarding/SelectableCard";
@@ -10,10 +8,10 @@ import { OnboardingContext } from "../OnboardingFlow";
 const Gender: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   // Add error logging to debug the issue
   console.log("OnboardingContext in Gender:", context);
-  
+
   if (!context) {
     console.error("OnboardingContext is null in Gender component");
     throw new Error("Gender must be used within OnboardingContext");
@@ -37,26 +35,26 @@ const Gender: React.FC = () => {
         <SelectableCard
           selected={data.gender === "male"}
           onSelect={() => handleSelect("male")}
-          icon={<User size={32} />}
+          icon={<img src="/cabeza-de-hombre-2.svg" alt="Masculino" className="w-7 h-7 brightness-0 invert" />}
           label="Masculino"
         />
-        
+
         <SelectableCard
           selected={data.gender === "female"}
           onSelect={() => handleSelect("female")}
-          icon={<Users size={32} />}
+          icon={<img src="/cabeza-de-mujer.svg" alt="Femenino" className="w-7 h-7 brightness-0 invert" />}
           label="Femenino"
         />
-        
+
         <SelectableCard
           selected={data.gender === "other"}
           onSelect={() => handleSelect("other")}
-          icon={<Heart size={32} />}
+          icon={<img src="/venus-marte.svg" alt="Otro" className="w-7 h-7 brightness-0 invert" />}
           label="Otro/Prefiero no decirlo"
         />
       </div>
 
-      <OnboardingNavigation 
+      <OnboardingNavigation
         onNext={handleNext}
         nextDisabled={!data.gender}
       />

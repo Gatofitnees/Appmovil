@@ -32,25 +32,25 @@ export const useHomePageData = () => {
   const [loading, setLoading] = useState(true);
   const [datesWithWorkouts, setDatesWithWorkouts] = useState<Date[]>([]);
   const { getLocalDateString, getLocalDayRange } = useLocalTimezone();
-  
+
   // Stable initial macros to prevent re-renders
   const initialMacros = useMemo(() => ({
-    calories: { 
-      current: 0, 
-      target: profile?.initial_recommended_calories || 2000, 
+    calories: {
+      current: 0,
+      target: profile?.initial_recommended_calories || 2000,
       unit: "kcal" as const
     },
-    protein: { 
-      current: 0, 
-      target: profile?.initial_recommended_protein_g || 120 
+    protein: {
+      current: 0,
+      target: profile?.initial_recommended_protein_g || 120
     },
-    carbs: { 
-      current: 0, 
-      target: profile?.initial_recommended_carbs_g || 200 
+    carbs: {
+      current: 0,
+      target: profile?.initial_recommended_carbs_g || 200
     },
-    fats: { 
-      current: 0, 
-      target: profile?.initial_recommended_fats_g || 65 
+    fats: {
+      current: 0,
+      target: profile?.initial_recommended_fats_g || 65
     }
   }), [
     profile?.initial_recommended_calories,
@@ -61,217 +61,153 @@ export const useHomePageData = () => {
 
   const [macros, setMacros] = useState<MacroData>(initialMacros);
 
-  // Update macro targets when profile changes - but only once
+  // Update macro targets when profile changes
   useEffect(() => {
     if (profile) {
       setMacros(prev => ({
-        calories: { 
-          current: prev.calories.current, 
-          target: profile.initial_recommended_calories || 2000, 
-          unit: "kcal" 
+        calories: {
+          current: prev.calories.current,
+          target: profile.initial_recommended_calories || 2000,
+          unit: "kcal"
         },
-        protein: { 
-          current: prev.protein.current, 
-          target: profile.initial_recommended_protein_g || 120 
+        protein: {
+          current: prev.protein.current,
+          target: profile.initial_recommended_protein_g || 120
         },
-        carbs: { 
-          current: prev.carbs.current, 
-          target: profile.initial_recommended_carbs_g || 200 
+        carbs: {
+          current: prev.carbs.current,
+          target: profile.initial_recommended_carbs_g || 200
         },
-        fats: { 
-          current: prev.fats.current, 
-          target: profile.initial_recommended_fats_g || 65 
+        fats: {
+          current: prev.fats.current,
+          target: profile.initial_recommended_fats_g || 65
         }
       }));
     }
-  }, [
-    profile?.initial_recommended_calories, 
-    profile?.initial_recommended_protein_g, 
-    profile?.initial_recommended_carbs_g, 
-    profile?.initial_recommended_fats_g
-  ]);
+  }, [profile]);
 
-  // Memoize the selected date string to prevent unnecessary re-calculations
-  const selectedDateString = useMemo(() => 
+  // Memoize the selected date string
+  const selectedDateString = useMemo(() =>
     getLocalDateString(selectedDate), [selectedDate, getLocalDateString]
   );
 
-  // Load daily food consumption - stable with proper dependencies
-  const fetchDailyFoodConsumption = useCallback(async () => {
-    if (!user?.id) return;
-    
-    try {
-      const { data: foodEntries, error } = await supabase
-        .from('daily_food_log_entries')
-        .select('calories_consumed, protein_g_consumed, carbs_g_consumed, fat_g_consumed')
-        .eq('user_id', user.id)
-        .eq('log_date', selectedDateString);
-        
-      if (error) throw error;
-      
-      // Calculate totals from food entries
-      const totals = (foodEntries || []).reduce(
-        (sum, entry) => ({
-          calories: sum.calories + (entry.calories_consumed || 0),
-          protein: sum.protein + (entry.protein_g_consumed || 0),
-          carbs: sum.carbs + (entry.carbs_g_consumed || 0),
-          fats: sum.fats + (entry.fat_g_consumed || 0)
-        }),
-        { calories: 0, protein: 0, carbs: 0, fats: 0 }
-      );
-      
-      // Update macros with real consumption data
-      setMacros(prev => ({
-        calories: { 
-          current: Math.round(totals.calories), 
-          target: prev.calories.target, 
-          unit: "kcal" 
-        },
-        protein: { 
-          current: Math.round(totals.protein), 
-          target: prev.protein.target 
-        },
-        carbs: { 
-          current: Math.round(totals.carbs), 
-          target: prev.carbs.target 
-        },
-        fats: { 
-          current: Math.round(totals.fats), 
-          target: prev.fats.target 
-        }
-      }));
-      
-    } catch (error) {
-      console.error("Error loading daily food consumption:", error);
-    }
-  }, [user?.id, selectedDateString]);
-
-  // Load workout dates - stable and only runs once
-  const fetchWorkoutDates = useCallback(async () => {
-    if (!user?.id) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('workout_logs')
-        .select('workout_date')
-        .eq('user_id', user.id)
-        .order('workout_date', { ascending: false })
-        .limit(50);
-        
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        // Convert server dates to user's local dates
-        const dates = data.map(item => {
-          const serverDate = new Date(item.workout_date);
-          // Create a new date that represents the local date without timezone conversion
-          return new Date(serverDate.getTime() + (serverDate.getTimezoneOffset() * 60000));
-        });
-        setDatesWithWorkouts(dates);
-      }
-    } catch (error) {
-      console.error("Error loading workout dates:", error);
-    }
-  }, [user?.id]);
-
-  // Load daily workouts - stable with memoized day range
-  const dayRange = useMemo(() => 
+  // Memoize day range
+  const dayRange = useMemo(() =>
     getLocalDayRange(selectedDate), [selectedDate, getLocalDayRange]
   );
 
-  const fetchDailyWorkouts = useCallback(async () => {
+  // Consolidated fetch function
+  const fetchAllHomeData = useCallback(async (isInitialLoad = false) => {
     if (!user?.id) return;
-    
-    setLoading(true);
+
+    if (isInitialLoad) setLoading(true);
+
     try {
-      console.log(`Fetching workouts for local date range: ${dayRange.startOfDay} to ${dayRange.endOfDay}`);
-      
-      const { data: workoutLogs, error } = await supabase
-        .from('workout_logs')
-        .select(`
-          id,
-          routine_name_snapshot,
-          duration_completed_minutes,
-          calories_burned_estimated,
-          workout_date,
-          workout_log_exercise_details(exercise_name_snapshot)
-        `)
-        .eq('user_id', user.id)
-        .gte('workout_date', dayRange.startOfDay)
-        .lte('workout_date', dayRange.endOfDay)
-        .order('workout_date', { ascending: false });
-        
-      if (error) throw error;
-      
-      console.log(`Found ${workoutLogs?.length || 0} workouts for the selected date`);
-      
-      if (workoutLogs && workoutLogs.length > 0) {
-        const workouts = workoutLogs.map(workout => {
+      // Execute all major queries in parallel
+      const [foodRes, workoutRes, datesRes] = await Promise.all([
+        supabase
+          .from('daily_food_log_entries')
+          .select('calories_consumed, protein_g_consumed, carbs_g_consumed, fat_g_consumed')
+          .eq('user_id', user.id)
+          .eq('log_date', selectedDateString),
+
+        supabase
+          .from('workout_logs')
+          .select(`
+            id,
+            routine_name_snapshot,
+            duration_completed_minutes,
+            calories_burned_estimated,
+            workout_date,
+            workout_log_exercise_details(exercise_name_snapshot)
+          `)
+          .eq('user_id', user.id)
+          .gte('workout_date', dayRange.startOfDay)
+          .lte('workout_date', dayRange.endOfDay)
+          .order('workout_date', { ascending: false }),
+
+        isInitialLoad || datesWithWorkouts.length === 0 ?
+          supabase
+            .from('workout_logs')
+            .select('workout_date')
+            .eq('user_id', user.id)
+            .order('workout_date', { ascending: false })
+            .limit(50)
+          : Promise.resolve({ data: null, error: null })
+      ]);
+
+      // 1. Process Food / Macros
+      if (foodRes.data) {
+        const totals = foodRes.data.reduce(
+          (sum, entry) => ({
+            calories: sum.calories + (entry.calories_consumed || 0),
+            protein: sum.protein + (entry.protein_g_consumed || 0),
+            carbs: sum.carbs + (entry.carbs_g_consumed || 0),
+            fats: sum.fats + (entry.fat_g_consumed || 0)
+          }),
+          { calories: 0, protein: 0, carbs: 0, fats: 0 }
+        );
+
+        setMacros(prev => ({
+          ...prev,
+          calories: { ...prev.calories, current: Math.round(totals.calories) },
+          protein: { ...prev.protein, current: Math.round(totals.protein) },
+          carbs: { ...prev.carbs, current: Math.round(totals.carbs) },
+          fats: { ...prev.fats, current: Math.round(totals.fats) }
+        }));
+      }
+
+      // 2. Process Workouts
+      if (workoutRes.data && workoutRes.data.length > 0) {
+        const workouts = workoutRes.data.map(workout => {
           const exerciseNames = Array.from(
             new Set(
-              workout.workout_log_exercise_details
-                .map((detail: any) => detail.exercise_name_snapshot)
+              workout.workout_log_exercise_details.map((detail: any) => detail.exercise_name_snapshot)
             )
           );
-          
-          // Use actual workout duration, only estimate if null or 0
-          let duration = workout.duration_completed_minutes;
-          if (!duration || duration === 0) {
-            duration = Math.max(15, exerciseNames.length * 3);
-          }
-          
-          let calories = workout.calories_burned_estimated;
-          if (!calories || calories === 0) {
-            calories = Math.round(duration * 6);
-          }
-          
+
+          let duration = workout.duration_completed_minutes || Math.max(15, exerciseNames.length * 3);
+          let calories = workout.calories_burned_estimated || Math.round(duration * 6);
+
           return {
             id: workout.id,
             name: workout.routine_name_snapshot || "Entrenamiento",
             duration: `${duration} min`,
             calories: calories,
             date: workout.workout_date,
-            exercises: exerciseNames.slice(0, 3), // Show only first 3
+            exercises: exerciseNames.slice(0, 3),
             exerciseCount: exerciseNames.length,
             totalSets: workout.workout_log_exercise_details.length
           };
         });
-        
+
         setWorkoutSummaries(workouts);
         setHasCompletedWorkout(true);
       } else {
         setWorkoutSummaries([]);
         setHasCompletedWorkout(false);
       }
+
+      // 3. Process Workout Dates (only if fetched)
+      if (datesRes.data && datesRes.data.length > 0) {
+        const dates = datesRes.data.map(item => {
+          const serverDate = new Date(item.workout_date);
+          return new Date(serverDate.getTime() + (serverDate.getTimezoneOffset() * 60000));
+        });
+        setDatesWithWorkouts(dates);
+      }
+
     } catch (error) {
-      console.error("Error loading workouts:", error);
-      setHasCompletedWorkout(false);
-      setWorkoutSummaries([]);
+      console.error("Error loading home page data:", error);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, dayRange.startOfDay, dayRange.endOfDay]);
+  }, [user?.id, selectedDateString, dayRange.startOfDay, dayRange.endOfDay, datesWithWorkouts.length]);
 
-  // Effect for loading food consumption - only when dependencies change
+  // Initial load and whenever critical params change
   useEffect(() => {
-    if (user?.id && selectedDateString) {
-      fetchDailyFoodConsumption();
-    }
-  }, [user?.id, selectedDateString]);
-
-  // Effect for loading workout dates - only once when user changes
-  useEffect(() => {
-    if (user?.id) {
-      fetchWorkoutDates();
-    }
-  }, [user?.id]);
-
-  // Effect for loading daily workouts - only when date or user changes
-  useEffect(() => {
-    if (user?.id && dayRange.startOfDay && dayRange.endOfDay) {
-      fetchDailyWorkouts();
-    }
-  }, [user?.id, dayRange.startOfDay, dayRange.endOfDay]);
+    fetchAllHomeData(true);
+  }, [user?.id, selectedDateString]); // Consolidated effect
 
   const handleDateSelect = useCallback((date: Date) => {
     setSelectedDate(date);
@@ -284,6 +220,7 @@ export const useHomePageData = () => {
     loading,
     datesWithWorkouts,
     macros,
-    handleDateSelect
+    handleDateSelect,
+    refetch: fetchAllHomeData
   };
 };

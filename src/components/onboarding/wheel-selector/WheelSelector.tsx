@@ -41,7 +41,7 @@ const WheelSelector: React.FC<WheelSelectorProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(getInitialIndex);
   const [offset, setOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  
+
   const startYRef = useRef(0);
   const lastYRef = useRef(0);
   const animationRef = useRef<number | null>(null);
@@ -60,7 +60,7 @@ const WheelSelector: React.FC<WheelSelectorProps> = ({
   // Handle item click
   const handleItemClick = useCallback((index: number) => {
     if (index === selectedIndex) return;
-    
+
     setSelectedIndex(index);
     setOffset(0);
     onChange(values[index].value);
@@ -71,12 +71,12 @@ const WheelSelector: React.FC<WheelSelectorProps> = ({
     if (Math.abs(offset) >= itemHeight / 2) {
       const indexChange = Math.sign(offset) * -1; // Reverse direction for natural feel
       const newIndex = Math.max(0, Math.min(values.length - 1, selectedIndex + indexChange));
-      
+
       if (newIndex !== selectedIndex) {
         setSelectedIndex(newIndex);
         onChange(values[newIndex].value);
       }
-      
+
       setOffset(0);
     }
   }, [offset, itemHeight, selectedIndex, values, onChange]);
@@ -87,7 +87,7 @@ const WheelSelector: React.FC<WheelSelectorProps> = ({
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
-    
+
     setIsDragging(true);
     startYRef.current = clientY;
     lastYRef.current = clientY;
@@ -96,48 +96,71 @@ const WheelSelector: React.FC<WheelSelectorProps> = ({
   // Handle touch/mouse move
   const handleMove = useCallback((clientY: number) => {
     if (!isDragging) return;
-    
+
     const delta = clientY - lastYRef.current;
     lastYRef.current = clientY;
-    
-    // Update offset with some resistance for better feel
-    setOffset(prevOffset => {
-      const newOffset = prevOffset + delta * 0.8;
-      
-      // Add resistance at ends
-      if ((selectedIndex === 0 && newOffset > 0) || 
-          (selectedIndex === values.length - 1 && newOffset < 0)) {
-        return prevOffset + delta * 0.3;
-      }
-      
-      return newOffset;
-    });
-  }, [isDragging, selectedIndex, values.length]);
+
+    // Smooth scrolling with 1:1 movement
+    setOffset(prevOffset => prevOffset + delta);
+  }, [isDragging]);
 
   // Handle touch/mouse end
   const handleEnd = useCallback(() => {
     if (!isDragging) return;
-    
     setIsDragging(false);
-    
-    // Snap back to center with animation
+
+    // Calculate final velocity (simplified)
+    const velocity = lastYRef.current - startYRef.current;
+
+    // Animate snap to nearest item with inertia
+    const animateSnap = () => {
+      setOffset(prev => {
+        // Friction to slow down
+        const friction = 0.95;
+        let nextOffset = prev * friction;
+
+        // Snap when slow enough
+        if (Math.abs(nextOffset) < 0.5) {
+          if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
+          }
+          return 0; // Final snap center
+        }
+
+        // If we crossed a threshold during inertia, the useEffect loop handles index update
+        // We just keep decaying the offset here
+
+        animationRef.current = requestAnimationFrame(animateSnap);
+        return nextOffset;
+      });
+    };
+
+    // Use a slightly different approach: just let the existing useEffect logic 
+    // handle the item switching, but we decay the offset smoothly.
+    // Actually, simple spring snap is often better for "pickers".
+
+    // Revert to simple spring snap for now as "inertia" on a picker often feels loose
+    // A tight spring snap feels more "premium" for date/number pickers.
     const snapBack = () => {
       setOffset(prevOffset => {
-        if (Math.abs(prevOffset) < 1) {
+        if (Math.abs(prevOffset) < 0.5) {
           if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
             animationRef.current = null;
           }
           return 0;
         }
-        
-        const newOffset = prevOffset * 0.8;
+
+        // Smooth snap physics (spring-like)
+        const newOffset = prevOffset * 0.85;
         animationRef.current = requestAnimationFrame(snapBack);
         return newOffset;
       });
     };
-    
+
     animationRef.current = requestAnimationFrame(snapBack);
+
   }, [isDragging]);
 
   // Cleanup animation frame on unmount
@@ -152,7 +175,7 @@ const WheelSelector: React.FC<WheelSelectorProps> = ({
   // Calculate wheel dimensions
   const wheelHeight = itemHeight * visibleItems;
   const halfVisibleItems = Math.floor(visibleItems / 2);
-  
+
   // Get container styles
   const containerStyles = getWheelContainerStyles(className);
 
@@ -163,7 +186,7 @@ const WheelSelector: React.FC<WheelSelectorProps> = ({
   }, []);
 
   return (
-    <div 
+    <div
       className={containerStyles}
       style={{ height: `${wheelHeight}px`, width: "100%" }}
       onTouchStart={(e) => {
@@ -186,16 +209,16 @@ const WheelSelector: React.FC<WheelSelectorProps> = ({
     >
       {/* Center highlight */}
       <WheelHighlight itemHeight={itemHeight} />
-      
+
       {/* Items */}
       <div className="relative h-full w-full">
         {values.map((item, index) => {
           // Calculate distance from selected item
           const distance = index - selectedIndex;
-          
+
           // Only render items that are visible or about to become visible
           if (Math.abs(distance) > halfVisibleItems + 1) return null;
-          
+
           return (
             <WheelItem
               key={`${index}-${item.value}`}

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WeeklyProgram } from "./useWeeklyPrograms";
@@ -23,6 +24,11 @@ export interface UnifiedProgramData {
   program: WeeklyProgram | GatofitProgram | AdminProgram;
   routines: any[];
   userProgress?: UserGatofitProgress;
+  nutritionPlans?: any[];
+  videos?: any[];
+  documents?: any[];
+  surveys?: any[];
+  hasEvolution?: boolean;
 }
 
 export const useActiveProgramUnified = (selectedDate: Date) => {
@@ -39,10 +45,10 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
   ) => {
     const start = new Date(startDate);
     const selected = new Date(selectedDate);
-    
+
     // Calcular días transcurridos desde el inicio
     const daysDiff = Math.floor((selected.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     console.log('🔢 Day calculation:', {
       startDate,
       selectedDate: selectedDate.toDateString(),
@@ -50,47 +56,47 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
       currentWeek,
       currentDay
     });
-    
+
     if (daysDiff < 0) {
       console.log('❌ Selected date is before program start');
       return null; // Fecha anterior al inicio
     }
-    
+
     // Para la fecha actual, usar el progreso guardado
     const today = new Date();
     const isToday = selected.toDateString() === today.toDateString();
-    
+
     if (isToday) {
       // Usar el progreso actual para el día de hoy
       // Convertir JS day (0=domingo) a Monday-first (0=lunes)
       const jsDay = selectedDate.getDay(); // 0=domingo, 1=lunes, etc.
       const mondayFirstDay = jsDay === 0 ? 6 : jsDay - 1; // 0=lunes, 1=martes, ..., 6=domingo
-      
+
       console.log('📅 Today calculation:', {
         jsDay,
         mondayFirstDay,
         currentWeek,
         currentDay
       });
-      
-      return { 
-        weekNumber: currentWeek, 
+
+      return {
+        weekNumber: currentWeek,
         dayOfWeek: mondayFirstDay
       };
     }
-    
+
     // Para otras fechas, calcular basándose en la fecha de inicio
     const weekNumber = Math.floor(daysDiff / 7) + 1;
     const jsDay = selectedDate.getDay(); // 0=domingo, 1=lunes, etc.
     const mondayFirstDay = jsDay === 0 ? 6 : jsDay - 1; // 0=lunes, 1=martes, ..., 6=domingo
-    
+
     console.log('📅 Other date calculation:', {
       weekNumber,
       jsDay,
       mondayFirstDay,
       daysDiff
     });
-    
+
     return { weekNumber, dayOfWeek: mondayFirstDay };
   };
 
@@ -99,12 +105,64 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
       setLoading(true);
       console.log('Fetching active program for date:', selectedDate.toDateString());
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         setActiveProgram(null);
         setIsCompletedForSelectedDate(false);
         return;
       }
+
+      // 0. Fetch all scheduled tasks for completion check
+      // Use format to get local date string (YYYY-MM-DD) instead of UTC to avoid timezone shift
+      const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
+      const { data: scheduledTasks } = await supabase
+        .from('user_scheduled_tasks' as any)
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('scheduled_date', selectedDateString);
+
+      // --- FETCH STANDALONE ROUTINES ---
+      let standaloneRoutines: any[] = [];
+      const routineTasks = (scheduledTasks || []).filter((t: any) =>
+        (t.task_type === 'routine' || t.task_type === 'workout') &&
+        (t.reference_id || t.routine_id)
+      );
+
+      if (routineTasks.length > 0) {
+        const routineIds = routineTasks.map((t: any) => t.reference_id || t.routine_id);
+        // Fetch details for these routines
+        const { data: stRoutineDetails } = await supabase
+          .from('routines')
+          .select('id, name, type, estimated_duration_minutes, description, routine_exercises(count)')
+          .in('id', routineIds);
+
+        const stRoutineMap = new Map(stRoutineDetails?.map((r: any) => [r.id, r]) || []);
+
+        standaloneRoutines = routineTasks.map((task: any) => {
+          const rId = task.reference_id || task.routine_id;
+          const routineDetail = stRoutineMap.get(rId);
+          return {
+            id: task.id,
+            routine_id: rId,
+            is_standalone: true,
+            routine: routineDetail ? {
+              ...routineDetail,
+              exercise_count: routineDetail.routine_exercises?.[0]?.count || 0
+            } : null,
+            is_completed: task.is_completed // simplified completion check
+          };
+        }).filter((r: any) => r.routine);
+      }
+
+      const mergeWithStandalone = (programRoutines: any[]) => {
+        if (!standaloneRoutines.length) return programRoutines;
+        const existingIds = new Set(programRoutines.map((r: any) => r.routine_id));
+        const uniqueStandalone = standaloneRoutines.filter(r => !existingIds.has(r.routine_id));
+        return [...programRoutines, ...uniqueStandalone];
+      };
+
+      const nonNutritionTasks = (scheduledTasks || []).filter((t: any) => t.task_type !== 'nutrition');
+      const allTasksCompleted = nonNutritionTasks.length > 0 ? nonNutritionTasks.every((t: any) => t.is_completed) : true;
 
       // 1. Verificar programa Admin activo (prioridad más alta)
       const { data: adminPrograms, error: adminError } = await supabase
@@ -122,37 +180,37 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
       if (adminPrograms && adminPrograms.length > 0) {
         const adminAssignment = adminPrograms[0];
         console.log('🏃‍♂️ Active Admin program found:', adminAssignment);
-        
+
         // Helper function to normalize dates for calculation
         const normalizeDateForCalculation = (date: Date | string) => {
           const d = new Date(date);
           // Create a new date using only year, month, day to avoid timezone issues
           return new Date(d.getFullYear(), d.getMonth(), d.getDate());
         };
-        
+
         // For admin programs - calculate which routines to show
         const dayOfWeek = selectedDate.getDay();
         const dayOfWeekAdjusted = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert JS day (0=Sunday) to our format (0=Monday)
-        
+
         // Normalize both dates to avoid timezone issues
         const normalizedStartDate = normalizeDateForCalculation(adminAssignment.started_at);
         const normalizedSelectedDate = normalizeDateForCalculation(selectedDate);
-        
+
         console.log('📅 Date normalization:', {
           originalStartDate: adminAssignment.started_at,
           normalizedStartDate: normalizedStartDate.toDateString(),
           originalSelectedDate: selectedDate.toDateString(),
           normalizedSelectedDate: normalizedSelectedDate.toDateString()
         });
-        
+
         const daysDiff = Math.floor((normalizedSelectedDate.getTime() - normalizedStartDate.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (daysDiff >= 0) {
           const weekNumber = Math.floor(daysDiff / 7) + 1;
-          
-          console.log('🧮 Admin program day calculation (FIXED):', { 
-            weekNumber, 
-            dayOfWeek: dayOfWeekAdjusted, 
+
+          console.log('🧮 Admin program day calculation (FIXED):', {
+            weekNumber,
+            dayOfWeek: dayOfWeekAdjusted,
             daysDiff,
             selectedDate: selectedDate.toDateString(),
             startDate: adminAssignment.started_at,
@@ -175,81 +233,83 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
 
           console.log('🔍 Admin routines found:', adminRoutines);
 
-            // Separate fetch for routine details to handle missing routines
-            if (adminRoutines && adminRoutines.length > 0) {
-              const routineIds = adminRoutines.map((r: any) => r.routine_id);
-              
-              console.log('🔍 Fetching routine details for IDs:', routineIds);
-              
-              const { data: routineDetails, error: routineDetailsError } = await supabase
-                .from('routines')
-                .select('id, name, type, estimated_duration_minutes, description')
-                .in('id', routineIds);
+          // Separate fetch for routine details to handle missing routines
+          if (adminRoutines && adminRoutines.length > 0) {
+            const routineIds = adminRoutines.map((r: any) => r.routine_id);
 
-              console.log('📋 Routine details response:', { routineDetails, error: routineDetailsError });
+            console.log('🔍 Fetching routine details for IDs:', routineIds);
 
-              if (routineDetailsError) {
-                console.error('Error fetching routine details:', routineDetailsError);
-              }
+            const { data: routineDetails, error: routineDetailsError } = await supabase
+              .from('routines')
+              .select('id, name, type, estimated_duration_minutes, description, routine_exercises(count)')
+              .in('id', routineIds);
 
-              // Create map for easy lookup
-              const routineMap = new Map(routineDetails?.map((r: any) => [r.id, r]) || []);
-              
-              console.log('🗺️ Routine map created:', routineMap);
-              
-              // Log missing routines for debugging
-              const missingRoutines = routineIds.filter(id => !routineMap.has(id));
-              if (missingRoutines.length > 0) {
-                console.warn('⚠️ Missing routine details for admin program IDs:', missingRoutines);
-              }
+            console.log('📋 Routine details response:', { routineDetails, error: routineDetailsError });
+
+            if (routineDetailsError) {
+              console.error('Error fetching routine details:', routineDetailsError);
+            }
+
+            // Create map for easy lookup
+            const routineMap = new Map(routineDetails?.map((r: any) => [r.id, r]) || []);
+
+            console.log('🗺️ Routine map created:', routineMap);
+
+            // Log missing routines for debugging
+            const missingRoutines = routineIds.filter(id => !routineMap.has(id));
+            if (missingRoutines.length > 0) {
+              console.warn('⚠️ Missing routine details for admin program IDs:', missingRoutines);
+            }
 
             // Combine data with fallback for missing routines
             const routines = adminRoutines.map((item: any) => {
               const routineDetail = routineMap.get(item.routine_id);
               return {
                 ...item,
-                routine: routineDetail || {
+                routine: routineDetail ? {
+                  ...routineDetail,
+                  exercise_count: routineDetail.routine_exercises?.[0]?.count || 0
+                } : {
                   id: item.routine_id,
                   name: `Rutina no encontrada (ID: ${item.routine_id})`,
                   type: 'strength',
                   estimated_duration_minutes: 60,
                   description: 'Esta rutina no está disponible en el sistema',
-                  is_missing: true
+                  is_missing: true,
+                  exercise_count: 0
                 }
               };
             });
 
             console.log('Admin routines for day:', routines);
-            
-            // Only check completion for existing routines
-            const existingRoutines = routines.filter(r => !r.routine?.is_missing);
-            if (existingRoutines.length > 0) {
-              const selectedDateString = selectedDate.toISOString().split('T')[0];
-              const { data: workoutLogs, error: workoutError } = await supabase
-                .from('workout_logs')
-                .select('routine_id')
-                .eq('user_id', user.id)
-                .gte('workout_date', `${selectedDateString}T00:00:00.000Z`)
-                .lte('workout_date', `${selectedDateString}T23:59:59.999Z`);
 
-              if (workoutError) throw workoutError;
+            // Check routine completion
+            const combinedRoutines = mergeWithStandalone(routines);
 
-              const completedRoutineIds = new Set(workoutLogs?.map(log => log.routine_id) || []);
-              const programmedRoutineIds = existingRoutines.map((r: any) => r.routine_id);
-              const hasCompletedProgrammedRoutine = programmedRoutineIds.some(id => completedRoutineIds.has(id));
+            // Check routine completion (on combined set)
+            const { data: workoutLogs } = await supabase
+              .from('workout_logs')
+              .select('routine_id')
+              .eq('user_id', user.id)
+              .gte('workout_date', `${selectedDateString}T00:00:00.000Z`)
+              .lte('workout_date', `${selectedDateString}T23:59:59.999Z`);
 
-              setIsCompletedForSelectedDate(hasCompletedProgrammedRoutine);
-            } else {
-              setIsCompletedForSelectedDate(false);
-            }
+            const completedRoutineIds = new Set(workoutLogs?.map(log => log.routine_id) || []);
+            const existingRoutines = combinedRoutines.filter((r: any) => !r.routine?.is_missing);
+            const allRoutinesCompleted = existingRoutines.length > 0
+              ? existingRoutines.every((r: any) => completedRoutineIds.has(r.routine_id))
+              : true;
+
+            setIsCompletedForSelectedDate(allRoutinesCompleted && allTasksCompleted);
 
             setActiveProgram({
               type: 'admin',
               program: adminAssignment.program,
-              routines: routines || []
+              routines: combinedRoutines || []
             });
             return;
           } else {
+            setIsCompletedForSelectedDate(allTasksCompleted);
             // Aunque no haya rutinas para este día, mostrar el programa activo
             // para que el usuario pueda navegar y ver otros días
             setActiveProgram({
@@ -278,7 +338,7 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
       if (gatofitProgress && gatofitProgress.length > 0) {
         const progress = gatofitProgress[0];
         console.log('Active Gatofit program found:', progress);
-        
+
         const programDay = calculateGatofitProgramDay(
           progress.started_at,
           selectedDate,
@@ -291,12 +351,12 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
         if (programDay) {
           // Obtener rutinas del programa Gatofit para este día
           try {
-            console.log('Fetching routines for:', { 
-              programId: progress.program_id, 
-              week: programDay.weekNumber, 
-              day: programDay.dayOfWeek 
+            console.log('Fetching routines for:', {
+              programId: progress.program_id,
+              week: programDay.weekNumber,
+              day: programDay.dayOfWeek
             });
-            
+
             // 1) Obtener las rutinas base del programa para ese día
             const { data: programRoutines, error: gatofitRoutinesError } = await supabase
               .from('gatofit_program_routines')
@@ -318,7 +378,7 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
 
               const { data: routineDetails, error: routinesDetailsError } = await supabase
                 .from('routines')
-                .select('id, name, type, estimated_duration_minutes, description')
+                .select('id, name, type, estimated_duration_minutes, description, routine_exercises(count)')
                 .in('id', routineIds);
 
               console.log('Routine details fetched:', routineDetails);
@@ -331,13 +391,21 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
                 (routineDetails || []).map((rd: any) => [rd.id, rd])
               );
 
-              const combinedRoutines = programRoutines.map((r: any) => ({
-                ...r,
-                routine: routineMap.get(r.routine_id) || null,
-              }));
+              const combinedRoutines = programRoutines.map((r: any) => {
+                const routineDetail = routineMap.get(r.routine_id);
+                return {
+                  ...r,
+                  routine: routineDetail ? {
+                    ...routineDetail,
+                    exercise_count: routineDetail.routine_exercises?.[0]?.count || 0
+                  } : null,
+                };
+              });
+
+              // Merge Standalone
+              const finalRoutines = mergeWithStandalone(combinedRoutines);
 
               // Verificar si las rutinas ya están completadas
-              const selectedDateString = selectedDate.toISOString().split('T')[0];
               const { data: workoutLogs, error: workoutError } = await supabase
                 .from('workout_logs')
                 .select('routine_id')
@@ -348,25 +416,24 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
               if (workoutError) throw workoutError;
 
               const completedRoutineIds = new Set(workoutLogs?.map(log => log.routine_id) || []);
-              const programmedRoutineIds = combinedRoutines.map((r: any) => r.routine_id);
-              const hasCompletedProgrammedRoutine = programmedRoutineIds.some(id => completedRoutineIds.has(id));
+              const allRoutinesCompleted = finalRoutines.every((r: any) => completedRoutineIds.has(r.routine_id));
 
-              console.log('Setting active Gatofit program with routines (enriched):', combinedRoutines);
+              console.log('Setting active Gatofit program with routines (enriched):', finalRoutines);
 
               setActiveProgram({
                 type: 'gatofit',
                 program: progress.program,
-                routines: combinedRoutines,
+                routines: finalRoutines,
                 userProgress: progress
               });
-              setIsCompletedForSelectedDate(hasCompletedProgrammedRoutine);
+              setIsCompletedForSelectedDate(allRoutinesCompleted && allTasksCompleted);
               return;
             }
           } catch (routinesError) {
             console.error('Error fetching Gatofit routines:', routinesError);
           }
         }
-        
+
         // Si no hay rutinas para el día seleccionado, aún mostrar el programa
         console.log('No routines found for selected day, but program is active');
         setActiveProgram({
@@ -375,7 +442,7 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
           routines: [],
           userProgress: progress
         });
-        setIsCompletedForSelectedDate(false);
+        setIsCompletedForSelectedDate(allTasksCompleted);
         return;
       }
 
@@ -390,6 +457,15 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
       if (weeklyProgramError) throw weeklyProgramError;
 
       if (!weeklyPrograms || weeklyPrograms.length === 0) {
+        if (standaloneRoutines.length > 0) {
+          setActiveProgram({
+            type: 'weekly',
+            program: { name: 'Rutinas Asignadas', id: 'standalone' } as any,
+            routines: standaloneRoutines
+          });
+          setIsCompletedForSelectedDate(allTasksCompleted);
+          return;
+        }
         setActiveProgram(null);
         setIsCompletedForSelectedDate(false);
         return;
@@ -403,7 +479,7 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
       // Obtener día de la semana para fecha seleccionada (convertir a Monday-first: 0 = lunes)
       const jsDay = selectedDate.getDay(); // 0=domingo, 1=lunes, etc.
       const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1; // 0=lunes, 1=martes, ..., 6=domingo
-      
+
       console.log('📅 Weekly program day calculation:', {
         selectedDate: selectedDate.toDateString(),
         jsDay,
@@ -419,7 +495,10 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
             id,
             name,
             type,
-            estimated_duration_minutes
+            name,
+            type,
+            estimated_duration_minutes,
+            routine_exercises(count)
           )
         `)
         .eq('program_id', program.id)
@@ -430,8 +509,15 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
 
       if (weeklyRoutines && weeklyRoutines.length > 0) {
         // Verificar completado
-        const selectedDateString = selectedDate.toISOString().split('T')[0];
-        
+
+        const combinedRoutines = mergeWithStandalone(weeklyRoutines ? weeklyRoutines.map((wr: any) => ({
+          ...wr,
+          routine: wr.routine ? {
+            ...wr.routine,
+            exercise_count: wr.routine.routine_exercises?.[0]?.count || 0
+          } : null
+        })) : []);
+
         const { data: workoutLogs, error: workoutError } = await supabase
           .from('workout_logs')
           .select('routine_id')
@@ -442,18 +528,14 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
         if (workoutError) throw workoutError;
 
         const completedRoutineIds = new Set(workoutLogs?.map(log => log.routine_id) || []);
-        const programmedRoutineIds = weeklyRoutines.map(r => r.routine_id);
-        
-        const hasCompletedProgrammedRoutine = programmedRoutineIds.some(id => 
-          completedRoutineIds.has(id)
-        );
+        const allRoutinesCompleted = combinedRoutines.every(r => completedRoutineIds.has(r.routine_id));
 
         setActiveProgram({
           type: 'weekly',
           program: program,
-          routines: weeklyRoutines || []
+          routines: combinedRoutines
         });
-        setIsCompletedForSelectedDate(hasCompletedProgrammedRoutine);
+        setIsCompletedForSelectedDate(allRoutinesCompleted && allTasksCompleted);
       } else {
         // Aunque no haya rutinas para este día, mostrar el programa activo
         // para que el usuario pueda navegar y ver otros días
@@ -462,7 +544,7 @@ export const useActiveProgramUnified = (selectedDate: Date) => {
           program: program,
           routines: []
         });
-        setIsCompletedForSelectedDate(false);
+        setIsCompletedForSelectedDate(allTasksCompleted);
       }
 
     } catch (error: any) {

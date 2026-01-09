@@ -16,14 +16,14 @@ const FeatureCard: React.FC<{
   icon: React.ReactNode;
 }> = ({ title, description, icon }) => {
   return (
-    <div 
-      className="flex flex-col items-center p-4 rounded-2xl bg-secondary/20 shadow-neu-card text-center h-full"
+    <div
+      className="flex flex-col items-center justify-center p-6 rounded-3xl bg-secondary/20 border border-white/5 text-center min-h-[320px] h-auto w-full max-w-sm mx-auto shadow-sm backdrop-blur-sm"
     >
-      <div className="bg-primary/10 p-3 rounded-xl mb-3">
-        {icon}
+      <div className="bg-primary/10 p-8 rounded-full mb-8">
+        {React.cloneElement(icon as React.ReactElement, { size: 64 })}
       </div>
-      <h3 className="font-semibold text-lg mb-2">{title}</h3>
-      <p className="text-muted-foreground text-sm">{description}</p>
+      <h3 className="font-bold text-3xl mb-4">{title}</h3>
+      <p className="text-muted-foreground text-xl leading-relaxed">{description}</p>
     </div>
   );
 };
@@ -32,7 +32,7 @@ const FeaturesPreview: React.FC = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("FeaturesPreview must be used within OnboardingContext");
   }
@@ -41,91 +41,81 @@ const FeaturesPreview: React.FC = () => {
     {
       title: "Planes de Entrenamiento Personalizados",
       description: "Rutinas adaptadas a tus objetivos, nivel de experiencia y preferencias.",
-      icon: <Calendar size={24} className="text-primary" />,
+      icon: <Calendar className="text-primary" />,
     },
     {
       title: "Seguimiento Nutricional Inteligente",
       description: "Controla macros y calorías con un sistema inteligente que aprende de tus hábitos.",
-      icon: <Calculator size={24} className="text-primary" />,
+      icon: <Calculator className="text-primary" />,
     },
     {
       title: "Análisis de Progreso",
       description: "Visualiza tu evolución con gráficos detallados y métricas personalizadas.",
-      icon: <BarChart3 size={24} className="text-primary" />,
+      icon: <BarChart3 className="text-primary" />,
     },
     {
       title: "Logros y Retos",
       description: "Mantén tu motivación con desafíos adaptados a tu nivel y celebra tus victorias.",
-      icon: <ArrowUpCircle size={24} className="text-primary" />,
+      icon: <ArrowUpCircle className="text-primary" />,
     },
     {
       title: "Biblioteca de Ejercicios",
       description: "Accede a cientos de ejercicios con guías detalladas y videos demostrativos.",
-      icon: <BookOpenCheck size={24} className="text-primary" />,
+      icon: <BookOpenCheck className="text-primary" />,
     },
     {
       title: "Planes de Comidas",
       description: "Descubre recetas saludables que se alinean con tus objetivos nutricionales.",
-      icon: <List size={24} className="text-primary" />,
+      icon: <List className="text-primary" />,
     },
   ];
 
-  // Auto-scroll carousel every 4 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % features.length);
-    }, 4000);
-    
-    return () => clearInterval(interval);
-  }, [features.length]);
+  // Auto-scroll logic removed from here as it's handled by SwipeableCarousel now
+  // We just sync state if needed, but SwipeableCarousel drives it.
+  // Actually, we need to pass autoScroll to SwipeableCarousel.
 
   const handleNext = () => {
     navigate("/onboarding/create-account");
   };
 
   return (
-    <OnboardingLayout currentStep={17} totalSteps={20}>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        className="flex flex-col h-full min-h-[calc(100vh-200px)]"
-      >
-        <h1 className="text-2xl font-bold mb-2">
+    <OnboardingLayout currentStep={17} totalSteps={20} className="h-full">
+      <div className="flex flex-col h-full">
+        <h1 className="text-2xl font-bold mb-2 text-center">
           Descubre cómo <GatofitAILogo size="lg" className="inline-block" /> te impulsará
         </h1>
-        
-        <p className="text-muted-foreground mb-6">
+
+        <p className="text-muted-foreground mb-4 text-center px-4">
           Estas son algunas de las características clave que te ayudarán a alcanzar tus objetivos
         </p>
 
-        <div className="w-full flex-1 flex flex-col justify-center">
-          <div className="flex-grow">
-            <SwipeableCarousel 
-              autoScroll 
+        <div className="w-full flex-1 flex flex-col justify-center overflow-hidden min-h-[400px]">
+          <div className="flex-grow h-full py-4">
+            <SwipeableCarousel
+              autoScroll
               autoScrollInterval={4000}
-              currentSlide={currentSlide} 
+              currentSlide={currentSlide}
               onSlideChange={setCurrentSlide}
               cardsPerView={1}
-              className="h-[calc(100%-30px)]"
+              className="h-full"
             >
               {features.map((feature, index) => (
-                <div key={index} className="px-1 py-1 h-full">
-                  <AspectRatio ratio={1/1} className="h-full max-w-[60vh] mx-auto">
+                <div key={index} className="px-2 py-1 h-full">
+                  <div className="h-full max-w-[85vw] mx-auto">
                     <FeatureCard
                       title={feature.title}
                       description={feature.description}
                       icon={feature.icon}
                     />
-                  </AspectRatio>
+                  </div>
                 </div>
               ))}
             </SwipeableCarousel>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      <OnboardingNavigation 
+      <OnboardingNavigation
         onNext={handleNext}
         nextLabel="Crear Cuenta"
       />

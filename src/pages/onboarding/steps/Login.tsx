@@ -14,12 +14,12 @@ import { usePlatform } from "@/hooks/usePlatform";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
   const context = useContext(OnboardingContext);
   const { saveOnboardingToProfile, checkIfUserHasCompleteProfile } = useOnboardingPersistence();
   const { isNative, isAndroid, isIOS } = usePlatform();
 
-  const { 
+  const {
     email, setEmail,
     password, setPassword,
     showPassword, setShowPassword,
@@ -27,6 +27,8 @@ const Login: React.FC = () => {
     googleLoading, setGoogleLoading,
     error, setError
   } = useAuthForm();
+
+  const [appleLoading, setAppleLoading] = React.useState(false);
 
   if (!context) {
     throw new Error("Login must be used within OnboardingContext");
@@ -43,7 +45,7 @@ const Login: React.FC = () => {
 
     try {
       const { error, data } = await signIn(email, password);
-      
+
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
           setError("Email o contraseña incorrectos");
@@ -55,9 +57,9 @@ const Login: React.FC = () => {
       } else {
         // Check if user already has complete profile data
         const hasCompleteProfile = await checkIfUserHasCompleteProfile();
-        
+
         console.log('User has complete profile:', hasCompleteProfile);
-        
+
         // Only save onboarding data if user has incomplete profile
         // Use preserveExisting=true to avoid overwriting existing data on direct login
         if (!hasCompleteProfile) {
@@ -66,7 +68,7 @@ const Login: React.FC = () => {
         } else {
           console.log('Profile already complete, skipping onboarding data save');
         }
-        
+
         toast.success({
           title: "¡Bienvenido de nuevo!",
           description: "Has iniciado sesión exitosamente"
@@ -83,18 +85,40 @@ const Login: React.FC = () => {
   const handleGoogleSignIn = async () => {
     setError(null);
     setGoogleLoading(true);
-    
+
     try {
       const { error } = await signInWithGoogle();
-      
+
       if (error) {
         setError("Error al iniciar sesión con Google: " + error.message);
         setGoogleLoading(false);
+      } else {
+        // Navigate to app-transition after successful auth
+        navigate("/onboarding/app-transition");
       }
-      // The redirect to Google's auth page will happen automatically
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesión con Google");
       setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setError(null);
+    setAppleLoading(true);
+
+    try {
+      const { error } = await signInWithApple();
+
+      if (error) {
+        setError("Error al iniciar sesión con Apple: " + error.message);
+        setAppleLoading(false);
+      } else {
+        // Navigate to app-transition after successful auth
+        navigate("/onboarding/app-transition");
+      }
+    } catch (err: any) {
+      setError(err.message || "Error al iniciar sesión con Apple");
+      setAppleLoading(false);
     }
   };
 
@@ -119,12 +143,12 @@ const Login: React.FC = () => {
       <h1 className="text-2xl font-bold mb-2">
         Inicia sesión en <GatofitAILogo size="lg" className="inline-block" />
       </h1>
-      
+
       <p className="text-muted-foreground mb-6">
         Continúa tu viaje fitness
       </p>
 
-      <LoginForm 
+      <LoginForm
         email={email}
         setEmail={setEmail}
         password={password}
@@ -136,7 +160,7 @@ const Login: React.FC = () => {
       />
 
       <div className="flex justify-end mt-2 mb-6">
-        <button 
+        <button
           onClick={handleForgotPassword}
           className="text-xs text-primary"
         >
@@ -144,7 +168,7 @@ const Login: React.FC = () => {
         </button>
       </div>
 
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="w-full max-w-md mx-auto space-y-4 pb-10">
         <button
           className="w-full py-6 h-auto flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-neu-button active:shadow-neu-button-active disabled:opacity-50 disabled:pointer-events-none transition-all"
           onClick={handleLogin}
@@ -154,7 +178,7 @@ const Login: React.FC = () => {
             <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
           ) : "Iniciar Sesión"}
         </button>
-        
+
         <div className="relative py-2">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-muted"></div>
@@ -164,7 +188,7 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        <button 
+        <button
           className="w-full py-6 h-auto flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 border border-muted rounded-xl transition-all"
           onClick={handleGoogleSignIn}
           disabled={googleLoading}
@@ -183,7 +207,27 @@ const Login: React.FC = () => {
             </>
           )}
         </button>
-        
+
+        {/* Solo mostrar botón de Apple en iOS, no en Android */}
+        {!isAndroid && (
+          <button
+            className="w-full py-6 h-auto flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 border border-muted rounded-xl transition-all"
+            onClick={handleAppleSignIn}
+            disabled={appleLoading}
+          >
+            {appleLoading ? (
+              <div className="animate-spin w-5 h-5 border-2 border-primary border-t-transparent rounded-full" />
+            ) : (
+              <>
+                <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.335 20.5c-1.92 0-2.845-1.294-5.335-1.294-2.49 0-3.415 1.294-5.335 1.294C2.465 20.5 0 15.616 0 11.5 0 7.41 2.925 5.5 5.835 5.5c2.09 0 3.415 1.294 4.165 1.294.75 0 2.09-1.544 4.415-1.294 1.005.083 3.835.417 5.085 3.127-4.665 2.494-3.915 8.956.5 10.123-.835 1.878-1.92 3.25-4.665 3.25zM15.835 0C13.745.25 11.24 1.794 11.49 4.706c2.34.167 4.915-1.794 5.085-4.706z" />
+                </svg>
+                <span>Continuar con Apple</span>
+              </>
+            )}
+          </button>
+        )}
+
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
             ¿No tienes cuenta? <button onClick={handleCreateAccount} className="text-primary">Crear cuenta</button>

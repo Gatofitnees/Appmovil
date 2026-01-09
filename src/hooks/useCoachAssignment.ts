@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCoachAssignment = () => {
+  const { user } = useAuth();
   const [coachId, setCoachId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCoachAssignment = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           setCoachId(null);
           setLoading(false);
@@ -31,7 +32,7 @@ export const useCoachAssignment = () => {
     };
 
     fetchCoachAssignment();
-  }, []);
+  }, [user]);
 
   return { coachId, loading };
 };

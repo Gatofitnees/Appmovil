@@ -9,7 +9,7 @@ interface ProfileContextType {
   profile: UserProfile | null;
   loading: boolean;
   recalculatingMacros: boolean;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateProfile: (updates: Partial<UserProfile>, skipRecalculation?: boolean) => Promise<boolean>;
   refreshProfile: () => void;
 }
 
@@ -21,9 +21,9 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [recalculatingMacros, setRecalculatingMacros] = useState(false);
   const { toast } = useToast();
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const updateProfile = async (updates: Partial<UserProfile>, skipRecalculation: boolean = false) => {
     // Check if we need to recalculate macros
-    const shouldRecalculateMacros = [
+    const shouldRecalculateMacros = !skipRecalculation && [
       'current_weight_kg', 'height_cm', 'date_of_birth', 'gender',
       'main_goal', 'trainings_per_week', 'target_pace'
     ].some(field => field in updates);
@@ -38,26 +38,26 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     try {
       const success = await hookUpdateProfile(updates);
-      
+
       if (success && shouldRecalculateMacros) {
         // Wait a bit longer for the macro calculation to complete
         console.log('Waiting for macro recalculation to complete...');
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         // Refresh the profile multiple times to ensure we get the updated data
         console.log('Refreshing profile data...');
         await refetch();
-        
+
         // Wait a bit more and refresh again to ensure consistency
         await new Promise(resolve => setTimeout(resolve, 1000));
         await refetch();
-        
+
         toast({
           title: "¡Perfecto!",
           description: "Perfil y recomendaciones nutricionales actualizados correctamente"
         });
       }
-      
+
       return success;
     } finally {
       if (shouldRecalculateMacros) {

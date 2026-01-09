@@ -1,7 +1,8 @@
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import OnboardingNavigation from "@/components/onboarding/OnboardingNavigation";
 import { OnboardingContext } from "../OnboardingFlow";
@@ -9,189 +10,141 @@ import { OnboardingContext } from "../OnboardingFlow";
 const ProgressComparison: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  const [showAI, setShowAI] = useState(false);
-  const [traditionalProgress, setTraditionalProgress] = useState(0);
-  const [aiProgress, setAiProgress] = useState(0);
-  
+
   if (!context) {
     throw new Error("ProgressComparison must be used within OnboardingContext");
   }
-
-  // Traditional app data points (low progress)
-  const traditionalData = [0, 3, 5, 8, 10, 12];
-  
-  // AI app data points (high progress)
-  const aiData = [0, 25, 45, 70, 88, 100];
-
-  // Animate traditional line first
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setTraditionalProgress(100);
-      setTimeout(() => setShowAI(true), 800);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Animate AI line after traditional
-  useEffect(() => {
-    if (showAI) {
-      const timer = setTimeout(() => {
-        setAiProgress(100);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [showAI]);
 
   const handleNext = () => {
     navigate("/onboarding/physical-data");
   };
 
-  // Generate SVG path for line with better alignment
-  const createPath = (data: number[], progress: number) => {
-    const width = 300;
-    const height = 180;
-    const padding = 40;
-    
-    const chartWidth = width - (padding * 2);
-    const chartHeight = height - (padding * 2);
-    
-    const points = data.map((value, index) => {
-      const x = padding + (index / (data.length - 1)) * chartWidth;
-      const y = padding + chartHeight - (value / 100) * chartHeight;
-      return { x, y, value };
-    });
-    
-    // Calculate how much of the path to show based on progress
-    const visiblePointsCount = Math.floor((points.length - 1) * (progress / 100)) + 1;
-    const pathPoints = points.slice(0, visiblePointsCount);
-    
-    if (pathPoints.length < 2) return { path: "", points: [] };
-    
-    const pathString = `M ${pathPoints[0].x},${pathPoints[0].y} L ${pathPoints.slice(1).map(p => `${p.x},${p.y}`).join(" L ")}`;
-    
-    return { path: pathString, points: pathPoints };
-  };
+  // SVG Configuration
+  const width = 300;
+  const height = 180;
+  // Start point (Left, slightly up from center)
+  const startX = 20;
+  const startY = 60;
 
-  const traditionalPathData = createPath(traditionalData, traditionalProgress);
-  const aiPathData = createPath(aiData, aiProgress);
+  // Traditional Diet Path (The "Yoyo" effect)
+  // Starts at startY, dips down a bit (to 90), then shoots UP way high (to 20)
+  const traditionalPath = `M ${startX} ${startY} C 100 ${startY + 20}, 120 ${startY + 40}, 160 80 S 240 20, 280 20`;
+
+  // Gatofit AI Path (The "Sustainable" drop)
+  // Starts at startY, gradual curve down to bottom
+  const aiPath = `M ${startX} ${startY} C 100 ${startY}, 150 ${startY + 20}, 180 100 S 240 140, 280 150`;
 
   return (
-    <OnboardingLayout currentStep={5} totalSteps={20}>
-      <div className="flex-1 flex flex-col min-h-[calc(100vh-200px)]">
-        <h1 className="text-2xl font-bold mb-2">
-          Con GatofitAI, tu progreso se acelera.
-        </h1>
+    <OnboardingLayout currentStep={5} totalSteps={20} className="flex flex-col">
+      <div className="flex-1 flex flex-col min-h-0">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-6 px-2"
+        >
+          <h1 className="text-3xl font-bold leading-tight">
+            Gatofit crea resultados a largo plazo
+          </h1>
+        </motion.div>
 
-        <p className="text-muted-foreground mb-6">
-          Nuestra IA personaliza tu plan para resultados óptimos.
-        </p>
-
-        <div className="flex-1 min-h-[300px] bg-background/30 rounded-lg p-3 border border-white/3 flex items-center justify-center">
-          <svg width="320" height="200" className="w-full max-w-[320px]">
-            {/* Grid lines */}
-            <defs>
-              <pattern id="grid" width="40" height="30" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1"/>
-              </pattern>
-            </defs>
-            <rect width="320" height="200" fill="url(#grid)" />
-            
-            {/* Y-axis labels */}
-            <text x="25" y="45" fill="hsl(var(--muted-foreground))" fontSize="10" textAnchor="middle">100%</text>
-            <text x="25" y="110" fill="hsl(var(--muted-foreground))" fontSize="10" textAnchor="middle">50%</text>
-            <text x="25" y="175" fill="hsl(var(--muted-foreground))" fontSize="10" textAnchor="middle">0%</text>
-            
-            {/* X-axis labels */}
-            {[1, 2, 3, 4, 5, 6].map((month, index) => (
-              <text 
-                key={month}
-                x={40 + (index / 5) * 240}
-                y="195" 
-                fill="hsl(var(--muted-foreground))" 
-                fontSize="10" 
-                textAnchor="middle"
-              >
-                M{month}
-              </text>
-            ))}
-            
-            {/* Traditional app line */}
-            <motion.path
-              d={traditionalPathData.path}
-              fill="none"
-              stroke="#9CA3AF"
-              strokeWidth="3"
-              strokeDasharray="8,4"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: traditionalProgress / 100 }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-            />
-            
-            {/* Traditional app dots - properly aligned */}
-            {traditionalPathData.points.map((point, index) => (
-              <motion.circle
-                key={`trad-${index}`}
-                cx={point.x}
-                cy={point.y}
-                r="4"
-                fill="#9CA3AF"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.3, duration: 0.3 }}
-              />
-            ))}
-            
-            {/* AI app line */}
-            {showAI && (
-              <motion.path
-                d={aiPathData.path}
-                fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="4"
-                filter="drop-shadow(0 0 6px hsl(var(--primary)/0.6))"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: aiProgress / 100 }}
-                transition={{ duration: 2, ease: "easeInOut" }}
-              />
-            )}
-            
-            {/* AI app dots - properly aligned */}
-            {showAI && aiPathData.points.map((point, index) => (
-              <motion.circle
-                key={`ai-${index}`}
-                cx={point.x}
-                cy={point.y}
-                r="5"
-                fill="hsl(var(--primary))"
-                stroke="hsl(var(--background))"
-                strokeWidth="2"
-                filter="drop-shadow(0 0 4px hsl(var(--primary)/0.5))"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.4, duration: 0.3 }}
-              />
-            ))}
-          </svg>
-        </div>
-
-        <div className="flex justify-center gap-8 mb-6 mt-4">
-          <div className="flex items-center">
-            <div className="w-6 h-0.5 bg-[#9CA3AF] mr-3" style={{ backgroundImage: 'repeating-linear-gradient(to right, transparent, transparent 4px, #9CA3AF 4px, #9CA3AF 12px)' }}></div>
-            <span className="text-sm text-muted-foreground">Apps Tradicionales</span>
+        {/* Chart Card */}
+        <motion.div
+          className="bg-secondary/20 border border-white/5 rounded-3xl p-6 relative overflow-visible shadow-lg backdrop-blur-sm"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <div className="mb-4">
+            <h3 className="text-lg font-medium text-foreground/80">Tu peso</h3>
           </div>
-          <motion.div 
-            className="flex items-center"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: showAI ? 1 : 0, scale: showAI ? 1 : 0.9 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div className="w-6 h-1 bg-primary mr-3 rounded-full shadow-[0_0_8px_hsl(var(--primary)/0.5)]"></div>
-            <span className="text-sm font-medium text-primary">GatofitAI</span>
-          </motion.div>
+
+          <div className="relative h-[220px] w-full">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
+              {/* Grid Lines (Dotted) */}
+              <line x1="0" y1={startY} x2={width} y2={startY} stroke="currentColor" strokeOpacity="0.1" strokeDasharray="4 4" />
+              <line x1="0" y1={height - 40} x2={width} y2={height - 40} stroke="currentColor" strokeOpacity="0.1" strokeDasharray="4 4" />
+
+              {/* Traditional Line (Red) - Rebound */}
+              <motion.path
+                d={traditionalPath}
+                fill="none"
+                stroke="#ef4444" // red-500
+                strokeWidth="3"
+                strokeLinecap="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 1.5, ease: "easeInOut", delay: 0.4 }}
+              />
+
+              {/* Gatofit Line (White/Primary) - Success */}
+              <motion.path
+                d={aiPath}
+                fill="none"
+                stroke="white"
+                strokeWidth="3"
+                strokeLinecap="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 1.5, ease: "easeInOut", delay: 0.4 }}
+              />
+
+              {/* End Points */}
+              <motion.circle
+                cx="20" cy="60" r="4" fill="white" stroke="black" strokeWidth="2"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+              />
+              <motion.circle
+                cx="280" cy="150" r="4" fill="white" stroke="black" strokeWidth="2"
+                initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1.9 }}
+              />
+            </svg>
+
+            {/* Labels overlayed absolutely for easier positioning */}
+
+            {/* Traditional Label */}
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.2, duration: 0.5 }}
+              className="absolute top-[10%] right-[5%] flex items-center gap-2"
+            >
+              <span className="text-xs font-medium text-red-400 bg-red-400/10 px-2 py-1 rounded-md border border-red-400/20">
+                Dieta tradicional
+              </span>
+            </motion.div>
+
+            {/* Gatofit Label */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.7, duration: 0.5 }}
+              className="absolute bottom-[25%] left-[40%] transform -translate-x-1/2"
+            >
+              <div className="flex items-center gap-1.5 bg-foreground text-background px-3 py-1.5 rounded-full shadow-xl">
+                <img src="/logo negro.svg" alt="Gatofit" className="w-3.5 h-3.5" />
+                <span className="text-xs font-bold whitespace-nowrap">Gatofit</span>
+              </div>
+            </motion.div>
+
+            {/* X Axis */}
+            <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-muted-foreground mt-2 border-t border-white/5 pt-2">
+              <span>Mes 1</span>
+              <span>Mes 6</span>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              El 80% de los usuarios de Gatofit mantienen su pérdida de peso incluso 6 meses después.
+            </p>
+          </div>
+        </motion.div>
+
+        <div className="mt-auto pt-8">
+          <OnboardingNavigation onNext={handleNext} />
         </div>
       </div>
-
-      <OnboardingNavigation onNext={handleNext} />
     </OnboardingLayout>
   );
 };

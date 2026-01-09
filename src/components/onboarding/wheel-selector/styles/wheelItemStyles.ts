@@ -12,7 +12,7 @@ export const getWheelItemContainerStyles = (isSelected: boolean) => {
 // Helper for wheel item label styles
 export const getWheelItemLabelStyles = (labelClassName?: string) => {
   return cn(
-    "select-none text-center truncate px-2 transition-opacity duration-150",
+    "select-none text-center px-1 transition-opacity duration-150",
     labelClassName
   );
 };
@@ -20,7 +20,7 @@ export const getWheelItemLabelStyles = (labelClassName?: string) => {
 // Helper for wheel container styles
 export const getWheelContainerStyles = (className?: string) => {
   return cn(
-    "relative overflow-hidden rounded-xl bg-secondary/20 select-none touch-none",
+    "relative overflow-hidden select-none touch-none",
     className
   );
 };

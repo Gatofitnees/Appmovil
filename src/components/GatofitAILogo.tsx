@@ -24,7 +24,7 @@ const GatofitAILogo: React.FC<GatofitAILogoProps> = ({
       sizeClasses[size],
       className
     )}>
-      GatofitAI
+      Gatofit
     </h1>
   );
 };

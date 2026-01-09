@@ -4,7 +4,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
-interface GoogleUserMetadata {
+interface SocialUserMetadata {
   avatar_url?: string;
   email?: string;
   email_verified?: boolean;
@@ -19,7 +19,7 @@ interface GoogleUserMetadata {
 const generateUniqueUsername = async (baseUsername: string): Promise<string> => {
   let username = baseUsername;
   let counter = 1;
-  
+
   while (true) {
     try {
       const { data: existingUser } = await supabase
@@ -31,7 +31,7 @@ const generateUniqueUsername = async (baseUsername: string): Promise<string> => 
       if (!existingUser) {
         return username;
       }
-      
+
       username = `${baseUsername}${counter}`;
       counter++;
     } catch (error) {
@@ -50,7 +50,7 @@ export const useAutoProfileSetup = (user: User | null) => {
   useEffect(() => {
     // Prevent multiple executions for the same user
     if (!user || (hasRunRef.current && currentUserIdRef.current === user.id)) return;
-    
+
     // Reset if user changed
     if (currentUserIdRef.current && currentUserIdRef.current !== user.id) {
       hasRunRef.current = false;
@@ -58,8 +58,7 @@ export const useAutoProfileSetup = (user: User | null) => {
 
     const setupUserProfile = async () => {
       try {
-        console.log('AutoProfileSetup: Starting for user:', user.id);
-        console.log('User metadata:', user.user_metadata);
+
 
         // Mark as running
         hasRunRef.current = true;
@@ -72,12 +71,13 @@ export const useAutoProfileSetup = (user: User | null) => {
           .eq('id', user.id)
           .maybeSingle(); // Use maybeSingle to avoid errors
 
-        console.log('Existing profile:', existingProfile);
 
-        const metadata = user.user_metadata as GoogleUserMetadata;
+
+        const metadata = user.user_metadata as SocialUserMetadata;
         const isGoogleUser = metadata.provider_id?.includes('google') || user.app_metadata?.provider === 'google';
+        const isAppleUser = metadata.provider_id?.includes('apple') || user.app_metadata?.provider === 'apple';
 
-        console.log('Is Google user:', isGoogleUser);
+
 
         let fullName = '';
         let avatarUrl = '';
@@ -86,18 +86,37 @@ export const useAutoProfileSetup = (user: User | null) => {
         if (isGoogleUser) {
           // Extract Google data - try multiple possible fields
           fullName = metadata.full_name || metadata.name || '';
-          
+
           // Try different avatar URL fields from Google
           avatarUrl = metadata.avatar_url || metadata.picture || '';
-          
-          console.log('Google data extracted:', { fullName, avatarUrl });
-          
+
+
+
           if (fullName) {
             baseUsername = fullName.toLowerCase()
               .replace(/\s+/g, '')
               .replace(/[^a-z0-9]/g, '')
               .substring(0, 15);
           }
+        } else if (isAppleUser) {
+          // Apple typically returns name only once and no avatar
+          fullName = metadata.full_name || metadata.name || '';
+
+          // If no name, derive from email if present
+          if (!fullName && user.email) {
+            const emailPart = user.email.split('@')[0];
+            fullName = emailPart.charAt(0).toUpperCase() + emailPart.slice(1);
+          }
+
+          if (fullName) {
+            baseUsername = fullName.toLowerCase()
+              .replace(/\s+/g, '')
+              .replace(/[^a-z0-9]/g, '')
+              .substring(0, 15);
+          }
+          // Apple does not provide avatar_url
+          avatarUrl = '';
+
         }
 
         // If no name from Google or not a Google user, use email
@@ -120,13 +139,13 @@ export const useAutoProfileSetup = (user: User | null) => {
 
         // Prepare updates - always update missing fields
         const updates: any = {};
-        
+
         if (!existingProfile?.full_name && fullName) {
           updates.full_name = fullName;
         }
         if (!existingProfile?.avatar_url && avatarUrl) {
           updates.avatar_url = avatarUrl;
-          console.log('Setting avatar URL:', avatarUrl);
+
         }
         if (!existingProfile?.username) {
           // Generate unique username
@@ -134,7 +153,7 @@ export const useAutoProfileSetup = (user: User | null) => {
           updates.username = uniqueUsername;
         }
 
-        console.log('Updates to apply:', updates);
+
 
         if (Object.keys(updates).length > 0) {
           const { error } = await supabase
@@ -145,28 +164,28 @@ export const useAutoProfileSetup = (user: User | null) => {
           if (error) {
             console.error('Error updating profile with auto data:', error);
           } else {
-            console.log('Profile auto-configured successfully:', updates);
+
           }
         }
 
         // Check if this is a Google user who might have onboarding data pending
         if (isGoogleUser && (!existingProfile?.height_cm || !existingProfile?.current_weight_kg)) {
-          console.log('Google user detected, checking for pending onboarding data...');
-          
+
+
           // Check localStorage for onboarding data (this might exist if the flow was interrupted)
           try {
             const pendingDataStr = localStorage.getItem('gatofit_google_auth_pending');
             const regularDataStr = localStorage.getItem('gatofit_onboarding_data');
-            
+
             if (pendingDataStr || regularDataStr) {
-              console.log('Found potential onboarding data for Google user');
+
               // Removed toast to reduce noise during login
             }
           } catch (storageError) {
-            console.log('No accessible localStorage data:', storageError);
+
           }
         }
-        
+
       } catch (error) {
         console.error('Error in auto profile setup:', error);
       }

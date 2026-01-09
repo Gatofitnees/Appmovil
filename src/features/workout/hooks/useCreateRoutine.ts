@@ -14,9 +14,9 @@ import { convertRoutineTypeToUi } from "../utils/routineTypeMapping";
 export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editRoutineId?: number) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Get context state and setters
-  const { 
+  const {
     routineName,
     routineType,
     routineExercises,
@@ -43,14 +43,16 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     handleAddSet,
     handleSetUpdate,
     handleRemoveExercise,
+    handleRemoveSet,
     handleMoveExercise,
+    handleNotesUpdate,
   } = useRoutineForm(
-    routineExercises, 
-    routineName, 
-    routineType, 
+    routineExercises,
+    routineName,
+    routineType,
     setRoutineExercises
   );
-  
+
   // Set up persistence
   useRoutinePersistence(
     routineName,
@@ -61,26 +63,26 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     setRoutineExercises,
     editRoutineId
   );
-  
+
   // Set up navigation handlers
-  const { 
+  const {
     handleNavigateAway,
     handleBackClick,
     handleSelectExercises,
-    handleDiscardChanges 
+    handleDiscardChanges
   } = useRoutineNavigation(editRoutineId);
-  
+
   // Set up sheet handlers
-  const { 
+  const {
     handleExerciseOptions,
     handleReorderClick,
-    handleReorderSave 
+    handleReorderSave
   } = useRoutineSheets();
-  
+
   // Set up save handlers
-  const { 
+  const {
     handleSaveRoutineStart,
-    handleSaveRoutine 
+    handleSaveRoutine
   } = useRoutineSave(editRoutineId);
 
   // Función para cargar los datos de la rutina a editar
@@ -165,7 +167,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     showReorderSheet,
     currentExerciseIndex,
     isLoading,
-    
+
     // State setters
     setRoutineName,
     setRoutineType,
@@ -175,10 +177,11 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     setShowDiscardChangesDialog,
     setShowExerciseOptionsSheet,
     setShowReorderSheet,
-    
+
     // Handlers
     handleAddSet,
     handleSetUpdate,
+    handleRemoveSet,
     handleRemoveExercise,
     handleMoveExercise,
     handleSelectExercises,
@@ -190,7 +193,8 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     handleDiscardChanges,
     handleNavigateAway,
     handleBackClick,
-    
+    handleNotesUpdate,
+
     // Carga de datos para edición
     loadRoutineData
   };

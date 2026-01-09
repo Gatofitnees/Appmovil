@@ -1,11 +1,13 @@
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart2, Copy, Pencil } from "lucide-react";
+import { BarChart2, Clock, Copy, Pencil } from "lucide-react";
 import { SetRow } from "./SetRow";
 import { ExerciseNotesDialog } from "./ExerciseNotesDialog";
-import { WorkoutSet, WorkoutExercise } from "../../types/workout";
+import { WorkoutExercise } from "../../types/workout";
+import { useRestTimer } from "../../hooks/useRestTimer";
+import { RestTimerModal } from "./RestTimerModal";
 
 interface ExerciseCardProps {
   exercise: WorkoutExercise;
@@ -27,6 +29,9 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   onShowStats
 }) => {
   const [showNotesDialog, setShowNotesDialog] = useState(false);
+  const [showTimerModal, setShowTimerModal] = useState(false);
+  const restSeconds = useMemo(() => exercise.rest_between_sets_seconds ?? 60, [exercise.rest_between_sets_seconds]);
+  const { remaining, duration, status, start, pause, resume, end, adjust } = useRestTimer(restSeconds);
 
   const handleNotesClick = () => {
     setShowNotesDialog(true);
@@ -54,12 +59,17 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Rest time display */}
-              {exercise.rest_between_sets_seconds && (
-                <div className="text-xs text-muted-foreground">
-                  {exercise.rest_between_sets_seconds}s descanso
-                </div>
-              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full border border-white/5 bg-white/5"
+                onClick={() => {
+                  setShowTimerModal(true);
+                  start(restSeconds);
+                }}
+              >
+                <Clock className="h-5 w-5" />
+              </Button>
               
               {/* Statistics button - icon only */}
               <Button
@@ -72,7 +82,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               </Button>
             </div>
           </div>
-          
+
           {/* Routine Creator Notes (Instructor Instructions) */}
           {exercise.notes && (
             <div className="mb-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
@@ -84,6 +94,24 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </div>
           )}
 
+
+        <RestTimerModal
+          open={showTimerModal}
+          onOpenChange={setShowTimerModal}
+          exerciseName={exercise.name}
+          remaining={remaining}
+          duration={duration}
+          baseSeconds={restSeconds}
+          status={status}
+          onStart={() => start(restSeconds)}
+          onPause={pause}
+          onResume={resume}
+          onEnd={() => {
+            end();
+            setShowTimerModal(false);
+          }}
+          onAdjust={adjust}
+        />
           {/* Sets */}
           <div className="space-y-3">
             {/* Header for the table-like layout */}

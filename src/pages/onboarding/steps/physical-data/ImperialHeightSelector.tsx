@@ -11,43 +11,52 @@ interface ImperialHeightSelectorProps {
   onHeightInChange: (value: number) => void;
 }
 
-const ImperialHeightSelector: React.FC<ImperialHeightSelectorProps> = ({ 
-  heightValues, 
-  inchesValues, 
-  heightFt, 
-  heightIn, 
+const ImperialHeightSelector: React.FC<ImperialHeightSelectorProps> = ({
+  heightValues,
+  inchesValues,
+  heightFt,
+  heightIn,
   onHeightFtChange,
-  onHeightInChange 
+  onHeightInChange
 }) => {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium block mb-2">Altura</label>
-      <div className="flex space-x-2 h-[200px]">
-        {heightValues.length > 0 && (
-          <WheelSelector
-            values={heightValues}
-            onChange={onHeightFtChange}
-            initialValue={heightFt}
-            className="w-1/2"
-            labelClassName="text-lg font-medium"
-            itemHeight={45}
-            visibleItems={5}
-          />
-        )}
-        {inchesValues.length > 0 && (
-          <WheelSelector
-            values={inchesValues}
-            onChange={onHeightInChange}
-            initialValue={heightIn}
-            className="w-1/2"
-            labelClassName="text-lg font-medium"
-            itemHeight={45}
-            visibleItems={5}
-          />
-        )}
+    <div className="space-y-2 w-full">
+      {/* Label moved to parent */}
+      <div className="flex justify-center gap-4 h-[200px]">
+        <div className="flex flex-col items-center w-20">
+          <div className="h-full w-full">
+            {heightValues.length > 0 && (
+              <WheelSelector
+                values={heightValues}
+                onChange={onHeightFtChange}
+                initialValue={heightFt}
+                className="w-full"
+                labelClassName="text-xl font-medium"
+                itemHeight={50}
+                visibleItems={5}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center w-20">
+          <div className="h-full w-full">
+            {inchesValues.length > 0 && (
+              <WheelSelector
+                values={inchesValues}
+                onChange={onHeightInChange}
+                initialValue={heightIn}
+                className="w-full"
+                labelClassName="text-xl font-medium"
+                itemHeight={50}
+                visibleItems={5}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default ImperialHeightSelector;
+export default React.memo(ImperialHeightSelector);

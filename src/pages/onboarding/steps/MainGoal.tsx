@@ -1,7 +1,7 @@
 
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Scale, Heart } from "lucide-react";
+
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import OnboardingNavigation from "@/components/onboarding/OnboardingNavigation";
 import SelectableCard from "@/components/onboarding/SelectableCard";
@@ -10,7 +10,7 @@ import { OnboardingContext } from "../OnboardingFlow";
 const MainGoal: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("MainGoal must be used within OnboardingContext");
   }
@@ -18,7 +18,12 @@ const MainGoal: React.FC = () => {
   const { data, updateData } = context;
 
   const handleSelect = (goal: "gain_muscle" | "lose_weight" | "maintain_weight") => {
-    updateData({ mainGoal: goal });
+    // If the goal changes, reset the target weight so the next screen calculates a new smart default
+    if (data.mainGoal !== goal) {
+      updateData({ mainGoal: goal, targetWeight: undefined });
+    } else {
+      updateData({ mainGoal: goal });
+    }
   };
 
   const handleNext = () => {
@@ -33,29 +38,29 @@ const MainGoal: React.FC = () => {
         <SelectableCard
           selected={data.mainGoal === "gain_muscle"}
           onSelect={() => handleSelect("gain_muscle")}
-          icon={<Dumbbell size={32} />}
+          icon={<img src="/gimnasio.svg" alt="Ganar Músculo" className="w-7 h-7 brightness-0 invert" />}
           label="Ganar Masa Muscular"
         >
           <p className="text-xs text-muted-foreground text-center mt-1">
             Aumentar fuerza y volumen muscular
           </p>
         </SelectableCard>
-        
+
         <SelectableCard
           selected={data.mainGoal === "lose_weight"}
           onSelect={() => handleSelect("lose_weight")}
-          icon={<Scale size={32} />}
+          icon={<img src="/perdida-de-peso-2.svg" alt="Perder Peso" className="w-7 h-7 brightness-0 invert" />}
           label="Perder Peso / Grasa"
         >
           <p className="text-xs text-muted-foreground text-center mt-1">
             Reducir peso y porcentaje de grasa
           </p>
         </SelectableCard>
-        
+
         <SelectableCard
           selected={data.mainGoal === "maintain_weight"}
           onSelect={() => handleSelect("maintain_weight")}
-          icon={<Heart size={32} />}
+          icon={<img src="/levantamiento-de-pesas-con-mancuernas-2.svg" alt="Mantener" className="w-7 h-7 brightness-0 invert" />}
           label="Mantenerme en Forma"
         >
           <p className="text-xs text-muted-foreground text-center mt-1">
@@ -64,7 +69,7 @@ const MainGoal: React.FC = () => {
         </SelectableCard>
       </div>
 
-      <OnboardingNavigation 
+      <OnboardingNavigation
         onNext={handleNext}
         nextDisabled={!data.mainGoal}
       />

@@ -9,12 +9,19 @@ export const saveRoutine = async (name: string, type: string, exercises: Routine
 
   // Convertir tipo de UI a formato de base de datos
   const dbType = convertRoutineTypeToDb(type);
+  
+  console.log("Saving routine with type:", type, "->", dbType);
+
+  // Validar que el tipo sea válido
+  if (!dbType || dbType.trim() === '') {
+    throw new Error('Tipo de rutina inválido');
+  }
 
   // Crear la rutina
   const { data: routine, error: routineError } = await supabase
     .from('routines')
     .insert({
-      name,
+      name: name.trim(),
       type: dbType,
       user_id: user.id,
       is_predefined: false,
@@ -60,12 +67,19 @@ export const updateRoutine = async (routineId: number, name: string, type: strin
 
   // Convertir tipo de UI a formato de base de datos
   const dbType = convertRoutineTypeToDb(type);
+  
+  console.log("Updating routine with type:", type, "->", dbType);
+
+  // Validar que el tipo sea válido
+  if (!dbType || dbType.trim() === '') {
+    throw new Error('Tipo de rutina inválido');
+  }
 
   // Actualizar la rutina
   const { data: routine, error: routineError } = await supabase
     .from('routines')
     .update({
-      name,
+      name: name.trim(),
       type: dbType,
       estimated_duration_minutes: Math.max(15, exercises.length * 3)
     })

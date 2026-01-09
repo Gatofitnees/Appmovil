@@ -107,31 +107,32 @@ export const getSecurityHeaders = (): Record<string, string> => {
   return {
     // Content Security Policy - Enhanced
     'Content-Security-Policy': [
-      "default-src 'self'",
-      "script-src 'self' 'wasm-unsafe-eval'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https:",
+      "default-src 'self' capacitor: http://localhost https://mwgnpexeymgpzibnkiof.supabase.co https://*.supabase.co https://www.youtube.com https://www.youtube-nocookie.com data: blob:",
+      "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://www.youtube.com https://www.youtube-nocookie.com",
+      "img-src 'self' data: blob: https: https://mwgnpexeymgpzibnkiof.supabase.co https://i.ytimg.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://mwgnpexeymgpzibnkiof.supabase.co wss://mwgnpexeymgpzibnkiof.supabase.co",
-      "media-src 'self' blob:",
-      "object-src 'none'",
+      "connect-src 'self' https://mwgnpexeymgpzibnkiof.supabase.co wss://mwgnpexeymgpzibnkiof.supabase.co https://www.youtube.com https://*.googlevideo.com",
+      "media-src 'self' blob: https://www.youtube.com https://*.googlevideo.com",
+      "frame-src 'self' capacitor: http://localhost https://mwgnpexeymgpzibnkiof.supabase.co https://*.supabase.co https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com",
+      "object-src 'self' https://mwgnpexeymgpzibnkiof.supabase.co https://*.supabase.co data: blob:",
       "base-uri 'self'",
       "form-action 'self'",
-      "frame-ancestors 'none'",
+      "frame-ancestors 'self'",
       "upgrade-insecure-requests",
       "block-all-mixed-content"
     ].join('; '),
     
     // Security headers
     'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
+    'X-Frame-Options': 'SAMEORIGIN',
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-    'Cross-Origin-Embedder-Policy': 'require-corp',
-    'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Resource-Policy': 'same-origin'
+    'Cross-Origin-Embedder-Policy': 'unsafe-none',
+    'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+    'Cross-Origin-Resource-Policy': 'cross-origin'
   };
 };
 

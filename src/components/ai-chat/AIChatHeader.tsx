@@ -17,15 +17,10 @@ interface AIChatHeaderProps {
 const AIChatHeader: React.FC<AIChatHeaderProps> = ({ onBack, onClear, hasMessages }) => {
   const { isPremium } = useSubscription();
   const { branding, loading } = useBranding();
-  
+
   return (
-    <div 
-      className="flex items-center justify-between p-4 border-b border-muted/30 bg-background/95 backdrop-blur-sm sticky top-0 z-10"
-      style={{
-        paddingTop: 'max(1rem, var(--safe-area-inset-top, 0px))',
-        paddingLeft: 'max(1rem, var(--safe-area-inset-left, 0px))',
-        paddingRight: 'max(1rem, var(--safe-area-inset-right, 0px))',
-      }}
+    <div
+      className="flex items-center justify-between p-4 bg-background sticky top-0 z-10"
     >
       <div className="flex items-center gap-3">
         <Button
@@ -50,7 +45,7 @@ const AIChatHeader: React.FC<AIChatHeaderProps> = ({ onBack, onClear, hasMessage
               "w-8 h-8 rounded-full overflow-hidden flex items-center justify-center",
               "ring-2 ring-primary/20 transition-all duration-200"
             )}>
-              <img 
+              <img
                 src={branding.logoImageUrl}
                 alt={`${branding.companyName} Avatar`}
                 className="w-full h-full object-cover"

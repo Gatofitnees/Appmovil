@@ -3,8 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Flame, Beef, Wheat, Droplets } from 'lucide-react';
-import NutrientIcon from './NutrientIcon';
+import { FlatIcon } from '@/components/ui/FlatIcon';
+// import { Flame, Beef, Wheat, Droplets } from 'lucide-react'; // Removed unused imports
 import FoodCategoryBadge from './FoodCategoryBadge';
 import { cn } from '@/lib/utils';
 
@@ -32,12 +32,12 @@ interface FoodSearchItemProps {
   onQuantityChange: (quantity: number) => void;
 }
 
-const FoodSearchItem: React.FC<FoodSearchItemProps> = ({ 
-  food, 
-  isSelected, 
-  quantity, 
-  onToggleSelect, 
-  onQuantityChange 
+const FoodSearchItem: React.FC<FoodSearchItemProps> = ({
+  food,
+  isSelected,
+  quantity,
+  onToggleSelect,
+  onQuantityChange
 }) => {
   const multiplier = quantity / 100;
 
@@ -75,25 +75,25 @@ const FoodSearchItem: React.FC<FoodSearchItemProps> = ({
               />
             )}
           </div>
-          
+
           {/* Horizontal macros display */}
           {food.nutrition && (
             <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-1">
-                <Flame className="w-3 h-3 text-orange-500" />
-                <span className="text-xs font-medium">{Math.round(food.nutrition.calories * multiplier)}</span>
+              <div className="flex items-center gap-1.5 bg-secondary/50 px-2.5 py-1 rounded-full">
+                <img src="/flame.svg" alt="Cal" className="w-3.5 h-3.5 brightness-0 invert -translate-y-0.5" />
+                <span className="text-xs font-bold">{Math.round(food.nutrition.calories * multiplier)}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Beef className="w-3 h-3 text-red-500" />
-                <span className="text-xs font-medium">{Math.round(food.nutrition.protein * multiplier)}g</span>
+              <div className="flex items-center gap-1.5">
+                <FlatIcon name="sr-drumstick" size={12} style={{ color: '#dd6969' }} />
+                <span className="text-xs font-medium text-muted-foreground">{Math.round(food.nutrition.protein * multiplier)}g</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Wheat className="w-3 h-3 text-yellow-600" />
-                <span className="text-xs font-medium">{Math.round(food.nutrition.carbs * multiplier)}g</span>
+              <div className="flex items-center gap-1.5">
+                <FlatIcon name="sr-wheat" size={12} style={{ color: '#EB9F6D' }} />
+                <span className="text-xs font-medium text-muted-foreground">{Math.round(food.nutrition.carbs * multiplier)}g</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Droplets className="w-3 h-3 text-blue-500" />
-                <span className="text-xs font-medium">{Math.round(food.nutrition.fat * multiplier)}g</span>
+              <div className="flex items-center gap-1.5">
+                <FlatIcon name="sr-avocado" size={12} style={{ color: '#6C95DC' }} />
+                <span className="text-xs font-medium text-muted-foreground">{Math.round(food.nutrition.fat * multiplier)}g</span>
               </div>
             </div>
           )}

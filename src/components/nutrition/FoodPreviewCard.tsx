@@ -45,15 +45,15 @@ export const FoodPreviewCard: React.FC<FoodPreviewCardProps> = ({
   // Función para truncado inteligente del texto
   const intelligentTruncate = (text: string, maxLength: number = 18) => {
     if (text.length <= maxLength) return text;
-    
+
     // Buscar el último espacio antes del límite
     const truncateIndex = text.lastIndexOf(' ', maxLength);
-    
+
     // Si no hay espacios, cortar directamente
     if (truncateIndex === -1) {
       return text.substring(0, maxLength) + '...';
     }
-    
+
     return text.substring(0, truncateIndex) + '...';
   };
 
@@ -64,10 +64,10 @@ export const FoodPreviewCard: React.FC<FoodPreviewCardProps> = ({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isSwipeActive) return;
-    
+
     currentX.current = e.touches[0].clientX;
     const distance = startX.current - currentX.current;
-    
+
     if (distance > 0) {
       setSwipeDistance(Math.min(distance, 80));
     }
@@ -89,10 +89,10 @@ export const FoodPreviewCard: React.FC<FoodPreviewCardProps> = ({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isSwipeActive) return;
-    
+
     currentX.current = e.clientX;
     const distance = startX.current - currentX.current;
-    
+
     if (distance > 0) {
       setSwipeDistance(Math.min(distance, 80));
     }
@@ -109,7 +109,7 @@ export const FoodPreviewCard: React.FC<FoodPreviewCardProps> = ({
 
   return (
     <div className="relative overflow-hidden rounded-xl">
-      <div 
+      <div
         ref={cardRef}
         className={cn(
           "neu-card cursor-pointer hover:bg-secondary/10 transition-all duration-200 relative overflow-hidden rounded-xl",
@@ -133,8 +133,8 @@ export const FoodPreviewCard: React.FC<FoodPreviewCardProps> = ({
         <div className="flex h-28">
           {/* Food Image - Left Side */}
           <div className="w-28 h-28 flex-shrink-0">
-            <img 
-              src={imageUrl} 
+            <img
+              src={imageUrl}
               alt={name}
               className="w-full h-full object-cover rounded-l-xl"
             />
@@ -146,25 +146,25 @@ export const FoodPreviewCard: React.FC<FoodPreviewCardProps> = ({
             <h3 className="font-medium text-sm mb-1 leading-tight">
               {intelligentTruncate(name)}
             </h3>
-            
+
             {/* Calories - Main Line */}
             <div className="flex items-center gap-2 mb-1">
-              <FlatIcon name="ss-flame" size={16} style={{ color: '#fb923c' }} className="flex-shrink-0" />
+              <img src="/flame.svg" alt="Calories" className="w-4 h-4 flex-shrink-0 brightness-0 invert -translate-y-0.5" />
               <span className="text-lg font-bold">{calories} kcal</span>
             </div>
-            
+
             {/* Macronutrients */}
             <div className="flex gap-3 text-xs">
               <div className="flex items-center gap-1.5">
                 <FlatIcon name="sr-drumstick" size={12} style={{ color: '#dd6969' }} className="flex-shrink-0" />
                 <span className="font-medium">{formatMacroValue(protein)}g</span>
               </div>
-              
+
               <div className="flex items-center gap-1.5">
                 <FlatIcon name="sr-wheat" size={12} style={{ color: '#EB9F6D' }} className="flex-shrink-0" />
                 <span className="font-medium">{formatMacroValue(carbs)}g</span>
               </div>
-              
+
               <div className="flex items-center gap-1.5">
                 <FlatIcon name="sr-avocado" size={12} style={{ color: '#6C95DC' }} className="flex-shrink-0" />
                 <span className="font-medium">{formatMacroValue(fat)}g</span>
@@ -176,7 +176,7 @@ export const FoodPreviewCard: React.FC<FoodPreviewCardProps> = ({
 
       {/* Delete Button */}
       {swipeDistance > 20 && (
-        <div 
+        <div
           className="absolute right-0 top-0 h-full flex items-center justify-center bg-red-500 text-white rounded-r-xl"
           style={{ width: `${Math.min(swipeDistance, 80)}px` }}
         >

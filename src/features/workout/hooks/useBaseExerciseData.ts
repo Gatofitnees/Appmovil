@@ -60,47 +60,48 @@ export function useBaseExerciseData({
   // Initialize base exercises only once when previous data is loaded
   useEffect(() => {
     if (!exerciseDetails.length || !previousDataLoaded || isInitialized.current) return;
-    
+
     console.log("Initializing base exercises for the first time");
     console.log("Available previous data:", previousData);
     console.log("Cached base exercises:", cachedBaseExercises);
-    
+
     // Priority: cachedBaseExercises > storedData > fresh data
     const storedData = loadFromStorage();
-    const dataToUse = cachedBaseExercises && Object.keys(cachedBaseExercises).length > 0 
-      ? cachedBaseExercises 
+    const dataToUse = cachedBaseExercises && Object.keys(cachedBaseExercises).length > 0
+      ? cachedBaseExercises
       : storedData;
-    
+
     if (cachedBaseExercises && Object.keys(cachedBaseExercises).length > 0) {
       console.log("🔄 Restoring workout from cache");
     }
-    
+
     const initialBaseExercises: Record<number, WorkoutExercise> = {};
-    
+
     exerciseDetails.forEach(ex => {
       console.log(`Processing exercise ${ex.id} (${ex.name})`);
       console.log(`Previous data for exercise ${ex.id}:`, previousData[ex.id]);
-      
+
       // Check if we have cached or stored data for this exercise
       const storedExercise = dataToUse[ex.id];
-      
+
       if (storedExercise && storedExercise.sets.length > 0) {
         // Use stored data but update previous data and add target reps
         const updatedSets = storedExercise.sets.map((set, i) => {
           const prevWeight = previousData[ex.id]?.[i]?.weight || null;
           const prevReps = previousData[ex.id]?.[i]?.reps || null;
-          
+
           console.log(`Set ${i + 1} - Previous: ${prevWeight}kg × ${prevReps}`);
-          
+
           return {
             ...set,
             previous_weight: prevWeight,
             previous_reps: prevReps,
             target_reps_min: ex.reps_min || undefined,
-            target_reps_max: ex.reps_max || undefined
+            target_reps_max: ex.reps_max || undefined,
+            target_reps_range: ex.reps_range || undefined
           };
         });
-        
+
         initialBaseExercises[ex.id] = {
           ...storedExercise,
           sets: updatedSets,
@@ -116,9 +117,9 @@ export function useBaseExerciseData({
           (_, i) => {
             const prevWeight = previousData[ex.id]?.[i]?.weight || null;
             const prevReps = previousData[ex.id]?.[i]?.reps || null;
-            
+
             console.log(`Fresh set ${i + 1} - Previous: ${prevWeight}kg × ${prevReps}`);
-            
+
             return {
               set_number: i + 1,
               weight: null,
@@ -127,7 +128,8 @@ export function useBaseExerciseData({
               previous_weight: prevWeight,
               previous_reps: prevReps,
               target_reps_min: ex.reps_min || undefined,
-              target_reps_max: ex.reps_max || undefined
+              target_reps_max: ex.reps_max || undefined,
+              target_reps_range: ex.reps_range || undefined
             };
           }
         );
@@ -144,10 +146,10 @@ export function useBaseExerciseData({
         };
         console.log(`Created fresh exercise ${ex.id} with target reps:`, ex.reps_min, "-", ex.reps_max);
       }
-      
+
       initializedExerciseIds.current.add(ex.id);
     });
-    
+
     console.log("Final base exercises data:", initialBaseExercises);
     setBaseExerciseData(initialBaseExercises);
     saveToStorage(initialBaseExercises);
@@ -157,14 +159,14 @@ export function useBaseExerciseData({
   // Add new exercises if they appear in exerciseDetails but aren't in baseExerciseData
   useEffect(() => {
     if (!isInitialized.current || !exerciseDetails.length) return;
-    
+
     const newExercises: Record<number, WorkoutExercise> = {};
     let hasNewExercises = false;
-    
+
     exerciseDetails.forEach(ex => {
       if (!initializedExerciseIds.current.has(ex.id)) {
         console.log(`Adding new base exercise ${ex.id} to existing data`);
-        
+
         const formattedSets: WorkoutSet[] = Array.from(
           { length: ex.sets || 1 },
           (_, i) => ({
@@ -175,7 +177,8 @@ export function useBaseExerciseData({
             previous_weight: previousData[ex.id]?.[i]?.weight || null,
             previous_reps: previousData[ex.id]?.[i]?.reps || null,
             target_reps_min: ex.reps_min || undefined,
-            target_reps_max: ex.reps_max || undefined
+            target_reps_max: ex.reps_max || undefined,
+            target_reps_range: ex.reps_range || undefined
           })
         );
 
@@ -189,12 +192,12 @@ export function useBaseExerciseData({
           user_notes: "", // Initialize user workout notes as empty
           rest_between_sets_seconds: ex.rest_between_sets_seconds
         };
-        
+
         initializedExerciseIds.current.add(ex.id);
         hasNewExercises = true;
       }
     });
-    
+
     if (hasNewExercises) {
       setBaseExerciseData(prev => {
         const updated = { ...prev, ...newExercises };
@@ -210,7 +213,7 @@ export function useBaseExerciseData({
       if (updated[exerciseId]) {
         updated[exerciseId] = updater(updated[exerciseId]);
         console.log(`Updated base exercise ${exerciseId}:`, updated[exerciseId].sets.map(s => ({ weight: s.weight, reps: s.reps })));
-        
+
         // Save to storage immediately after update
         saveToStorage(updated);
       }

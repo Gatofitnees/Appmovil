@@ -222,6 +222,7 @@ export const useOnboardingPersistence = () => {
 
       // Prepare profile updates with better validation
       const profileUpdates: any = {
+        email: authenticatedUser.email || null, // Add email from authenticated user
         gender: dataToSave.gender as 'male' | 'female' | null,
         height_cm: dataToSave.height || null,
         current_weight_kg: dataToSave.weight || null,

@@ -3,16 +3,21 @@ import { UserData } from './types';
 const WEBHOOK_URL = 'https://paneln8n.gatofit.com/webhook/5ad29227-88fb-46ab-bff9-c44cb4e1d957';
 
 export const sendToWebhook = async (message: string, userData: UserData): Promise<any> => {
+  // Filter userData to only include identity (as requested)
+  const identityPayload = {
+    user: userData.user
+  };
+
   const payload = {
     message: message.trim(),
-    user_data: userData,
+    user_data: identityPayload,
   };
 
   console.log('🔍 [AI CHAT DEBUG] Enviando petición al webhook:', payload);
   console.log('🔍 [AI CHAT DEBUG] URL del webhook:', WEBHOOK_URL);
 
   const requestStart = Date.now();
-  
+
   const response = await fetch(WEBHOOK_URL, {
     method: 'POST',
     headers: {
@@ -44,7 +49,7 @@ export const sendToWebhook = async (message: string, userData: UserData): Promis
     console.log('🔍 [AI CHAT DEBUG] Verificando si el webhook está configurado correctamente...');
     console.log('🔍 [AI CHAT DEBUG] URL utilizada:', WEBHOOK_URL);
     console.log('🔍 [AI CHAT DEBUG] Payload enviado:', JSON.stringify(payload, null, 2));
-    
+
     // Return a placeholder response instead of throwing an error
     return JSON.stringify({
       text: 'El webhook externo devolvió una respuesta vacía. Por favor, verifica la configuración del webhook o inténtalo de nuevo más tarde.'

@@ -15,16 +15,16 @@ const Gratitude: React.FC = () => {
 
   // Particle animation for celebration
   const particles = Array.from({ length: 20 }).map((_, i) => (
-    <motion.div 
+    <motion.div
       key={i}
       className="absolute w-2 h-2 rounded-full bg-primary"
-      initial={{ 
+      initial={{
         scale: 0,
         opacity: 1,
         x: 0,
         y: 0
       }}
-      animate={{ 
+      animate={{
         scale: Math.random() * 1.5 + 0.5,
         opacity: 0,
         x: (Math.random() - 0.5) * 100,
@@ -47,7 +47,7 @@ const Gratitude: React.FC = () => {
     <OnboardingLayout currentStep={15} totalSteps={20}>
       <div className="flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[calc(100vh-200px)]">
         {particles}
-        
+
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
@@ -65,7 +65,7 @@ const Gratitude: React.FC = () => {
           transition={{ delay: 0.4, duration: 0.4 }}
           className="text-2xl font-bold mb-4"
         >
-          ¡Gracias por compartir tus metas con GatofitAI!
+          ¡Gracias por compartir tus metas con Gatofit!
         </motion.h1>
 
         <motion.p

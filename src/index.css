@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,35 +9,51 @@
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
 
-    --background: 215 30% 11%; /* #1A1D21 - Dark Gray/Black background */
-    --foreground: 210 20% 98%; /* White/Light Gray for text */
+    --background: 215 30% 11%;
+    /* #1A1D21 - Dark Gray/Black background */
+    --foreground: 210 20% 98%;
+    /* White/Light Gray for text */
 
-    --card: 220 10% 13%; /* Further reduced contrast - barely lighter than background */
-    --card-foreground: 213 31% 91%; /* White for card text */
+    --card: 220 10% 13%;
+    /* Further reduced contrast - barely lighter than background */
+    --card-foreground: 213 31% 91%;
+    /* White for card text */
 
-    --popover: 220 10% 13%; /* Matching card background */
-    --popover-foreground: 215 20.2% 95.1%; 
+    --popover: 220 10% 13%;
+    /* Matching card background */
+    --popover-foreground: 215 20.2% 95.1%;
 
-    --primary: 207 90% 54%; /* Electric Blue for accent */
-    --primary-foreground: 210 40% 98%; /* White for text on primary */
+    --primary: 207 90% 54%;
+    /* Electric Blue for accent */
+    --primary-foreground: 210 40% 98%;
+    /* White for text on primary */
 
-    --secondary: 220 13% 16%; /* Lighter gray for secondary elements with less contrast */
-    --secondary-foreground: 210 40% 98%; /* White for text on secondary */
+    --secondary: 220 13% 16%;
+    /* Lighter gray for secondary elements with less contrast */
+    --secondary-foreground: 210 40% 98%;
+    /* White for text on secondary */
 
-    --muted: 220 13% 16%; /* Matching secondary */
-    --muted-foreground: 215 20.2% 75.1%; /* Gray for muted text */
+    --muted: 220 13% 16%;
+    /* Matching secondary */
+    --muted-foreground: 215 20.2% 75.1%;
+    /* Gray for muted text */
 
-    --accent: 220 13% 16%; /* Matching secondary */
+    --accent: 220 13% 16%;
+    /* Matching secondary */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 16%; /* Matching secondary */
-    --input: 220 13% 16%; /* Matching secondary */
-    --ring: 207 90% 54%; /* Electric Blue for ring */
+    --border: 220 13% 16%;
+    /* Matching secondary */
+    --input: 220 13% 16%;
+    /* Matching secondary */
+    --ring: 207 90% 54%;
+    /* Electric Blue for ring */
 
-    --radius: 1rem; /* Increased border radius */
+    --radius: 1rem;
+    /* Increased border radius */
   }
 }
 
@@ -46,6 +61,18 @@
   * {
     @apply border-border;
   }
+
+  html,
+  body,
+  #root {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    width: 100%;
+    height: 100%;
+    background-color: #141B24;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -53,20 +80,52 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
+    /* Disable elastic scroll overscroll on iOS */
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+    /* Prevent white flash on overscroll */
+    background-color: #141B24;
   }
 
   /* Default scrollbar styles - hide by default */
   body::-webkit-scrollbar {
     width: 0;
+    height: 0;
     background: transparent;
+    display: none;
   }
 
   body::-webkit-scrollbar-track {
     @apply bg-transparent;
+    display: none;
   }
 
   body::-webkit-scrollbar-thumb {
     @apply bg-transparent;
+    display: none;
+  }
+
+  /* Hide scrollbars for all elements */
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  ::-webkit-scrollbar-track {
+    display: none;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    display: none;
+  }
+
+  /* iOS specific - hide scrollbar indicator */
+  body,
+  #root,
+  div[style*="overflow"] {
+    -webkit-appearance: none;
+    scroll-behavior: smooth;
   }
 
   /* Hide number input spinners completely */
@@ -92,7 +151,9 @@
   }
 
   /* Allow text selection for inputs and content */
-  input, textarea, [contenteditable] {
+  input,
+  textarea,
+  [contenteditable] {
     -webkit-user-select: text;
     -khtml-user-select: text;
     -moz-user-select: text;
@@ -104,24 +165,30 @@
 /* Custom styles for components */
 @layer utilities {
   .neu-button {
-    @apply bg-background/80 border border-white/5 shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:shadow-[0_6px_14px_rgba(0,0,0,0.4)];
+    @apply bg-background/80 border border-white/5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: box-shadow 0.2s;
   }
-  
+
+  .neu-button:hover {
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  }
+
   .neu-button-active {
-    @apply shadow-[inset_2px_2px_5px_rgba(0,0,0,0.3),inset_-2px_-2px_5px_rgba(255,255,255,0.05)];
+    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3), inset -2px -2px 5px rgba(255, 255, 255, 0.05);
   }
-  
+
   .neu-card {
     @apply bg-card/90 border border-white/5 shadow-neu-card rounded-xl backdrop-blur-sm;
   }
-  
+
   /* Mobile-optimized scrollbar hiding */
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
     width: 0;
@@ -137,11 +204,11 @@
   .mobile-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
-  
+
   .mobile-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .mobile-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-muted-foreground/30 rounded-full;
   }
@@ -160,16 +227,16 @@
   .touch-element {
     @apply active:scale-95 transition-transform duration-150;
   }
-  
+
   /* Enhanced galactic effects for premium elements */
   .premium-glow {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 0 40px rgba(99, 102, 241, 0.2);
   }
-  
+
   .premium-aura {
     position: relative;
   }
-  
+
   .premium-aura::before {
     content: '';
     position: absolute;
@@ -184,81 +251,96 @@
     filter: blur(8px);
     animation: premium-pulse 3s ease-in-out infinite;
   }
-  
+
   @keyframes premium-pulse {
-    0%, 100% { opacity: 0.4; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.02); }
+
+    0%,
+    100% {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.8;
+      transform: scale(1.02);
+    }
   }
-  
+
   /* Galactic AI button effect */
   .ai-galactic-text {
-    @apply font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-300 drop-shadow-[0_0_5px_rgba(59,130,246,0.5)];
+    @apply font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-300 drop-shadow-[0_0_5px_rgba(59, 130, 246, 0.5)];
     animation: pulse 2s infinite;
   }
 
   .glow-effect {
     filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.6));
   }
-  
+
   /* Enhanced shadow-glow for premium cards */
   .shadow-glow {
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.4), 0 4px 20px rgba(0, 0, 0, 0.3);
   }
-  
+
   @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.5));
     }
+
     50% {
       filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.7));
     }
   }
-  
+
   /* Aura effect for Gatofit avatar */
   .gatofit-aura {
     filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.7));
   }
-  
+
   /* New animations for exercise selection */
   .slide-in-right {
     animation: slideInRight 0.3s forwards;
   }
-  
+
   @keyframes slideInRight {
     from {
       transform: translateX(100%);
       opacity: 0;
     }
+
     to {
       transform: translateX(0);
       opacity: 1;
     }
   }
-  
+
   .slide-out-right {
     animation: slideOutRight 0.3s forwards;
   }
-  
+
   @keyframes slideOutRight {
     from {
       transform: translateX(0);
       opacity: 1;
     }
+
     to {
       transform: translateX(100%);
       opacity: 0;
     }
   }
-  
+
   .fade-in-scale {
     animation: fadeInScale 0.3s forwards;
   }
-  
+
   @keyframes fadeInScale {
     from {
       opacity: 0;
       transform: scale(0.95);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -275,22 +357,27 @@
     touch-action: pan-x;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Premium subscription specific styles */
   .subscription-card-glow {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
     border: 1px solid rgba(59, 130, 246, 0.2);
     box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
   }
-  
+
   .premium-badge-glow {
     background: linear-gradient(45deg, #3b82f6, #6366f1);
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
     animation: gentle-glow 2s ease-in-out infinite alternate;
   }
-  
+
   @keyframes gentle-glow {
-    from { box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
-    to { box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6); }
+    from {
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    }
+
+    to {
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+    }
   }
 }

@@ -1,6 +1,15 @@
 
+
 import React from "react";
 import WheelSelector from "@/components/onboarding/wheel-selector/WheelSelector";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface BodyFatSelectorProps {
   fatValues: Array<{ label: string; value: number }>;
@@ -8,32 +17,29 @@ interface BodyFatSelectorProps {
   onBodyFatChange: (value: number) => void;
 }
 
-const BodyFatSelector: React.FC<BodyFatSelectorProps> = ({ 
-  fatValues, 
-  bodyFat, 
-  onBodyFatChange 
+const BodyFatSelector: React.FC<BodyFatSelectorProps> = ({
+  fatValues,
+  bodyFat,
+  onBodyFatChange
 }) => {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium block mb-2">% Grasa Corporal (opcional)</label>
-      <div className="h-[200px]">
+    <div className="space-y-2 w-full flex flex-col items-center">
+      {/* Header moved to parent */}
+      <div className="h-[200px] w-24">
         {fatValues.length > 0 && (
           <WheelSelector
             values={fatValues}
             onChange={onBodyFatChange}
             initialValue={bodyFat}
             className="w-full"
-            labelClassName="text-lg font-medium"
-            itemHeight={45}
+            labelClassName="text-xl font-medium whitespace-nowrap"
+            itemHeight={50}
             visibleItems={5}
           />
         )}
       </div>
-      <p className="text-xs text-muted-foreground mt-1">
-        No te preocupes si no lo sabes con exactitud
-      </p>
     </div>
   );
 };
 
-export default BodyFatSelector;
+export default React.memo(BodyFatSelector);

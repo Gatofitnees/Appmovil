@@ -32,28 +32,28 @@ const MacrosCard: React.FC<MacrosCardProps> = ({
 
   // Use provided macros or create default ones from profile
   const macros = propMacros || {
-    calories: { 
-      current: 0, 
-      target: profile?.initial_recommended_calories || 2000, 
-      unit: "kcal" 
+    calories: {
+      current: 0,
+      target: profile?.initial_recommended_calories || 2000,
+      unit: "kcal"
     },
-    protein: { 
-      current: 0, 
-      target: profile?.initial_recommended_protein_g || 120 
+    protein: {
+      current: 0,
+      target: profile?.initial_recommended_protein_g || 120
     },
-    carbs: { 
-      current: 0, 
-      target: profile?.initial_recommended_carbs_g || 200 
+    carbs: {
+      current: 0,
+      target: profile?.initial_recommended_carbs_g || 200
     },
-    fats: { 
-      current: 0, 
-      target: profile?.initial_recommended_fats_g || 65 
+    fats: {
+      current: 0,
+      target: profile?.initial_recommended_fats_g || 65
     }
   };
 
   return (
     <Card className={cn("animate-fade-in", className)}>
-      <CardHeader 
+      <CardHeader
         title="Mis Macros Hoy"
         subtitle="Resumen de objetivos nutricionales"
       />
@@ -61,7 +61,7 @@ const MacrosCard: React.FC<MacrosCardProps> = ({
         <div className="flex flex-col space-y-6">
           {/* Loading indicator for macro recalculation */}
           {recalculatingMacros && (
-            <div 
+            <div
               className={cn(
                 "flex items-center justify-center gap-2 p-3 rounded-xl",
                 !branding.hasCoach && "bg-primary/10"
@@ -70,14 +70,14 @@ const MacrosCard: React.FC<MacrosCardProps> = ({
                 backgroundColor: `${branding.primaryButtonColor}10`
               } : {}}
             >
-              <Loader2 
+              <Loader2
                 className={cn(
                   "h-4 w-4 animate-spin",
                   !branding.hasCoach && "text-primary"
                 )}
                 style={branding.hasCoach ? { color: branding.primaryButtonColor } : {}}
               />
-              <span 
+              <span
                 className={cn(
                   "text-sm font-medium",
                   !branding.hasCoach && "text-primary"
@@ -88,7 +88,7 @@ const MacrosCard: React.FC<MacrosCardProps> = ({
               </span>
             </div>
           )}
-          
+
           {/* Main calorie counter */}
           <div className="bg-background/40 p-4 rounded-xl shadow-inner-dark">
             <div className="flex items-center justify-between">
@@ -100,14 +100,14 @@ const MacrosCard: React.FC<MacrosCardProps> = ({
                 <MacroRing
                   value={macros.calories.current}
                   target={macros.calories.target}
-                  color="primary"
+                  color="white"
                   size="md"
-                  icon={<FlatIcon name="ss-flame" className="text-orange-400" size={24} />}
+                  icon={<img src="/flame.svg" alt="Calories" className="w-6 h-6 brightness-0 invert -translate-y-1" />}
                 />
               </div>
             </div>
           </div>
-          
+
           {/* Macros grid */}
           <div className="grid grid-cols-3 gap-4">
             {/* Protein */}
@@ -124,7 +124,7 @@ const MacrosCard: React.FC<MacrosCardProps> = ({
                 />
               </div>
             </div>
-            
+
             {/* Carbs */}
             <div className="bg-background/40 p-3 rounded-xl shadow-inner-dark">
               <div className="flex flex-col items-center">
@@ -139,7 +139,7 @@ const MacrosCard: React.FC<MacrosCardProps> = ({
                 />
               </div>
             </div>
-            
+
             {/* Fats */}
             <div className="bg-background/40 p-3 rounded-xl shadow-inner-dark">
               <div className="flex flex-col items-center">

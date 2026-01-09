@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import WheelSelector from "@/components/onboarding/wheel-selector/WheelSelector";
 
@@ -8,23 +9,23 @@ interface MetricHeightSelectorProps {
   onHeightChange: (value: number) => void;
 }
 
-const MetricHeightSelector: React.FC<MetricHeightSelectorProps> = ({ 
-  heightValues, 
-  heightCm, 
-  onHeightChange 
+const MetricHeightSelector: React.FC<MetricHeightSelectorProps> = ({
+  heightValues,
+  heightCm,
+  onHeightChange
 }) => {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium block mb-2">Altura</label>
-      <div className="h-[200px]">
+    <div className="space-y-2 w-full flex flex-col items-center">
+      {/* Label moved to parent for alignment */}
+      <div className="h-[200px] w-24">
         {heightValues.length > 0 && (
           <WheelSelector
             values={heightValues}
             onChange={onHeightChange}
             initialValue={heightCm}
             className="w-full"
-            labelClassName="text-lg font-medium"
-            itemHeight={45}
+            labelClassName="text-xl font-medium"
+            itemHeight={50}
             visibleItems={5}
           />
         )}
@@ -33,4 +34,4 @@ const MetricHeightSelector: React.FC<MetricHeightSelectorProps> = ({
   );
 };
 
-export default MetricHeightSelector;
+export default React.memo(MetricHeightSelector);

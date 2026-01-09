@@ -11,21 +11,20 @@ import { useRankings } from '@/hooks/useRankings';
 import { useUserStats } from '@/hooks/useUserStats';
 import { useFollowersList } from '@/hooks/useFollowersList';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCoachAssignment } from '@/hooks/useCoachAssignment';
 
 const SocialPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
-  const { rankings, isLoading, error } = useRankings(100); // Límite de 100 usuarios
+  const { coachId } = useCoachAssignment();
+  const { rankings, isLoading, error } = useRankings(100, coachId); // Límite de 100 usuarios
   const { user } = useAuth();
   const { stats } = useUserStats(user?.id);
   const { followers, following, isLoading: followersLoading } = useFollowersList(user?.id);
   const navigate = useNavigate();
 
-  console.log('🌟 SocialPage rankings:', rankings);
-  console.log('📊 SocialPage rankings count:', rankings?.length || 0);
-  console.log('⚡ SocialPage isLoading:', isLoading);
-  console.log('❌ SocialPage error:', error);
+
 
   // Filter users based on search query - search in both username and full_name
   const filteredUsers = rankings.filter(rankingUser => {
@@ -68,9 +67,9 @@ const SocialPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen pt-6 pb-24 px-4 max-w-md mx-auto">
+    <div className="min-h-screen pb-24 px-4 max-w-md mx-auto" style={{ paddingTop: 'calc(max(var(--safe-area-inset-top), 50px) + 1.5rem)' }}>
       <h1 className="text-xl font-bold mb-6">Social</h1>
-      
+
       {/* Search Bar */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -85,7 +84,7 @@ const SocialPage: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div 
+        <div
           className="cursor-pointer"
           onClick={handleFollowersClick}
         >
@@ -96,8 +95,8 @@ const SocialPage: React.FC = () => {
             </CardBody>
           </Card>
         </div>
-        
-        <div 
+
+        <div
           className="cursor-pointer"
           onClick={handleFollowingClick}
         >
@@ -118,7 +117,7 @@ const SocialPage: React.FC = () => {
             title="Seguidores"
             isLoading={followersLoading}
           />
-          <button 
+          <button
             onClick={handleHideLists}
             className="w-full mt-2 text-sm text-muted-foreground hover:text-foreground"
           >
@@ -134,7 +133,7 @@ const SocialPage: React.FC = () => {
             title="Siguiendo"
             isLoading={followersLoading}
           />
-          <button 
+          <button
             onClick={handleHideLists}
             className="w-full mt-2 text-sm text-muted-foreground hover:text-foreground"
           >
@@ -151,7 +150,7 @@ const SocialPage: React.FC = () => {
             <h3 className="font-semibold">Top Usuarios</h3>
             <span className="text-xs text-muted-foreground">({Math.min(rankings.length, 100)})</span>
           </div>
-          
+
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
@@ -172,8 +171,8 @@ const SocialPage: React.FC = () => {
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
               {topUsers.map((rankingUser, index) => (
-                <div 
-                  key={rankingUser.user_id} 
+                <div
+                  key={rankingUser.user_id}
                   className="flex items-center gap-3 cursor-pointer hover:bg-muted/20 rounded-lg p-2 -m-2 transition-colors active:bg-muted/30"
                   onClick={() => handleUserClick(rankingUser.user_id)}
                 >
@@ -182,13 +181,13 @@ const SocialPage: React.FC = () => {
                       #{index + 1}
                     </span>
                   </div>
-                  
+
                   <Avatar
                     name={rankingUser.username}
                     size="sm"
                     src={rankingUser.avatar_url}
                   />
-                  
+
                   <div className="flex-1">
                     <p className="font-medium text-sm">{rankingUser.username}</p>
                     <RankBadge level={rankingUser.current_level} size="sm" showLevelWithRank={true} />
@@ -207,7 +206,7 @@ const SocialPage: React.FC = () => {
             <h3 className="font-semibold mb-4">
               Resultados de búsqueda ({filteredUsers.length})
             </h3>
-            
+
             {filteredUsers.length === 0 ? (
               <p className="text-center text-muted-foreground py-4">
                 No se encontraron usuarios con "{searchQuery}"
@@ -215,8 +214,8 @@ const SocialPage: React.FC = () => {
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {filteredUsers.map((rankingUser) => (
-                  <div 
-                    key={rankingUser.user_id} 
+                  <div
+                    key={rankingUser.user_id}
                     className="flex items-center gap-3 cursor-pointer hover:bg-muted/20 rounded-lg p-2 -m-2 transition-colors active:bg-muted/30"
                     onClick={() => handleUserClick(rankingUser.user_id)}
                   >
@@ -225,7 +224,7 @@ const SocialPage: React.FC = () => {
                       size="sm"
                       src={rankingUser.avatar_url}
                     />
-                    
+
                     <div className="flex-1">
                       <p className="font-medium text-sm">{rankingUser.username}</p>
                       <div className="flex items-center gap-2">

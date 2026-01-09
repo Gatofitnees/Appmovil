@@ -8,6 +8,7 @@ export interface WorkoutSet {
   previous_reps: number | null;
   target_reps_min?: number;
   target_reps_max?: number;
+  target_reps_range?: string;
 }
 
 export interface WorkoutExercise {

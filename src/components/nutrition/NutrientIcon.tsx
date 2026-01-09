@@ -9,18 +9,19 @@ interface NutrientIconProps {
   className?: string;
 }
 
-const NutrientIcon: React.FC<NutrientIconProps> = React.memo(({ 
-  type, 
-  value, 
+const NutrientIcon: React.FC<NutrientIconProps> = React.memo(({
+  type,
+  value,
   unit = 'g',
-  className 
+  className
 }) => {
   const getIconConfig = () => {
     switch (type) {
       case 'calories':
         return {
-          icon: 'ss-flame',
-          color: '#2094F3',
+          icon: '/flame.svg',
+          isImage: true,
+          color: 'white',
           bgColor: 'bg-secondary/30',
           unit: 'kcal'
         };
@@ -57,18 +58,27 @@ const NutrientIcon: React.FC<NutrientIconProps> = React.memo(({
 
   const config = getIconConfig();
   const roundedValue = Math.round(value);
-  
+
   return (
     <div className={cn("flex items-center gap-1.5", className)}>
       <div className={cn(
         "w-6 h-6 rounded-full flex items-center justify-center",
         config.bgColor
       )}>
-        <FlatIcon 
-          name={config.icon} 
-          size={12} 
-          style={{ color: config.color, transform: 'translateY(1px)' }}
-        />
+        {/* @ts-ignore - straightforward check */}
+        {config.isImage ? (
+          <img
+            src={config.icon}
+            alt="Cal"
+            className="w-3.5 h-3.5 brightness-0 invert -translate-y-0.5"
+          />
+        ) : (
+          <FlatIcon
+            name={config.icon}
+            size={12}
+            style={{ color: config.color, transform: 'translateY(1px)' }}
+          />
+        )}
       </div>
       <div className="flex flex-col">
         <span className="text-sm font-semibold text-foreground">

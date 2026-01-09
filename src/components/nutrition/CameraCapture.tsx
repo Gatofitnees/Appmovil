@@ -1,6 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useFoodCapture } from '@/hooks/useFoodCapture';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { StatusBar } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 import { CameraControls } from './camera/CameraControls';
 import { CameraErrorDialog } from './camera/CameraErrorDialog';
 import { CameraLoadingOverlay } from './camera/CameraLoadingOverlay';
@@ -29,26 +32,53 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   useEffect(() => {
     if (isOpen) {
       startCamera();
-      // Hide navigation bar when camera is open
+      // Hide navigation bar and safe area bar when camera is open
       const navBar = document.querySelector('nav');
       if (navBar) {
         (navBar as HTMLElement).style.display = 'none';
       }
+
+      const safeAreaBar = document.getElementById('safe-area-bar');
+      if (safeAreaBar) {
+        safeAreaBar.style.display = 'none';
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        StatusBar.hide().catch(console.error);
+      }
     } else {
       stopCamera();
-      // Show navigation bar when camera is closed
+      // Show navigation bar and safe area bar when camera is closed
       const navBar = document.querySelector('nav');
       if (navBar) {
         (navBar as HTMLElement).style.display = '';
+      }
+
+      const safeAreaBar = document.getElementById('safe-area-bar');
+      if (safeAreaBar) {
+        safeAreaBar.style.display = '';
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        StatusBar.show().catch(console.error);
       }
     }
 
     return () => {
       stopCamera();
-      // Ensure navigation bar is shown when component unmounts
+      // Ensure navigation bar and safe area bar are shown when component unmounts
       const navBar = document.querySelector('nav');
       if (navBar) {
         (navBar as HTMLElement).style.display = '';
+      }
+
+      const safeAreaBar = document.getElementById('safe-area-bar');
+      if (safeAreaBar) {
+        safeAreaBar.style.display = '';
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        StatusBar.show().catch(console.error);
       }
     };
   }, [isOpen, facingMode]);
@@ -57,20 +87,20 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
     setCameraError(null);
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           facingMode,
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         }
       });
       setStream(mediaStream);
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
-      
+
       let errorMessage = 'Error al acceder a la cámara';
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
@@ -81,9 +111,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           errorMessage = 'La cámara está siendo usada por otra aplicación.';
         }
       }
-      
+
       setCameraError(errorMessage);
-      
+
       // Fallback to any available camera
       try {
         const fallbackStream = await navigator.mediaDevices.getUserMedia({
@@ -91,7 +121,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
         });
         setStream(fallbackStream);
         setCameraError(null);
-        
+
         if (videoRef.current) {
           videoRef.current.srcObject = fallbackStream;
         }
@@ -103,8 +133,14 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
 
   const stopCamera = () => {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false; // Double ensure
+      });
       setStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
   };
 
@@ -133,19 +169,41 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
   };
 
   const handleGallerySelect = async () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        onPhotoTaken(file);
-        onClose();
-      }
-    };
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const image = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Uri,
+          source: CameraSource.Photos // Force gallery only
+        });
 
-    input.click();
+        if (image.webPath) {
+          // Convert webPath to blob
+          const response = await fetch(image.webPath);
+          const blob = await response.blob();
+          onPhotoTaken(blob);
+          onClose();
+        }
+      } catch (error) {
+        console.error('Error selecting from gallery:', error);
+      }
+    } else {
+      // Fallback for web
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+
+      input.onchange = async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          onPhotoTaken(file);
+          onClose();
+        }
+      };
+
+      input.click();
+    }
   };
 
   const switchCamera = () => {
@@ -178,7 +236,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({
           muted
           className="w-full h-full object-cover"
         />
-        
+
         <canvas ref={canvasRef} className="hidden" />
 
         <CameraControls

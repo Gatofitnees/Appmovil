@@ -5,11 +5,15 @@ import { cn } from "@/lib/utils";
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className }) => {
+export const Card: React.FC<CardProps> = ({ children, className, onClick }) => {
   return (
-    <div className={cn("neu-card p-4 animate-fade-in", className)}>
+    <div
+      className={cn("neu-card p-4 animate-fade-in", className)}
+      onClick={onClick}
+    >
       {children}
     </div>
   );

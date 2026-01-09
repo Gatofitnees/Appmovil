@@ -27,27 +27,26 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
   return (
     <>
       {/* Header Controls */}
-      <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent">
+      <div className="absolute top-0 left-0 right-0 px-4 pb-4 pt-16 bg-gradient-to-b from-black/80 to-transparent z-50">
         <div className="flex justify-between items-center">
-          <Button
-            variant="secondary"
-            size="sm"
+          <button
             onClick={onClose}
-            className="h-10 w-10 rounded-full p-0 bg-black/20"
-            disabled={isProcessing || isLoading}
+            className="h-10 w-10 rounded-full p-0 bg-black/30 hover:bg-black/50 backdrop-blur-sm flex items-center justify-center transition-colors"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+            type="button"
           >
-            <X className="h-5 w-5 text-white" />
-          </Button>
+            <X className="h-6 w-6 text-white" />
+          </button>
 
-          <Button
-            variant="secondary"
-            size="sm"
+          <button
             onClick={onSwitchCamera}
-            className="h-10 w-10 rounded-full p-0 bg-black/20"
             disabled={isProcessing || isLoading || !!cameraError || showNoFoodDialog}
+            className="h-10 w-10 rounded-full p-0 bg-black/30 hover:bg-black/50 backdrop-blur-sm flex items-center justify-center transition-colors disabled:opacity-50"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+            type="button"
           >
             <RotateCcw className="h-5 w-5 text-white" />
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -85,7 +84,7 @@ export const CameraControls: React.FC<CameraControlsProps> = ({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => {}} // Flash functionality placeholder
+              onClick={() => { }} // Flash functionality placeholder
               className="h-14 w-14 rounded-full p-0 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-200"
               disabled={isProcessing || isLoading || !!cameraError || showNoFoodDialog}
             >

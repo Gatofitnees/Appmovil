@@ -14,6 +14,7 @@ interface ExerciseSelectionHeaderProps {
   onMuscleFilterToggle: (muscle: string) => void;
   onEquipmentFilterToggle: (equipment: string) => void;
   onNavigateBack: () => void;
+  onClearFilters: () => void;
 }
 
 const ExerciseSelectionHeader: React.FC<ExerciseSelectionHeaderProps> = ({
@@ -26,6 +27,7 @@ const ExerciseSelectionHeader: React.FC<ExerciseSelectionHeaderProps> = ({
   onMuscleFilterToggle,
   onEquipmentFilterToggle,
   onNavigateBack,
+  onClearFilters,
 }) => {
   return (
     <div className="sticky top-0 z-10 bg-background p-4 border-b border-muted/20">
@@ -42,17 +44,18 @@ const ExerciseSelectionHeader: React.FC<ExerciseSelectionHeaderProps> = ({
 
       {/* Search and Filter */}
       <div className="flex items-center gap-2">
-        <ExerciseSearch 
+        <ExerciseSearch
           searchTerm={searchTerm}
           onSearchChange={onSearchChange}
         />
-        <ExerciseFilters 
+        <ExerciseFilters
           muscleGroups={muscleGroups}
           equipmentTypes={equipmentTypes}
           muscleFilters={muscleFilters}
           equipmentFilters={equipmentFilters}
           onMuscleFilterToggle={onMuscleFilterToggle}
           onEquipmentFilterToggle={onEquipmentFilterToggle}
+          onClearFilters={onClearFilters}
         />
       </div>
     </div>

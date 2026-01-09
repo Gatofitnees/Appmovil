@@ -13,6 +13,7 @@ interface AvatarUploadProps {
   onAvatarUpdate?: (newUrl: string) => void;
   size?: 'sm' | 'md' | 'lg';
   isPremium?: boolean;
+  isAsesorado?: boolean;
 }
 
 const AvatarUpload: React.FC<AvatarUploadProps> = ({
@@ -20,7 +21,8 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   userName,
   onAvatarUpdate,
   size = 'lg',
-  isPremium = false
+  isPremium = false,
+  isAsesorado = false
 }) => {
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -63,27 +65,28 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
     <div className="flex flex-col items-center space-y-3">
       <div className="relative">
         <Avatar className={cn(
-          sizeClasses[size], 
+          sizeClasses[size],
           "border-2",
-          isPremium ? "border-yellow-400/40" : "border-primary/20"
+          isAsesorado ? "border-red-500 shadow-lg shadow-red-500/20" :
+            isPremium ? "border-yellow-400 shadow-lg shadow-yellow-400/20" : "border border-black/10"
         )}>
           <AvatarImage src={currentAvatar || undefined} alt={userName || 'Avatar'} />
           <AvatarFallback className="text-lg font-bold">
             {userName?.charAt(0)?.toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
-        
+
         {isUploading && (
           <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
           </div>
         )}
 
-        {/* Premium Crown - Positioned at top-right corner, rotated 45 degrees */}
-        {isPremium && (
+        {/* Premium Crown - Positioned at top-right corner, rotated 45 degrees - Hidden if isAsesorado is true */}
+        {isPremium && !isAsesorado && (
           <div className="absolute -top-1 -right-1 z-10">
             <div className="relative">
-              <Crown 
+              <Crown
                 className={cn(
                   crownSizes[size],
                   "text-yellow-400 transform rotate-45 drop-shadow-lg"
@@ -93,7 +96,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
                 }}
               />
               {/* Subtle glow effect */}
-              <Crown 
+              <Crown
                 className={cn(
                   crownSizes[size],
                   "absolute top-0 left-0 text-yellow-300 transform rotate-45 opacity-60"
@@ -118,7 +121,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
           <ImageIcon className="h-4 w-4" />
           Galería
         </Button>
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -139,7 +142,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         onChange={handleFileSelect}
         className="hidden"
       />
-      
+
       <input
         ref={cameraInputRef}
         type="file"

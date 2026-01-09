@@ -1,0 +1,60 @@
+{
+	"appId": "com.gatofit.app",
+	"appName": "Gatofit",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	},
+	"plugins": {
+		"Camera": {
+			"permissions": [
+				"camera",
+				"photos"
+			]
+		},
+		"SplashScreen": {
+			"launchShowDuration": 2000,
+			"launchAutoHide": true,
+			"backgroundColor": "#000000",
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP",
+			"showSpinner": false,
+			"androidSpinnerStyle": "large",
+			"iosSpinnerStyle": "small",
+			"spinnerColor": "#999999",
+			"splashFullScreen": true,
+			"splashImmersive": true,
+			"layoutName": "launch_screen",
+			"useDialog": true
+		},
+		"GoogleAuth": {
+			"scopes": [
+				"profile",
+				"email"
+			],
+			"serverClientId": "175681669860-6r9ejdog30rsm6l5auge5bmdnrak4n6e.apps.googleusercontent.com",
+			"iosClientId": "175681669860-ionmff8fd0d0ob3iohoojtcvs34l7egp.apps.googleusercontent.com",
+			"forceCodeForRefreshToken": true
+		},
+		"AppleSignIn": {
+			"clientId": "com.gatofit.app",
+			"teamId": "9466F5H2BT",
+			"redirectURI": "https://mwgnpexeymgpzibnkiof.supabase.co/auth/v1/callback",
+			"scope": "email name"
+		},
+		"LocalNotifications": {
+			"smallIcon": "ic_stat_icon_config_sample",
+			"iconColor": "#3B82F6",
+			"sound": "default"
+		}
+	},
+	"android": {
+		"allowMixedContent": true,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": false
+	},
+	"ios": {
+		"contentInset": "never",
+		"scrollEnabled": false
+	}
+}

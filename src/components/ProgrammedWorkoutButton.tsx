@@ -20,15 +20,6 @@ const ProgrammedWorkoutButton: React.FC<ProgrammedWorkoutButtonProps> = ({
   const { activeProgram, loading, isCompletedForSelectedDate, isCurrentDay } = useActiveProgramUnified(selectedDate);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Log para debug
-  console.log('ProgrammedWorkoutButton state:', {
-    loading,
-    activeProgram,
-    routinesLength: activeProgram?.routines?.length,
-    selectedDate: selectedDate.toDateString(),
-    isCurrentDay
-  });
-
   // Don't show if loading
   if (loading) {
     return null;
@@ -62,29 +53,29 @@ const ProgrammedWorkoutButton: React.FC<ProgrammedWorkoutButtonProps> = ({
   };
 
   const getButtonIcon = () => {
-    if (isCompletedForSelectedDate) {
-      return <Check className="h-5 w-5" />;
-    }
-    
-    // Use apple-dumbbell icon for admin programs
+    // Original apple icon should persist for admin programs regardless of completion
     if (activeProgram?.type === 'admin') {
       return <i className="fi fi-sr-apple-dumbbell text-lg translate-y-0.5" />;
     }
-    
+
+    if (isCompletedForSelectedDate) {
+      return <Check className="h-5 w-5" />;
+    }
+
     return <Calendar className="h-5 w-5" />;
   };
 
   const getButtonStyle = () => {
-    if (isCompletedForSelectedDate) {
-      return "w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-neu-button border-2 border-green-500";
-    }
-    
-    // Red styling for admin programs
+    // Red styling for admin programs (always stays exactly the same)
     if (activeProgram?.type === 'admin') {
-      return "w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-neu-button";
+      return "w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-neu-button";
     }
-    
-    return "w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-neu-button";
+
+    if (isCompletedForSelectedDate) {
+      return "w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-neu-button border-2 border-green-500";
+    }
+
+    return "w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-neu-button";
   };
 
   return (
@@ -104,8 +95,6 @@ const ProgrammedWorkoutButton: React.FC<ProgrammedWorkoutButtonProps> = ({
         activeProgram={activeProgram}
         todayRoutines={activeProgram.routines}
         onStartRoutine={handleStartRoutine}
-        isCurrentDay={isCurrentDay}
-        isCompleted={isCompletedForSelectedDate}
         selectedDate={selectedDate}
         programType={activeProgram.type}
       />

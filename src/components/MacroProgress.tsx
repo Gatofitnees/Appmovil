@@ -28,7 +28,7 @@ const MacroProgress: React.FC<MacroProgressProps> = ({
 
   const colorClasses = {
     primary: "bg-[#2094F3]",
-    protein: "bg-[#dd6969]", 
+    protein: "bg-[#dd6969]",
     carbs: "bg-[#EB9F6D]",
     fat: "bg-[#6C95DC]"
   };
@@ -36,7 +36,7 @@ const MacroProgress: React.FC<MacroProgressProps> = ({
   const getIcon = () => {
     switch (icon) {
       case "calories":
-        return <FlatIcon name="ss-flame" style={{ color: '#2094F3' }} size={16} />;
+        return <img src="/flame.svg" alt="Calories" className="w-4 h-4 brightness-0 invert -translate-y-0.5" />;
       case "protein":
         return <FlatIcon name="sr-drumstick" style={{ color: '#dd6969' }} size={16} />;
       case "carbs":

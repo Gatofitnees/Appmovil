@@ -14,24 +14,24 @@ export const useMacroCalculations = () => {
   // Function to recalculate macros when relevant data changes
   const recalculateMacros = async (profileData: UserProfile): Promise<MacroRecommendations | null> => {
     console.log('Starting macro calculation with profile data:', profileData);
-    
+
     // Check if we have the minimum required data
-    if (!profileData.current_weight_kg || !profileData.height_cm || !profileData.date_of_birth) {
+    if (!profileData.current_weight_kg || !profileData.height_cm) {
       console.log('Missing required data for macro calculation:', {
         weight: profileData.current_weight_kg,
-        height: profileData.height_cm,
-        dob: profileData.date_of_birth
+        height: profileData.height_cm
       });
       return null;
     }
 
-    const age = calculateAge(profileData.date_of_birth);
-    
+    // Default age to 30 if dob is missing
+    const age = profileData.date_of_birth ? calculateAge(profileData.date_of_birth) : 30;
+
     try {
       // Provide safe defaults for potentially null values
       const safeGender = profileData.gender || 'male';
       const safeTrainings = profileData.trainings_per_week || 3;
-      
+
       // Handle target_pace with safe defaults
       let dbTargetPace = 'moderate'; // default
       if (profileData.target_pace) {

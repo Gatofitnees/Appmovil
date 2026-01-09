@@ -11,36 +11,40 @@ import { calculateOptimizedRecommendation } from "@/utils/macroCalculations";
 const InitialRecommendation: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("InitialRecommendation must be used within OnboardingContext");
   }
 
   const { data, updateData } = context;
-  const [isCalculating, setIsCalculating] = useState(true);
+  // Initialize loading based on whether we already have the data
+  const [isCalculating, setIsCalculating] = useState(!data.initial_recommended_calories);
   const [calculationError, setCalculationError] = useState(false);
 
   // Enhanced macro calculation with improved formula
   useEffect(() => {
+    // Only calculate if we don't have data yet
+    if (data.initial_recommended_calories) {
+      setIsCalculating(false);
+      return;
+    }
+
     const timer = setTimeout(async () => {
       try {
-        console.log('Starting macro calculation with data:', data);
         const calculatedRecommendation = calculateOptimizedRecommendation(data);
-        
-        console.log('Calculated recommendation:', calculatedRecommendation);
-        
+
         updateData({
           initial_recommended_calories: calculatedRecommendation.calories,
           initial_recommended_protein_g: calculatedRecommendation.protein,
           initial_recommended_carbs_g: calculatedRecommendation.carbs,
           initial_recommended_fats_g: calculatedRecommendation.fats
         });
-        
+
         setIsCalculating(false);
       } catch (error) {
         console.error('Error calculating recommendations:', error);
         setCalculationError(true);
-        
+
         // Fallback to basic calculations
         const fallbackRecommendation = {
           calories: 2000,
@@ -48,20 +52,20 @@ const InitialRecommendation: React.FC = () => {
           carbs: 200,
           fats: 65
         };
-        
+
         updateData({
           initial_recommended_calories: fallbackRecommendation.calories,
           initial_recommended_protein_g: fallbackRecommendation.protein,
           initial_recommended_carbs_g: fallbackRecommendation.carbs,
           initial_recommended_fats_g: fallbackRecommendation.fats
         });
-        
+
         setIsCalculating(false);
       }
     }, 1500);
-    
+
     return () => clearTimeout(timer);
-  }, [data, updateData]);
+  }, []);
 
   const handleNext = () => {
     navigate("/onboarding/features-preview");
@@ -81,11 +85,17 @@ const InitialRecommendation: React.FC = () => {
             carbs={data.initial_recommended_carbs_g || 200}
             fats={data.initial_recommended_fats_g || 65}
             trainingsPerWeek={data.trainingsPerWeek || 3}
+            onUpdate={(values) => updateData({
+              initial_recommended_calories: values.calories,
+              initial_recommended_protein_g: values.protein,
+              initial_recommended_carbs_g: values.carbs,
+              initial_recommended_fats_g: values.fats
+            })}
           />
         )}
       </div>
 
-      <OnboardingNavigation 
+      <OnboardingNavigation
         onNext={handleNext}
         nextDisabled={isCalculating}
       />

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { CoachBranding, DEFAULT_GATOFIT_BRANDING } from '@/types/branding';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCoachBranding = () => {
+  const { user } = useAuth();
   const [branding, setBranding] = useState<CoachBranding>(DEFAULT_GATOFIT_BRANDING);
   const [loading, setLoading] = useState(true);
 
@@ -14,7 +16,7 @@ export const useCoachBranding = () => {
           .select('company_name, banner_image_url, logo_image_url, ranking_image_url, primary_button_color, primary_button_fill_color')
           .eq('email', 'menasebas2006@gmail.com')
           .maybeSingle();
-        
+
         if (data) {
           return {
             companyName: data.company_name || DEFAULT_GATOFIT_BRANDING.companyName,
@@ -34,8 +36,6 @@ export const useCoachBranding = () => {
 
     const fetchCoachBranding = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
         if (!user) {
           const superadminBranding = await fetchSuperadminBranding();
           setBranding(superadminBranding);
@@ -48,7 +48,7 @@ export const useCoachBranding = () => {
           .from('admin_users')
           .select('company_name, banner_image_url, logo_image_url, ranking_image_url, primary_button_color, primary_button_fill_color')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (isCoach) {
           // Usuario es un coach, usar su propio branding
@@ -112,7 +112,7 @@ export const useCoachBranding = () => {
     };
 
     fetchCoachBranding();
-  }, []);
+  }, [user]);
 
   return { branding, loading };
 };

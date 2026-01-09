@@ -11,14 +11,16 @@ import AccountForm from "@/components/onboarding/auth/AccountForm";
 import AuthButtons from "@/components/onboarding/auth/AuthButtons";
 import BackButton from "@/components/onboarding/auth/BackButton";
 import useAuthForm from "@/hooks/useAuthForm";
+import { usePlatform } from "@/hooks/usePlatform";
 
 const CreateAccount: React.FC = () => {
   const navigate = useNavigate();
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUp, signInWithGoogle, signInWithApple } = useAuth();
   const context = useContext(OnboardingContext);
   const { saveOnboardingToProfile, markGoogleAuthPending, saveOnboardingData } = useOnboardingPersistence();
+  const { isIOS } = usePlatform();
 
-  const { 
+  const {
     email, setEmail,
     password, setPassword,
     confirmPassword, setConfirmPassword,
@@ -38,6 +40,8 @@ const CreateAccount: React.FC = () => {
       return null;
     }
   });
+
+  const [appleLoading, setAppleLoading] = React.useState(false);
 
   if (!context) {
     throw new Error("CreateAccount must be used within OnboardingContext");
@@ -65,12 +69,12 @@ const CreateAccount: React.FC = () => {
 
     try {
       console.log('Starting email signup with data:', context.data);
-      
+
       // Save onboarding data before signup attempt
       saveOnboardingData(context.data);
-      
+
       const { error, data } = await signUp(email, password);
-      
+
       if (error) {
         if (error.message.includes("rate limit exceeded")) {
           setError("Has alcanzado el límite de envío de correos. Intenta de nuevo más tarde o utiliza Google para registrarte.");
@@ -79,7 +83,7 @@ const CreateAccount: React.FC = () => {
         }
       } else {
         console.log('Email signup successful, saving onboarding data...');
-        
+
         // Save onboarding data to profile after successful signup
         setTimeout(async () => {
           try {
@@ -89,7 +93,7 @@ const CreateAccount: React.FC = () => {
             console.error('Error saving onboarding data after email signup:', saveError);
           }
         }, 1000);
-        
+
         toast.success({
           title: "¡Cuenta creada!",
           description: "Te hemos enviado un email de verificación"
@@ -107,30 +111,81 @@ const CreateAccount: React.FC = () => {
   const handleGoogleSignUp = async () => {
     setError(null);
     setGoogleLoading(true);
-    
+
     try {
       console.log('Starting Google signup with data:', context.data);
-      
+
       // CRITICAL: Save onboarding data before Google Auth
       // This prevents data loss when localStorage is reset during OAuth flow
       markGoogleAuthPending(context.data);
       saveOnboardingData(context.data);
-      
+
       console.log('Onboarding data saved before Google auth, initiating OAuth...');
-      
+
       const { error } = await signInWithGoogle();
-      
+
       if (error) {
         console.error('Google auth error:', error);
-        setError("Error al iniciar sesión con Google: " + error.message);
+        const errorMsg = error.message || 'Error desconocido';
+        setError("Error al iniciar sesión con Google: " + errorMsg);
         setGoogleLoading(false);
+
+        // Log detailed error for debugging
+        console.error('Google auth error details:', {
+          message: error.message,
+          code: (error as any).code,
+          status: (error as any).status,
+          name: (error as any).name,
+        });
+      } else {
+        // Success - navigate to app transition screen
+        console.log('Google auth successful, navigating to app transition...');
+        navigate("/onboarding/app-transition");
       }
-      // Note: Don't set googleLoading to false here if successful,
-      // as the redirect to Google's auth page will happen automatically
     } catch (err: any) {
       console.error('Unexpected error during Google auth:', err);
       setError(err.message || "Error al iniciar sesión con Google");
       setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignUp = async () => {
+    setError(null);
+    setAppleLoading(true);
+
+    try {
+      console.log('Starting Apple signup with data:', context.data);
+
+      // Save onboarding data before Apple Auth
+      markGoogleAuthPending(context.data);
+      saveOnboardingData(context.data);
+
+      console.log('Onboarding data saved before Apple auth, initiating OAuth...');
+
+      const { error } = await signInWithApple();
+
+      if (error) {
+        console.error('Apple auth error:', error);
+        const errorMsg = error.message || 'Error desconocido';
+        setError("Error al iniciar sesión con Apple: " + errorMsg);
+        setAppleLoading(false);
+
+        // Log detailed error for debugging
+        console.error('Apple auth error details:', {
+          message: error.message,
+          code: (error as any).code,
+          status: (error as any).status,
+          name: (error as any).name,
+        });
+      } else {
+        // Success - navigate to app transition screen
+        console.log('Apple auth successful, navigating to app transition...');
+        navigate("/onboarding/app-transition");
+      }
+    } catch (err: any) {
+      console.error('Unexpected error during Apple auth:', err);
+      setError(err.message || "Error al iniciar sesión con Apple");
+      setAppleLoading(false);
     }
   };
 
@@ -147,12 +202,12 @@ const CreateAccount: React.FC = () => {
       <h1 className="text-2xl font-bold mb-2">
         Crea tu Cuenta <GatofitAILogo size="lg" className="inline-block" />
       </h1>
-      
+
       <p className="text-muted-foreground mb-6">
         Un paso más para comenzar tu viaje fitness
       </p>
 
-      <AccountForm 
+      <AccountForm
         email={email}
         setEmail={setEmail}
         password={password}
@@ -169,16 +224,20 @@ const CreateAccount: React.FC = () => {
         showTermsAgreement={true}
       />
 
-      <AuthButtons 
+      <AuthButtons
         handleCreateAccount={handleCreateAccount}
         handleGoogleSignUp={handleGoogleSignUp}
+        handleAppleSignUp={handleAppleSignUp}
         handleLogin={handleLogin}
         loading={loading}
         googleLoading={googleLoading}
+        appleLoading={appleLoading}
         isDisabled={!email || !password || !confirmPassword || !agreedToTerms}
       />
 
-      <BackButton onBack={handleBack} />
+      <div className="pb-10">
+        <BackButton onBack={handleBack} />
+      </div>
     </OnboardingLayout>
   );
 };

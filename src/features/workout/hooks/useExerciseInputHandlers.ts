@@ -22,17 +22,17 @@ export function useExerciseInputHandlers(
     // Parse value with improved decimal support for weight
     const parseValue = (val: string, isWeight: boolean) => {
       if (val === '') return null;
-      
+
       if (isWeight) {
         // For weight, allow trailing dots and preserve them during input
         const normalizedVal = val.replace(',', '.');
-        
+
         // If the value ends with a dot and it's a valid decimal start, keep it as string
         if (normalizedVal.endsWith('.') && /^\d+\.$/.test(normalizedVal)) {
           console.log(`Keeping trailing dot for weight input: "${val}" -> "${normalizedVal}"`);
           return normalizedVal; // Return as string to preserve the dot
         }
-        
+
         // If it's a valid decimal number, parse it
         if (/^\d*\.?\d*$/.test(normalizedVal) && normalizedVal !== '.') {
           const numValue = parseFloat(normalizedVal);
@@ -41,7 +41,7 @@ export function useExerciseInputHandlers(
             return numValue;
           }
         }
-        
+
         return null;
       } else {
         // For reps, only integers
@@ -61,8 +61,8 @@ export function useExerciseInputHandlers(
       // Use base exercise update function
       const updateExercise = (prev: WorkoutExercise) => ({
         ...prev,
-        sets: prev.sets.map((set, i) => 
-          i === setIndex 
+        sets: prev.sets.map((set, i) =>
+          i === setIndex
             ? { ...set, [field]: parsedValue }
             : set
         )
@@ -88,7 +88,7 @@ export function useExerciseInputHandlers(
       const updateExercise = (prev: WorkoutExercise) => {
         const newSetNumber = prev.sets.length + 1;
         const lastSet = prev.sets[prev.sets.length - 1];
-        
+
         const newSet = {
           set_number: newSetNumber,
           weight: null,
@@ -97,7 +97,8 @@ export function useExerciseInputHandlers(
           previous_weight: null,
           previous_reps: null,
           target_reps_min: lastSet?.target_reps_min,
-          target_reps_max: lastSet?.target_reps_max
+          target_reps_max: lastSet?.target_reps_max,
+          target_reps_range: lastSet?.target_reps_range
         };
 
         return {

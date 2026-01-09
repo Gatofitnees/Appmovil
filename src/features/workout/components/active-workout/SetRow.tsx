@@ -11,6 +11,7 @@ interface WorkoutSet {
   previous_reps: number | null;
   target_reps_min?: number;
   target_reps_max?: number;
+  target_reps_range?: string;
 }
 
 interface SetRowProps {
@@ -20,14 +21,20 @@ interface SetRowProps {
   onInputChange: (exerciseIndex: number, setIndex: number, field: 'weight' | 'reps', value: string) => void;
 }
 
-export const SetRow: React.FC<SetRowProps> = ({ 
-  set, 
-  exerciseIndex, 
-  setIndex, 
-  onInputChange 
+export const SetRow: React.FC<SetRowProps> = ({
+  set,
+  exerciseIndex,
+  setIndex,
+  onInputChange
 }) => {
   // Generate target reps placeholder text
   const getTargetRepsPlaceholder = () => {
+    // Prioritize reps_range if available (e.g., "4-6-8")
+    if (set.target_reps_range) {
+      return set.target_reps_range;
+    }
+
+    // Otherwise, build from min-max
     if (set.target_reps_min && set.target_reps_max) {
       if (set.target_reps_min === set.target_reps_max) {
         return set.target_reps_min.toString();
@@ -41,12 +48,12 @@ export const SetRow: React.FC<SetRowProps> = ({
   // Format weight display with proper decimal formatting
   const formatWeightDisplay = (weight: number | string | null) => {
     if (weight === null) return '';
-    
+
     // If it's a string (like "12."), return as is to preserve trailing dots
     if (typeof weight === 'string') {
       return weight;
     }
-    
+
     // If it's a number, format it properly
     if (typeof weight === 'number') {
       // Show decimals only if they're not zero
@@ -56,7 +63,7 @@ export const SetRow: React.FC<SetRowProps> = ({
         return weight.toFixed(1); // Show only 1 decimal place
       }
     }
-    
+
     return '';
   };
 
@@ -66,9 +73,9 @@ export const SetRow: React.FC<SetRowProps> = ({
       weight: set.previous_weight,
       reps: set.previous_reps
     });
-    
+
     if (set.previous_weight !== null && set.previous_reps !== null) {
-      const formattedWeight = typeof set.previous_weight === 'number' 
+      const formattedWeight = typeof set.previous_weight === 'number'
         ? (set.previous_weight % 1 === 0 ? set.previous_weight.toString() : set.previous_weight.toFixed(1))
         : set.previous_weight;
       return `${formattedWeight}kg × ${set.previous_reps}`;
@@ -85,12 +92,12 @@ export const SetRow: React.FC<SetRowProps> = ({
             {set.set_number}
           </div>
         </div>
-        
+
         {/* Anterior column */}
         <div className="text-xs text-muted-foreground flex items-center">
           {formatPreviousData()}
         </div>
-        
+
         {/* Peso column - with decimal support (max 1 decimal) */}
         <div>
           <NumericInput
@@ -102,7 +109,7 @@ export const SetRow: React.FC<SetRowProps> = ({
             maxDecimals={1}
           />
         </div>
-        
+
         {/* Reps column with target reps as placeholder */}
         <div>
           <NumericInput

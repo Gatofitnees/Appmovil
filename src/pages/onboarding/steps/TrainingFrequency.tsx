@@ -10,7 +10,7 @@ import { OnboardingContext } from "../OnboardingFlow";
 const TrainingFrequency: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("TrainingFrequency must be used within OnboardingContext");
   }
@@ -40,7 +40,7 @@ const TrainingFrequency: React.FC = () => {
           onValueChange={handleChange}
           className="my-12"
         />
-        
+
         <div className="flex justify-between text-xs text-muted-foreground mb-2">
           <span>0 días</span>
           <span>7 días</span>
@@ -49,14 +49,14 @@ const TrainingFrequency: React.FC = () => {
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="w-full bg-secondary/20 rounded-xl neu-card p-6 text-center mt-8"
+          className="w-full bg-secondary/20 border border-white/5 rounded-xl p-6 text-center mt-8 shadow-sm backdrop-blur-sm"
         >
-          <span className="text-5xl font-bold text-primary mb-2 block">
+          <span className="text-6xl font-bold text-primary mb-2 block tracking-tight">
             {data.trainingsPerWeek}
           </span>
-          <span className="small text-muted-foreground">
-            {data.trainingsPerWeek === 1 
-              ? "día a la semana" 
+          <span className="text-base text-muted-foreground font-medium">
+            {data.trainingsPerWeek === 1
+              ? "día a la semana"
               : "días a la semana"}
           </span>
         </motion.div>

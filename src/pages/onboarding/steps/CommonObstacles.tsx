@@ -27,7 +27,7 @@ const OBSTACLES = [
 const CommonObstacles: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("CommonObstacles must be used within OnboardingContext");
   }
@@ -37,13 +37,13 @@ const CommonObstacles: React.FC = () => {
   const toggleObstacle = (obstacleId: string) => {
     const currentObstacles = [...data.obstacles];
     const index = currentObstacles.indexOf(obstacleId);
-    
+
     if (index === -1) {
       currentObstacles.push(obstacleId);
     } else {
       currentObstacles.splice(index, 1);
     }
-    
+
     updateData({ obstacles: currentObstacles });
   };
 
@@ -56,7 +56,7 @@ const CommonObstacles: React.FC = () => {
       <h1 className="text-2xl font-bold mb-4">
         ¿Qué suele detenerte para alcanzar tus metas?
       </h1>
-      
+
       <p className="text-muted-foreground mb-8">
         Selecciona todos los que apliquen
       </p>
@@ -65,7 +65,7 @@ const CommonObstacles: React.FC = () => {
         {OBSTACLES.map((obstacle) => (
           <div
             key={obstacle.id}
-            className="flex items-center space-x-3 rounded-lg p-3 bg-secondary/20 hover:bg-secondary/30 transition-colors cursor-pointer"
+            className="flex items-center space-x-3 rounded-lg p-3 bg-secondary/20 border border-white/5 hover:bg-secondary/30 transition-colors cursor-pointer"
             onClick={() => toggleObstacle(obstacle.id.toString())}
           >
             <div className={`w-6 h-6 rounded-md flex items-center justify-center ${data.obstacles.includes(obstacle.id.toString()) ? 'bg-primary' : 'bg-secondary/50 border border-muted'}`}>
@@ -81,7 +81,7 @@ const CommonObstacles: React.FC = () => {
         ))}
       </div>
 
-      <OnboardingNavigation 
+      <OnboardingNavigation
         onNext={handleNext}
         nextDisabled={data.obstacles.length === 0}
       />

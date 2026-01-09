@@ -17,6 +17,7 @@ interface ExerciseDetail {
   sets: number;
   reps_min: number;
   reps_max: number;
+  reps_range?: string;
   rest_between_sets_seconds: number;
   muscle_group_main?: string;
   equipment_required?: string;
@@ -48,7 +49,7 @@ export const useRoutineDetail = (routineId: number | undefined) => {
     const fetchRoutineDetails = async () => {
       try {
         console.log('🏃‍♂️ Fetching routine details for routineId:', routineId);
-        
+
         // Fetch routine details
         const { data: routineData, error: routineError } = await supabase
           .from('routines')
@@ -83,6 +84,7 @@ export const useRoutineDetail = (routineId: number | undefined) => {
             sets,
             reps_min,
             reps_max,
+            reps_range,
             rest_between_sets_seconds,
             exercise_id,
             exercise_order,
@@ -119,12 +121,13 @@ export const useRoutineDetail = (routineId: number | undefined) => {
               sets: ex.sets || 0,
               reps_min: ex.reps_min || 0,
               reps_max: ex.reps_max || 0,
+              reps_range: ex.reps_range,
               rest_between_sets_seconds: ex.rest_between_sets_seconds || 60,
               muscle_group_main: ex.exercises?.muscle_group_main,
               equipment_required: ex.exercises?.equipment_required,
               notes: ex.notes || ""
             };
-            
+
             console.log('🔄 Formatted exercise:', formatted);
             return formatted;
           });
@@ -152,15 +155,15 @@ export const useRoutineDetail = (routineId: number | undefined) => {
 
   const handleStartWorkout = async () => {
     if (!routine) return;
-    
+
     setStartingWorkout(true);
-    
+
     try {
       console.log('🚀 Starting workout for routine:', routine.id);
-      
+
       // Navigate to active workout page
       navigate(`/workout/active/${routine.id}`);
-      
+
       toast({
         title: "¡Entrenamiento iniciado!",
         description: `Has comenzado la rutina ${routine.name}`,

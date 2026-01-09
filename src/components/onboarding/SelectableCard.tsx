@@ -26,8 +26,10 @@ const SelectableCard: React.FC<SelectableCardProps> = ({
       whileTap={{ scale: 0.98 }}
       onClick={onSelect}
       className={cn(
-        "p-4 rounded-xl cursor-pointer transition-all duration-200",
-        selected ? "bg-primary/10 neu-button-active" : "bg-secondary/20 neu-button",
+        "p-4 rounded-xl cursor-pointer transition-all duration-200 border",
+        selected
+          ? "bg-primary/10 border-primary"
+          : "bg-secondary/20 border-white/5 hover:bg-secondary/30",
         className
       )}
     >

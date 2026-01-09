@@ -52,20 +52,23 @@ const AddFoodMenu: React.FC<AddFoodMenuProps> = ({ onCameraClick, selectedDate }
   };
 
   return (
-    <div className="fixed right-4 bottom-20 z-30">
+    <div
+      className="fixed right-4 z-50"
+      style={{ bottom: 'calc(6rem + var(--safe-area-inset-bottom))' }}
+    >
       {/* Background overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm -z-10"
           onClick={() => setIsOpen(false)}
         />
       )}
-      
+
       {/* Action buttons */}
       <div className="flex flex-col items-center gap-3 mb-4">
         {/* Nutrition Program button */}
         {!loading && hasNutritionPlan && (
-          <div 
+          <div
             className={cn(
               "transition-all duration-300 transform",
               isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-4 opacity-0 scale-95 pointer-events-none"
@@ -88,7 +91,7 @@ const AddFoodMenu: React.FC<AddFoodMenuProps> = ({ onCameraClick, selectedDate }
         )}
 
         {/* Search Food button */}
-        <div 
+        <div
           className={cn(
             "transition-all duration-300 transform",
             isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-4 opacity-0 scale-95 pointer-events-none"
@@ -110,7 +113,7 @@ const AddFoodMenu: React.FC<AddFoodMenuProps> = ({ onCameraClick, selectedDate }
         </div>
 
         {/* Camera Scan button */}
-        <div 
+        <div
           className={cn(
             "transition-all duration-300 transform",
             isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-4 opacity-0 scale-95 pointer-events-none"
@@ -137,7 +140,7 @@ const AddFoodMenu: React.FC<AddFoodMenuProps> = ({ onCameraClick, selectedDate }
         onClick={toggleMenu}
         className={cn(
           "flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-300 text-white",
-          isOpen 
+          isOpen
             ? !branding.hasCoach && "bg-red-500 hover:bg-red-600 rotate-45"
             : !branding.hasCoach && "bg-blue-500 hover:bg-blue-600 hover:scale-110",
           isOpen && "rotate-45",

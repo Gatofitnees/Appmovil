@@ -24,7 +24,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/onboarding/welcome" state={{ from: location }} replace />;
   }
 
-  return <Fragment>{children}</Fragment>;
+  return <div>{children}</div>;
 };
 
 export default ProtectedRoute;

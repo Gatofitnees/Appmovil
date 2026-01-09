@@ -1,7 +1,7 @@
 
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { motion } from "framer-motion";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import OnboardingNavigation from "@/components/onboarding/OnboardingNavigation";
@@ -10,7 +10,7 @@ import { OnboardingContext } from "../OnboardingFlow";
 const GoalRealism: React.FC = () => {
   const navigate = useNavigate();
   const context = useContext(OnboardingContext);
-  
+
   if (!context) {
     throw new Error("GoalRealism must be used within OnboardingContext");
   }
@@ -21,65 +21,111 @@ const GoalRealism: React.FC = () => {
     navigate("/onboarding/desired-pace");
   };
 
-  // Evaluate if the goal is realistic
-  const weightDiff = data.targetWeight && data.weight 
+  // Evaluate goal difficulty
+  const weightDiff = data.targetWeight && data.weight
     ? Math.abs(data.targetWeight - data.weight)
     : 0;
-  
-  const isRealistic = weightDiff < 30; // Simplified check for demo
 
-  const getMessage = () => {
-    if (!data.targetWeight || !data.weight) {
-      return "Analizando tu objetivo...";
-    }
-    
-    if (data.mainGoal === "maintain_weight") {
-      return "¡Mantener tu peso actual es un objetivo perfectamente realista!";
-    }
-    
-    const targetText = data.targetWeight > data.weight
-      ? `Ganar ${weightDiff.toFixed(1)} ${data.weightUnit}`
-      : `Perder ${weightDiff.toFixed(1)} ${data.weightUnit}`;
-    
-    if (isRealistic) {
-      return `¡Genial! ${targetText} es un objetivo muy realista.`;
+  const getDifficulty = () => {
+    if (data.mainGoal === "maintain_weight") return "easy";
+    if (weightDiff <= 3) return "easy";
+    if (weightDiff <= 8) return "moderate";
+    return "hard";
+  };
+
+  const difficulty = getDifficulty();
+
+  const getContent = () => {
+    const action = data.targetWeight && data.weight && data.targetWeight > data.weight ? "Ganar" : "Perder";
+    const diffText = `${weightDiff.toFixed(1)} ${data.weightUnit || 'kg'}`;
+
+    if (difficulty === "hard") {
+      return {
+        title: "¡Wow! Es un gran desafío",
+        description: "Uy está duro, pero sé que con constancia y el plan adecuado lo vamos a conseguir."
+      };
+    } else if (difficulty === "moderate") {
+      return {
+        title: `¡Genial! ${action} ${diffText} es realista`,
+        description: "Es un reto estimulante, pero con nuestra ayuda lo lograrás sin problemas."
+      };
     } else {
-      return `Es un objetivo ambicioso, ¡te ayudaremos a ajustarlo si es necesario!`;
+      return {
+        title: "¡Objetivo muy alcanzable!",
+        description: data.mainGoal === "maintain_weight"
+          ? "Mantenerte en forma es una excelente decisión para tu salud."
+          : `Es un paso seguro. ${action} ${diffText} será pan comido para ti.`
+      };
     }
   };
 
-  return (
-    <OnboardingLayout currentStep={10} totalSteps={20}>
-      <div className="flex-1 flex flex-col items-center justify-center text-center min-h-[calc(100vh-200px)]">
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
-          {isRealistic ? (
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-              <CheckCircle2 className="h-16 w-16 text-primary" />
-            </div>
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-yellow-500/10 flex items-center justify-center">
-              <svg className="h-16 w-16 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-          )}
-        </motion.div>
+  const content = getContent();
 
-        <h1 className="text-2xl font-bold mb-4">
-          {getMessage()}
+  return (
+    <OnboardingLayout currentStep={10} totalSteps={20} className="justify-center items-center text-center">
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{
+          type: "spring",
+          stiffness: 260,
+          damping: 20,
+          duration: 0.6
+        }}
+        className="mb-8 w-full flex justify-center"
+      >
+        <div className="relative w-32 h-32 flex items-center justify-center">
+          {/* Pulse effect for emphasis */}
+          <div className={`absolute inset-0 rounded-full ${difficulty === 'hard' ? 'animate-pulse-ring bg-primary/20' : 'bg-transparent'}`} />
+
+          {/* Particle Effects */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+            {[...Array(12)].map((_, i) => {
+              const angle = (i * 30) * (Math.PI / 180);
+              const radius = 80 + Math.random() * 40;
+              return (
+                <motion.div
+                  key={i}
+                  className={`absolute w-1.5 h-1.5 rounded-full ${difficulty === 'hard' ? 'bg-primary' : 'bg-sky-400'}`}
+                  initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+                  animate={{
+                    opacity: [0, 1, 0],
+                    scale: [0, 1.5, 0],
+                    x: Math.cos(angle) * radius,
+                    y: Math.sin(angle) * radius,
+                  }}
+                  transition={{
+                    duration: 1.2,
+                    ease: "easeOut",
+                    delay: 0.2 + Math.random() * 0.1
+                  }}
+                />
+              );
+            })}
+          </div>
+
+          <div className={`w-32 h-32 rounded-full flex items-center justify-center relative z-10 
+            ${difficulty === 'hard' ? 'bg-primary shadow-[0_0_30px_rgba(59,130,246,0.6)]' : 'bg-primary/10'}`}>
+            <Check strokeWidth={4} className={`h-16 w-16 ${difficulty === 'hard' ? 'text-white' : 'text-primary'}`} />
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <h1 className="text-3xl font-bold mb-6 px-4">
+          {content.title}
         </h1>
 
-        <p className="text-muted-foreground">
-          Con constancia y el plan adecuado, lo conseguirás.
+        <p className="text-lg text-muted-foreground mb-12 max-w-xs mx-auto leading-relaxed">
+          {content.description}
         </p>
-      </div>
+      </motion.div>
 
-      <OnboardingNavigation onNext={handleNext} />
+      <OnboardingNavigation onNext={handleNext} className="w-full max-w-md" />
     </OnboardingLayout>
   );
 };

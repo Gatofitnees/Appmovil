@@ -31,13 +31,13 @@ export function useRoutineForm(
   const handleAddSet = useCallback((exerciseIndex: number) => {
     const updatedExercises = [...routineExercises];
     const lastSet = updatedExercises[exerciseIndex].sets[updatedExercises[exerciseIndex].sets.length - 1];
-    
+
     updatedExercises[exerciseIndex].sets.push({
       reps_min: lastSet.reps_min,
       reps_max: lastSet.reps_max,
       rest_seconds: lastSet.rest_seconds
     });
-    
+
     setRoutineExercises(updatedExercises);
   }, [routineExercises, setRoutineExercises]);
 
@@ -58,6 +58,22 @@ export function useRoutineForm(
     setRoutineExercises(updatedExercises);
   }, [routineExercises, setRoutineExercises]);
 
+  // Remove a set from an exercise
+  const handleRemoveSet = useCallback((exerciseIndex: number, setIndex: number) => {
+    const updatedExercises = [...routineExercises];
+
+    // Safety check
+    if (!updatedExercises[exerciseIndex] || !updatedExercises[exerciseIndex].sets[setIndex]) return;
+
+    // Prevent removing the last set if desired, or handle empty sets case?
+    // User wants to remove sets. If it's the last set, removing it leaves 0 sets.
+    // That's acceptable for now, or we can enforce min 1 set.
+    // Let's allow removing any set.
+
+    updatedExercises[exerciseIndex].sets.splice(setIndex, 1);
+    setRoutineExercises(updatedExercises);
+  }, [routineExercises, setRoutineExercises]);
+
   // Move an exercise to a different position
   const handleMoveExercise = useCallback((fromIndex: number, toIndex: number) => {
     const updatedExercises = [...routineExercises];
@@ -72,6 +88,15 @@ export function useRoutineForm(
     handleAddSet,
     handleSetUpdate,
     handleRemoveExercise,
-    handleMoveExercise
+    handleRemoveSet,
+    handleMoveExercise,
+    handleNotesUpdate: useCallback((exerciseIndex: number, notes: string) => {
+      const updatedExercises = [...routineExercises];
+      updatedExercises[exerciseIndex] = {
+        ...updatedExercises[exerciseIndex],
+        notes
+      };
+      setRoutineExercises(updatedExercises);
+    }, [routineExercises, setRoutineExercises])
   };
 }

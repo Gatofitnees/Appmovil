@@ -14,16 +14,16 @@ const AIChatPage: React.FC = () => {
   const navigate = useNavigate();
   const { isPremium } = useSubscription();
   const { usage, fetchUsage } = useUsageLimits();
-  const { 
-    messages, 
-    isLoading, 
-    sendMessage, 
+  const {
+    messages,
+    isLoading,
+    sendMessage,
     clearMessages,
     showPremiumModal,
     setShowPremiumModal,
     getAIChatUsageInfo
   } = useAIChatWithLimits();
-  
+
   const [inputValue, setInputValue] = useState('');
   const [usageInfo, setUsageInfo] = useState({ current: 0, limit: 3, canSend: true, isOverLimit: false });
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -40,15 +40,15 @@ const AIChatPage: React.FC = () => {
       setUsageInfo(info);
       console.log('📊 [AI CHAT PAGE] Usage info loaded:', info);
     };
-    
+
     loadUsageInfo();
   }, []);
 
   useEffect(() => {
     const handleResize = () => {
-      const isKeyboardOpen = window.visualViewport && 
+      const isKeyboardOpen = window.visualViewport &&
         window.visualViewport.height < window.innerHeight * 0.75;
-      
+
       if (chatContentRef.current) {
         if (isKeyboardOpen && window.visualViewport) {
           const keyboardHeight = window.innerHeight - window.visualViewport.height;
@@ -75,14 +75,14 @@ const AIChatPage: React.FC = () => {
 
   const handleSend = async () => {
     if (!inputValue.trim() || isLoading) return;
-    
+
     const message = inputValue;
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
     setInputValue('');
     await sendMessage(message);
-    
+
     // Actualizar información de uso después de enviar mensaje
     const updatedInfo = await getAIChatUsageInfo();
     setUsageInfo(updatedInfo);
@@ -92,7 +92,7 @@ const AIChatPage: React.FC = () => {
   const handleButtonClick = async (buttonText: string) => {
     if (isLoading) return;
     await sendMessage(buttonText);
-    
+
     // Actualizar información de uso después de enviar mensaje
     const updatedInfo = await getAIChatUsageInfo();
     setUsageInfo(updatedInfo);
@@ -105,8 +105,11 @@ const AIChatPage: React.FC = () => {
   return (
     <div className="h-[100dvh] bg-background flex flex-col max-w-md mx-auto relative overflow-hidden">
       {/* Header con banner de límites integrado */}
-      <div className="flex-shrink-0 z-20 relative">
-        <AIChatHeader 
+      <div
+        className="flex-shrink-0 z-20 relative bg-background"
+        style={{ marginTop: 'max(var(--safe-area-inset-top), 50px)' }}
+      >
+        <AIChatHeader
           onBack={handleBack}
           onClear={clearMessages}
           hasMessages={messages.length > 0}
@@ -125,7 +128,7 @@ const AIChatPage: React.FC = () => {
           {messages.length === 0 ? (
             <AIWelcomeScreen />
           ) : (
-            <AIMessageList 
+            <AIMessageList
               messages={messages}
               isLoading={isLoading}
               onButtonClick={handleButtonClick}
@@ -136,9 +139,9 @@ const AIChatPage: React.FC = () => {
       </div>
 
       {/* Input fijo en la parte inferior */}
-      <div 
+      <div
         className="flex-shrink-0 bg-background border-t border-muted/20 z-20"
-        style={{ 
+        style={{
           paddingBottom: 'max(0.5rem, var(--safe-area-inset-bottom, 0px))',
           paddingLeft: 'max(0.5rem, var(--safe-area-inset-left, 0px))',
           paddingRight: 'max(0.5rem, var(--safe-area-inset-right, 0px))',

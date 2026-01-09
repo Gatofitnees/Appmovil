@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Gatofit</string>
+    <string name="title_activity_main">Gatofit</string>
+    <string name="package_name">com.gatofit.app</string>
+    <string name="custom_url_scheme">com.gatofit.app</string>
+    <!-- Google Sign-In: Server Client ID (Web client) para autenticación con backend -->
+    <string name="server_client_id">175681669860-6r9ejdog30rsm6l5auge5bmdnrak4n6e.apps.googleusercontent.com</string>
+</resources>
