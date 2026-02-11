@@ -3,21 +3,21 @@ import { getImageExtension } from '@/utils/imageUtils';
 
 export const sendToWebhook = async (imageUrl: string, imageBlob: Blob) => {
   try {
-    console.log('Sending image to webhook...', { 
-      imageUrl, 
+    console.log('Sending image to webhook...', {
+      imageUrl,
       blobSize: imageBlob.size,
       mimeType: imageBlob.type || 'unknown'
     });
-    
+
     const formData = new FormData();
     formData.append('imageUrl', imageUrl);
-    
+
     // Use original image format
     const extension = getImageExtension(imageBlob);
     formData.append('image', imageBlob, `food-image.${extension}`);
     formData.append('timestamp', new Date().toISOString());
-    
-    const response = await fetch('https://paneln8n.gatofit.com/webhook/e39f095b-fb33-4ce3-b41a-619a650149f5', {
+
+    const response = await fetch('https://n8n.gatofit.com/webhook/escaner-de-comida', {
       method: 'POST',
       mode: 'no-cors', // Handle CORS issues
       body: formData,

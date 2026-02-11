@@ -33,6 +33,20 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
         if (user) {
             setIsLoading(true);
             fetchSubscriptionData();
+
+            // Listen for IAP events to refresh data immediately
+            const handlePurchaseUpdate = () => {
+                console.log('🔄 SubscriptionContext: Refreshing data due to purchase/restore');
+                fetchSubscriptionData();
+            };
+
+            window.addEventListener('iap:purchase-success', handlePurchaseUpdate);
+            window.addEventListener('iap:subscription-restored', handlePurchaseUpdate);
+
+            return () => {
+                window.removeEventListener('iap:purchase-success', handlePurchaseUpdate);
+                window.removeEventListener('iap:subscription-restored', handlePurchaseUpdate);
+            };
         } else {
             setSubscription(null);
             setIsPremium(false);
@@ -81,7 +95,30 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
                 }
 
                 setIsAsesorado(isActiveAsesorado);
-                setIsPremium((planType === 'monthly' || planType === 'yearly' || isActiveAsesorado) && data.status === 'active');
+
+                // STRICT EXPIRATION CHECK:
+                // Even if status is 'active', we must verify the expiration date.
+                // This handles cancelled trials where the webhook might be delayed or if status wasn't updated.
+                const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
+                const isExpired = expiresAt && expiresAt < new Date();
+
+                const isValidStatus = data.status === 'active' || data.status === 'trialing';
+                const hasValidPlan = planType === 'monthly' || planType === 'yearly' || isActiveAsesorado;
+
+                // User is premium ONLY if:
+                // 1. Has valid plan/status
+                // 2. AND is NOT expired (or has no expiration date set, assuming lifetime/auto-renew without date yet)
+                const newIsPremium = hasValidPlan && isValidStatus && !isExpired;
+
+                console.log('🔄 SubscriptionContext: Premium Check', {
+                    newIsPremium,
+                    planType,
+                    status: data.status,
+                    expiresAt: data.expires_at,
+                    isExpired
+                });
+
+                setIsPremium(newIsPremium);
             } else {
                 // If no subscription record, still check coach assignment
                 const { data: coachAssignment } = await supabase

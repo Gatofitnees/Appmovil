@@ -54,7 +54,7 @@ const AddFoodMenu: React.FC<AddFoodMenuProps> = ({ onCameraClick, selectedDate }
   return (
     <div
       className="fixed right-4 z-50"
-      style={{ bottom: 'calc(6rem + var(--safe-area-inset-bottom))' }}
+      style={{ bottom: 'calc(5.5rem + var(--safe-area-inset-bottom))' }}
     >
       {/* Background overlay */}
       {isOpen && (

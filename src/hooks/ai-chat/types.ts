@@ -19,6 +19,7 @@ export interface UserData {
     id?: string;
     email?: string;
     name?: string;
+    coach_company?: string;
   };
   profile: {
     weight_kg?: number;

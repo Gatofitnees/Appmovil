@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import MacroRing from '../MacroRing';
 import { FlatIcon } from '../ui/FlatIcon';
@@ -14,8 +15,11 @@ interface MacrosSummaryProps {
   macros: Macros;
 }
 
-const SummaryCard = ({ children, className, onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) => (
-  <div
+const SummaryCard = ({ children, className, onClick, delay = 0 }: { children: React.ReactNode; className?: string; onClick?: () => void; delay?: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay, ease: "easeOut" }}
     onClick={onClick}
     className={cn(
       "bg-card rounded-3xl p-5 border border-white/5 transition-all duration-200 cursor-pointer active:scale-[0.98] hover:bg-card/80",
@@ -23,7 +27,7 @@ const SummaryCard = ({ children, className, onClick }: { children: React.ReactNo
     )}
   >
     {children}
-  </div>
+  </motion.div>
 );
 
 export const MacrosSummary: React.FC<MacrosSummaryProps> = React.memo(({ macros }) => {
@@ -90,6 +94,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = React.memo(({ macros 
         {/* Protein */}
         <SummaryCard
           onClick={toggleDetails}
+          delay={0.1}
           className="flex flex-col items-center justify-center p-4 space-y-3"
         >
           <div className="text-center flex flex-col items-center">
@@ -115,6 +120,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = React.memo(({ macros 
         {/* Carbs */}
         <SummaryCard
           onClick={toggleDetails}
+          delay={0.2}
           className="flex flex-col items-center justify-center p-4 space-y-3"
         >
           <div className="text-center flex flex-col items-center">
@@ -140,6 +146,7 @@ export const MacrosSummary: React.FC<MacrosSummaryProps> = React.memo(({ macros 
         {/* Fats */}
         <SummaryCard
           onClick={toggleDetails}
+          delay={0.3}
           className="flex flex-col items-center justify-center p-4 space-y-3"
         >
           <div className="text-center flex flex-col items-center">

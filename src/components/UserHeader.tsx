@@ -17,6 +17,7 @@ import { getExperienceProgress } from "@/utils/rankSystem";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Skeleton } from "./ui/skeleton";
 import { useEffect } from "react";
+import { PremiumModal } from './premium/PremiumModal';
 
 interface UserHeaderProps {
   username?: string;
@@ -36,6 +37,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [showXPParticles, setShowXPParticles] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   // Handle XP Animation and Deferred Streak Update from Workout Summary
   useEffect(() => {
@@ -74,7 +76,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
 
   const handleManageSubscription = () => {
     setShowMenu(false);
-    navigate('/subscription');
+    setShowPremiumModal(true);
   };
 
   const handleChangeAccount = async () => {
@@ -279,6 +281,12 @@ const UserHeader: React.FC<UserHeaderProps> = ({
           </div>
         </div>
       )}
+
+      {/* Premium Modal */}
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+      />
     </div>
   );
 };

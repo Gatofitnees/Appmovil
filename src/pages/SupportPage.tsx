@@ -14,8 +14,10 @@ import { Progress } from "@/components/ui/progress";
 import { useSupportTicket } from "@/hooks/useSupportTicket";
 import { useNativeCamera } from "@/hooks/useNativeCamera";
 import { Capacitor } from "@capacitor/core";
+import { useAuth } from "@/contexts/AuthContext";
 
 const supportSchema = z.object({
+  email: z.string().email("Correo electrónico inválido"),
   subject: z
     .string()
     .trim()
@@ -35,6 +37,7 @@ type SupportFormData = z.infer<typeof supportSchema>;
 
 const SupportPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { submitTicket, isSubmitting, uploadProgress } = useSupportTicket();
   const { takePicture, selectFromGallery, isNative } = useNativeCamera();
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -42,6 +45,7 @@ const SupportPage: React.FC = () => {
   const form = useForm<SupportFormData>({
     resolver: zodResolver(supportSchema),
     defaultValues: {
+      email: user?.email || "",
       subject: "",
       message: "",
       category: "question",
@@ -57,7 +61,7 @@ const SupportPage: React.FC = () => {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    
+
     if (attachments.length + files.length > 5) {
       alert("Máximo 5 archivos permitidos");
       return;
@@ -74,12 +78,12 @@ const SupportPage: React.FC = () => {
         const response = await fetch(photo.webPath);
         const blob = await response.blob();
         const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        
+
         if (attachments.length >= 5) {
           alert("Máximo 5 archivos permitidos");
           return;
         }
-        
+
         setAttachments([...attachments, file]);
       }
     } catch (error) {
@@ -94,12 +98,12 @@ const SupportPage: React.FC = () => {
         const response = await fetch(photo.webPath);
         const blob = await response.blob();
         const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        
+
         if (attachments.length >= 5) {
           alert("Máximo 5 archivos permitidos");
           return;
         }
-        
+
         setAttachments([...attachments, file]);
       }
     } catch (error) {
@@ -117,6 +121,7 @@ const SupportPage: React.FC = () => {
       message: data.message,
       category: data.category,
       attachments,
+      email: data.email,
     });
 
     if (success) {
@@ -153,6 +158,24 @@ const SupportPage: React.FC = () => {
         <Card className="neu-card p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Email */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Correo de Contacto</FormLabel>
+                    <FormControl>
+                      <Input placeholder="tu@email.com" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Para poder contactarte sobre tu consulta.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Category */}
               <FormField
                 control={form.control}
@@ -260,7 +283,7 @@ const SupportPage: React.FC = () => {
                       </Button>
                     </>
                   )}
-                  
+
                   <Button
                     type="button"
                     variant="outline"
@@ -271,7 +294,7 @@ const SupportPage: React.FC = () => {
                     <Upload className="h-4 w-4 mr-2" />
                     Subir Archivo
                   </Button>
-                  
+
                   <input
                     id="file-upload"
                     type="file"

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import OnboardingNavigation from "@/components/onboarding/OnboardingNavigation";
 import { OnboardingContext } from "../OnboardingFlow";
-import { Snail, Rabbit, Zap } from "lucide-react";
+
 
 const DesiredPace: React.FC = () => {
   const navigate = useNavigate();
@@ -65,19 +65,19 @@ const DesiredPace: React.FC = () => {
   const getIconInfo = (value: number) => {
     if (value <= 2) {
       return {
-        icon: <Snail className="h-6 w-6 text-primary" />,
+        src: "/caracol.svg",
         title: "Constante",
         description: "~0.25-0.5 kg/semana"
       };
     } else if (value <= 3) {
       return {
-        icon: <Rabbit className="h-6 w-6 text-primary" />,
+        src: "/conejo.svg",
         title: "Equilibrado",
         description: "~0.5-0.65 kg/semana"
       };
     } else {
       return {
-        icon: <Zap className="h-6 w-6 text-primary" />,
+        src: "/puma.svg",
         title: "Intenso",
         description: "~0.75-0.9 kg/semana"
       };
@@ -86,25 +86,65 @@ const DesiredPace: React.FC = () => {
 
   const iconInfo = getIconInfo(sliderValue);
 
+  // Helper for rendering icons with mask for color control
+  const MaskedIcon = ({ src, className, isActive = true }: { src: string; className?: string; isActive?: boolean }) => (
+    <div
+      className={`transition-all duration-300 ${isActive ? 'bg-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.6)]' : 'bg-white/50'}`}
+      style={{
+        maskImage: `url(${src})`,
+        maskSize: 'contain',
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        WebkitMaskImage: `url(${src})`,
+        WebkitMaskSize: 'contain',
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+      }}
+    >
+      <div className={className} />
+    </div>
+  );
+
+  const PaceIcon = ({ src, label, isActive }: { src: string; label: string; isActive: boolean }) => {
+    const isCaracol = src.includes('caracol');
+    return (
+      <div className="text-center flex flex-col items-center gap-2 transition-all duration-300">
+        <div className={`transition-all duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}>
+          <MaskedIcon
+            src={src}
+            isActive={isActive}
+            className={isCaracol ? "h-10 w-10" : "h-12 w-12"}
+          />
+        </div>
+        <p className={`text-sm font-medium transition-colors ${isActive ? 'text-white' : 'text-muted-foreground'}`}>
+          {label}
+        </p>
+      </div>
+    );
+  };
+
   return (
     <OnboardingLayout currentStep={11} totalSteps={20}>
       <h1 className="text-2xl font-bold mb-8">¿A qué ritmo quieres alcanzar tu meta?</h1>
 
       <div className="w-full max-w-md mx-auto space-y-6">
         <div className="bg-secondary/20 border border-white/5 p-5 rounded-xl relative space-y-6 shadow-sm backdrop-blur-sm">
-          <div className="flex justify-between items-center">
-            <div className="text-center flex flex-col items-center">
-              <Snail className="h-6 w-6 mb-2" />
-              <p className="text-sm">Constante</p>
-            </div>
-            <div className="text-center flex flex-col items-center">
-              <Rabbit className="h-6 w-6 mb-2" />
-              <p className="text-sm">Equilibrado</p>
-            </div>
-            <div className="text-center flex flex-col items-center">
-              <Zap className="h-6 w-6 mb-2" />
-              <p className="text-sm">Intenso</p>
-            </div>
+          <div className="flex justify-between items-start px-2">
+            <PaceIcon
+              src="/caracol.svg"
+              label="Constante"
+              isActive={sliderValue <= 2}
+            />
+            <PaceIcon
+              src="/conejo.svg"
+              label="Equilibrado"
+              isActive={sliderValue === 3}
+            />
+            <PaceIcon
+              src="/puma.svg"
+              label="Intenso"
+              isActive={sliderValue >= 4}
+            />
           </div>
 
           <input
@@ -125,8 +165,12 @@ const DesiredPace: React.FC = () => {
 
         {/* Selected pace information */}
         <div className="bg-secondary/10 p-5 rounded-xl text-center space-y-3">
-          <div className="flex justify-center">
-            {iconInfo.icon}
+          <div className="flex justify-center items-center h-24">
+            <MaskedIcon
+              src={iconInfo.src}
+              isActive={true}
+              className={iconInfo.src.includes('caracol') ? "h-16 w-16 translate-y-2" : "h-20 w-20"}
+            />
           </div>
           <h3 className="font-medium text-lg">{iconInfo.title}</h3>
           <p className="text-sm text-muted-foreground">{iconInfo.description}</p>

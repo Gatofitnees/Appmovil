@@ -16,14 +16,14 @@ interface IngredientsSectionProps {
   ingredients: Ingredient[];
   showIngredients: boolean;
   onToggleShow: () => void;
-  onIngredientUpdate: (index: number, data: Ingredient) => void;
+  onIngredientClick: (index: number, field: string, value: string | number) => void;
 }
 
 export const IngredientsSection: React.FC<IngredientsSectionProps> = ({
   ingredients,
   showIngredients,
   onToggleShow,
-  onIngredientUpdate
+  onIngredientClick
 }) => {
   return (
     <div className="neu-card p-4 mb-4">
@@ -38,14 +38,14 @@ export const IngredientsSection: React.FC<IngredientsSectionProps> = ({
           <ChevronDown className="h-4 w-4" />
         )}
       </button>
-      
+
       {showIngredients && (
         <div className="mt-3 space-y-3">
           {ingredients.map((ingredient, index) => (
             <EditableIngredient
               key={index}
               {...ingredient}
-              onUpdate={(data) => onIngredientUpdate(index, data)}
+              onClick={(field, value) => onIngredientClick(index, field, value)}
             />
           ))}
         </div>

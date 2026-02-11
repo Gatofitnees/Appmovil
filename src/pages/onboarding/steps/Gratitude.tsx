@@ -10,7 +10,7 @@ const Gratitude: React.FC = () => {
   const navigate = useNavigate();
 
   const handleNext = () => {
-    navigate("/onboarding/initial-recommendation");
+    navigate("/onboarding/promo-code");
   };
 
   // Particle animation for celebration

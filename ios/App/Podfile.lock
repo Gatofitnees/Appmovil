@@ -24,6 +24,8 @@ PODS:
   - CapacitorCordova (7.3.0)
   - CapacitorDevice (7.0.1):
     - Capacitor
+  - CapacitorDialog (7.0.3):
+    - Capacitor
   - CapacitorLocalNotifications (7.0.4):
     - Capacitor
   - CapacitorStatusBar (7.0.4):
@@ -66,6 +68,7 @@ DEPENDENCIES:
   - "CapacitorCommunityHttp (from `../../node_modules/@capacitor-community/http`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorDevice (from `../../node_modules/@capacitor/device`)"
+  - "CapacitorDialog (from `../../node_modules/@capacitor/dialog`)"
   - "CapacitorLocalNotifications (from `../../node_modules/@capacitor/local-notifications`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CodetrixStudioCapacitorGoogleAuth (from `../../node_modules/@codetrix-studio/capacitor-google-auth`)"
@@ -100,6 +103,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorDevice:
     :path: "../../node_modules/@capacitor/device"
+  CapacitorDialog:
+    :path: "../../node_modules/@capacitor/dialog"
   CapacitorLocalNotifications:
     :path: "../../node_modules/@capacitor/local-notifications"
   CapacitorStatusBar:
@@ -120,6 +125,7 @@ SPEC CHECKSUMS:
   CapacitorCommunityHttp: 7be90668527ef14ee10d08135b0e00fac9cf8247
   CapacitorCordova: 2685f5c43675793b5f06dfd66b3b26268f003b97
   CapacitorDevice: fe3f190e1d718f4607bdc6b73993433d1c84f409
+  CapacitorDialog: e746da1bd326dc73d13040afa5e4c5799eda02f6
   CapacitorLocalNotifications: bee1a73de1eb03203a96a041e392aef17e2f8cb5
   CapacitorStatusBar: 4bf126c3c01dbaca8a4e416a29c4899cf91d0626
   CodetrixStudioCapacitorGoogleAuth: 5f6c0e0fe82b6ce5296dc059c952be3dc6f79501
@@ -132,6 +138,6 @@ SPEC CHECKSUMS:
   RevenueCat: a5fcd0a12b5ec9bbddc0cf0dd20c14b7e6213df6
   RevenuecatPurchasesCapacitor: c9779250c370941a615f1cdfccf198390302191e
 
-PODFILE CHECKSUM: b1afd4ea8ba3a0cddcbc8e325e5d1346dda25590
+PODFILE CHECKSUM: 31f8acc4dddbdc3e690dd1d4972bd5f2b1b7724f
 
 COCOAPODS: 1.16.2

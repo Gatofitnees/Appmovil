@@ -32,7 +32,7 @@ const WeightSelector: React.FC<WeightSelectorProps> = ({
   // but better to just center it first.
 
   return (
-    <div className="space-y-2 w-full flex flex-col items-center">
+    <div className="space-y-2 w-full flex flex-col items-center" data-no-swipe-back="true">
       {/* Label moved to parent */}
       <div className="h-[200px] w-24">
         {weightValues.length > 0 && (

@@ -18,6 +18,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
   // Get context state and setters
   const {
     routineName,
+    routineDescription,
     routineType,
     routineExercises,
     isSubmitting,
@@ -28,6 +29,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     showReorderSheet,
     currentExerciseIndex,
     setRoutineName,
+    setRoutineDescription,
     setRoutineType,
     setRoutineExercises,
     setShowNoExercisesDialog,
@@ -45,7 +47,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     handleRemoveExercise,
     handleRemoveSet,
     handleMoveExercise,
-    handleNotesUpdate,
+    handleExerciseUpdate,
   } = useRoutineForm(
     routineExercises,
     routineName,
@@ -102,6 +104,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
 
       // Establecer nombre y tipo (convertir de DB a UI)
       setRoutineName(routineData.name);
+      setRoutineDescription(routineData.description || "");
       setRoutineType(convertRoutineTypeToUi(routineData.type) || "general");
 
       // Obtener ejercicios de la rutina
@@ -156,6 +159,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
   return {
     // State
     routineName,
+    routineDescription,
     routineType,
     routineExercises,
     validationErrors,
@@ -170,6 +174,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
 
     // State setters
     setRoutineName,
+    setRoutineDescription,
     setRoutineType,
     setRoutineExercises,
     setShowNoExercisesDialog,
@@ -193,7 +198,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     handleDiscardChanges,
     handleNavigateAway,
     handleBackClick,
-    handleNotesUpdate,
+    handleExerciseUpdate,
 
     // Carga de datos para edición
     loadRoutineData

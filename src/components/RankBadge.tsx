@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { getRankFromLevel } from '@/utils/rankSystem';
+import { useRankSystem } from '@/contexts/RankSystemContext';
 
 interface RankBadgeProps {
   level: number;
@@ -11,22 +11,23 @@ interface RankBadgeProps {
   showLevelWithRank?: boolean; // New prop for "Nivel X • Rango" format
 }
 
-const RankBadge: React.FC<RankBadgeProps> = ({ 
-  level, 
-  showIcon = true, 
+const RankBadge: React.FC<RankBadgeProps> = ({
+  level,
+  showIcon = true,
   showName = true,
   size = 'md',
   showLevelNumber = false,
   showLevelWithRank = false
 }) => {
-  const rank = getRankFromLevel(level);
-  
+  const { getRank } = useRankSystem();
+  const rank = getRank(level);
+
   const sizeClasses = {
     sm: 'text-xs',
     md: 'text-sm',
     lg: 'text-base'
   };
-  
+
   const iconSizes = {
     sm: 'text-sm',
     md: 'text-base',

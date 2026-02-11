@@ -90,12 +90,21 @@ export function useRoutineForm(
     handleRemoveExercise,
     handleRemoveSet,
     handleMoveExercise,
-    handleNotesUpdate: useCallback((exerciseIndex: number, notes: string) => {
+    handleExerciseUpdate: useCallback((exerciseIndex: number, field: string, value: any) => {
       const updatedExercises = [...routineExercises];
-      updatedExercises[exerciseIndex] = {
-        ...updatedExercises[exerciseIndex],
-        notes
-      };
+      // Type safety for known fields
+      if (field === 'notes') {
+        updatedExercises[exerciseIndex] = {
+          ...updatedExercises[exerciseIndex],
+          notes: value
+        };
+      } else {
+        // Handle other fields if necessary, or just merge
+        updatedExercises[exerciseIndex] = {
+          ...updatedExercises[exerciseIndex],
+          [field]: value
+        };
+      }
       setRoutineExercises(updatedExercises);
     }, [routineExercises, setRoutineExercises])
   };

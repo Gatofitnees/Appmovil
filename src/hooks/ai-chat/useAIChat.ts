@@ -27,16 +27,16 @@ export const useAIChat = () => {
       const userData = collectUserData(messages);
       const responseText = await sendToWebhook(content.trim(), userData);
       const aiMessage = processWebhookResponse(responseText);
-      
+
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('❌ [AI CHAT ERROR] Error completo:', error);
       console.error('❌ [AI CHAT ERROR] Tipo de error:', error instanceof Error ? error.constructor.name : typeof error);
-      
+
       if (error instanceof TypeError && error.message.includes('fetch')) {
         console.error('❌ [AI CHAT ERROR] Error de red - problema de conectividad');
       }
-      
+
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
@@ -51,8 +51,16 @@ export const useAIChat = () => {
     }
   };
 
-  const clearMessages = () => {
+  const clearMessages = async () => {
     setMessages([]);
+    try {
+      // Enviar señal de reset al webhook
+      const userData = collectUserData([]);
+      await sendToWebhook('', userData, 'reset_memory');
+      console.log('🧹 [AI CHAT] Memoria limpiada en el servidor');
+    } catch (error) {
+      console.error('❌ [AI CHAT] Error al limpiar memoria:', error);
+    }
   };
 
   return {

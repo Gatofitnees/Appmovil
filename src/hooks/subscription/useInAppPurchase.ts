@@ -107,13 +107,17 @@ export const useInAppPurchase = () => {
             const wasPremium: boolean | undefined = (globalThis as any).__rcLastPremiumState;
             (globalThis as any).__rcLastPremiumState = nowPremium;
 
-            // If transitioned from not-premium to premium (restore/renew), emit event
+            // CRITICAL: Only fire restore event if wasPremium is EXPLICITLY false (not undefined)
+            // This prevents auto-activation on first app launch when user has Sandbox subscriptions
             if (wasPremium === false && nowPremium === true) {
+              console.log('🔄 Premium status changed from false to true - firing restore event');
               const activeIds = (customerInfo as any)?.activeSubscriptions as string[] | undefined;
-              const planIsYearly = activeIds?.some(id => id?.includes('ANUAL') || id?.toLowerCase()?.includes('year')) ?? false;
+              const planIsYearly = activeIds?.some(id => id?.includes('ANUAL') || id?.toLowerCase()?.includes('year') || id?.includes('influencer')) ?? false;
               const planType = planIsYearly ? 'yearly' : 'monthly';
               const planName = planIsYearly ? 'Suscripción Anual Premium' : 'Suscripción Mensual Premium';
               window.dispatchEvent(new CustomEvent('iap:subscription-restored', { detail: { planType, planName, mode: 'restore' } }));
+            } else if (wasPremium === undefined && nowPremium === true) {
+              console.log('⚠️ First launch detected with active subscription - NOT firing restore event to prevent auto-activation');
             }
           } catch (e) {
             // noop
@@ -213,7 +217,7 @@ export const useInAppPurchase = () => {
 
         const { error } = await supabase
           .from('user_subscriptions')
-          .upsert(payload);
+          .upsert(payload, { onConflict: 'user_id' });
 
         if (error) {
           console.error('Error saving subscription:', error);
@@ -231,13 +235,13 @@ export const useInAppPurchase = () => {
 
   // Purchase product
   const purchaseProduct = useCallback(
-    async (productId: string): Promise<PurchaseResult> => {
+    async (productId: string, targetOfferId?: string): Promise<PurchaseResult> => {
       // Helper: espera hasta que cualquier entitlement esté activo o expira
-      // Android puede tardar más en propagar entitlements que iOS
-      const waitForPremium = async (initialInfo: CustomerInfo, timeoutMs = 12000, intervalMs = 1000) => {
+      // ... (same helper code)
+      const waitForPremium = async (initialInfo: CustomerInfo, timeoutMs = 30000, intervalMs = 2000) => {
         let info = initialInfo;
         const start = Date.now();
-        
+
         // Verificar cualquier entitlement activo (premium, pro, etc.)
         const hasActiveEntitlement = () => {
           const active = info.entitlements?.active;
@@ -259,7 +263,7 @@ export const useInAppPurchase = () => {
             const refreshed = await Purchases.getCustomerInfo();
             info = refreshed.customerInfo;
             console.log('🔄 Refreshed customerInfo, checking entitlements...');
-            
+
             if (hasActiveEntitlement()) {
               console.log('✅ Entitlement confirmed after polling');
               return { info, premium: true };
@@ -285,15 +289,27 @@ export const useInAppPurchase = () => {
 
         // Find the package
         await ensureConfigured();
+
+        await ensureConfigured();
+
+        // toast({ title: "Debug", description: "📦 Buscando offerings..." });
+        console.log('📦 Fetching offerings...', { platform, productId, targetOfferId });
         const offerings = await Purchases.getOfferings();
-        
+        console.log('📦 Available offerings:', {
+          current: offerings.current?.identifier,
+          all: Object.keys(offerings.all || {})
+        });
+
         // En Android, usar offering 'android' si existe
         let currentOffering = offerings.current;
         if (platform === 'android' && offerings.all?.['android']) {
           currentOffering = offerings.all['android'];
+          console.log('📦 Using Android-specific offering');
         }
-        
+
         if (!currentOffering) {
+          console.error('❌ No offerings available');
+          toast({ variant: "destructive", title: "Error", description: "❌ No hay offerings disponibles en RevenueCat" });
           return { success: false, error: 'No offerings available' };
         }
 
@@ -309,7 +325,7 @@ export const useInAppPurchase = () => {
           // match directo por package o product id
           if (a === wanted || b === wanted) return true;
 
-          // match por prefijo cuando el product id incluye base plan (e.g., wanted "gatofit_premium_monthly" y b "gatofit_premium_monthly:01")
+          // match por prefijo cuando el product id incluye base plan
           if (wanted && (b.startsWith(`${wanted}:`) || a.startsWith(`${wanted}:`))) return true;
 
           // match la parte sin base plan si venimos con productId:basePlan
@@ -320,11 +336,30 @@ export const useInAppPurchase = () => {
         });
 
         if (!package_) {
-          return { success: false, error: 'Producto no encontrado' };
+          const availableProducts = currentOffering.availablePackages
+            .map(p => (p as any)?.product?.identifier)
+            .filter(Boolean);
+
+          console.error('❌ Product not found:', {
+            wanted: productId,
+            available: availableProducts
+          });
+
+          return {
+            success: false,
+            error: `Producto "${productId}" no encontrado. Disponibles: ${availableProducts.join(', ')}`
+          };
         }
 
+        console.log('✅ Package found:', {
+          identifier: (package_ as any)?.identifier,
+          productId: (package_ as any)?.product?.identifier,
+          price: (package_ as any)?.product?.priceString
+        });
+
+        // toast({ description: `✅ Producto encontrado: ${productId}` });
+
         // Check if user already has an active subscription (for upgrade/downgrade)
-        // This is critical to avoid duplicate subscriptions on Google Play
         let purchaseOptions: { aPackage: PurchasesPackage; googleProductChangeInfo?: any } = {
           aPackage: package_,
         };
@@ -333,67 +368,220 @@ export const useInAppPurchase = () => {
           try {
             const { customerInfo: currentInfo } = await Purchases.getCustomerInfo();
             const activeEntitlements = currentInfo.entitlements?.active;
-            
+
             if (activeEntitlements && Object.keys(activeEntitlements).length > 0) {
-              // User has active subscription - this is an upgrade/downgrade
-              // Find the current product ID from active entitlements
               const activeEntitlement = Object.values(activeEntitlements)[0] as any;
               const currentProductId = activeEntitlement?.productIdentifier;
-              
+
               if (currentProductId && currentProductId !== productId) {
                 console.log('🔄 Detected plan change from', currentProductId, 'to', productId);
-                
-                // Use IMMEDIATE_AND_CHARGE_PRORATED_PRICE for upgrades
-                // This replaces the old subscription immediately
-                purchaseOptions.googleProductChangeInfo = {
-                  oldProductIdentifier: currentProductId,
-                  prorationMode: 2, // IMMEDIATE_AND_CHARGE_PRORATED_PRICE
-                };
-                
-                console.log('📦 Using googleProductChangeInfo:', purchaseOptions.googleProductChangeInfo);
+
+                // Extract base product IDs to check if they're compatible
+                const currentBaseId = currentProductId.split(':')[0];
+                const targetBaseId = productId.split(':')[0];
+
+                // Only attempt upgrade/downgrade if base product IDs match
+                if (currentBaseId === targetBaseId) {
+                  console.log('✅ Same base product - can upgrade/downgrade');
+                  purchaseOptions.googleProductChangeInfo = {
+                    oldProductIdentifier: currentProductId,
+                    prorationMode: 2, // IMMEDIATE_AND_CHARGE_PRORATED_PRICE
+                  };
+                } else {
+                  console.warn(`⚠️ Different base products: ${currentBaseId} → ${targetBaseId}`);
+                  console.warn('Google Play does not support changing between different product bases');
+                  console.warn('User must cancel current subscription before purchasing new one');
+
+                  toast({
+                    variant: "destructive",
+                    title: "Cambio de Plan No Disponible",
+                    description: "Debes cancelar tu suscripción actual antes de cambiar a este plan. Ve a Google Play para cancelar."
+                  });
+
+                  return {
+                    success: false,
+                    error: 'Cannot change between different product bases. Please cancel current subscription first.'
+                  };
+                }
               }
             }
           } catch (infoError) {
             console.warn('Could not check current subscription for upgrade:', infoError);
-            // Continue with normal purchase
           }
         }
 
-        // Make purchase (with upgrade info if applicable)
-        console.log('🛒 Initiating purchase for package:', package_.identifier);
-        const { customerInfo } = await Purchases.purchasePackage(purchaseOptions);
+        // EXECUTE PURCHASE
+        let purchaseResult;
 
+        // Special handling for Android Verification Offers (Promo Codes)
+        if (platform === 'android' && targetOfferId) {
+          try {
+            console.log(`🎯 Attempting to purchase specific offer (Android): ${targetOfferId}`);
+            const product = (package_ as any).product;
+
+            // Look for subscription options (RC v6+ structure)
+            const options = product.subscriptionOptions;
+            if (options && Array.isArray(options)) {
+              const targetOption = options.find((opt: any) =>
+                opt.id === targetOfferId ||
+                (opt.id && typeof opt.id === 'string' && opt.id.endsWith(`:${targetOfferId}`)) ||
+                opt.tags?.includes(targetOfferId)
+              );
+
+              if (targetOption) {
+                console.log('✅ Found matching subscription option:', targetOption.id);
+                // toast({ description: `✅ Oferta aplicada: ${targetOfferId}` });
+
+                // Purchase via specific option
+                purchaseResult = await (Purchases as any).purchaseSubscriptionOption({
+                  subscriptionOption: targetOption,
+                  googleProductChangeInfo: purchaseOptions.googleProductChangeInfo
+                });
+              } else {
+                console.warn(`⚠️ Offer ${targetOfferId} not found in options. Available:`, options.map((o: any) => o.id));
+                // Fallback to standard package purchase
+                console.log('🛒 Falling back to standard package purchase');
+                purchaseResult = await Purchases.purchasePackage(purchaseOptions);
+              }
+            } else {
+              console.warn('⚠️ No subscription options available on product');
+              purchaseResult = await Purchases.purchasePackage(purchaseOptions);
+            }
+          } catch (offerError) {
+            console.error('Error with purchaseSubscriptionOption:', offerError);
+            // Fallback
+            purchaseResult = await Purchases.purchasePackage(purchaseOptions);
+          }
+        } else if (platform === 'ios' && targetOfferId) {
+          // IOS PROMOTIONAL OFFER LOGIC
+          try {
+            console.log(`🎯 Attempting to purchase specific offer (iOS): ${targetOfferId}`);
+
+            const product = (package_ as any).product;
+            const discounts = product.discounts;
+
+            console.log('📦 iOS Product Details:', {
+              identifier: product.identifier,
+              discounts: discounts ? discounts.map((d: any) => ({
+                identifier: d.identifier,
+                price: d.price,
+                priceString: d.priceString,
+                paymentMode: d.paymentMode
+              })) : 'No discounts found'
+            });
+
+            if (discounts && Array.isArray(discounts)) {
+
+              const matchedDiscount = discounts.find((d: any) => d.identifier === targetOfferId);
+
+              if (matchedDiscount) {
+                console.log('✅ Found matching discount object:', matchedDiscount.identifier);
+                // toast({ description: `✍️ Firmando oferta: ${targetOfferId}...` });
+
+                // Sign the offer (RevenueCat handles backend signature)
+                // This will fail if the Subscription Key (p8) is not uploaded to RevenueCat
+                try {
+                  const paymentDiscount = await Purchases.getPromotionalOffer({
+                    product: product,
+                    discount: matchedDiscount
+                  });
+
+                  if (paymentDiscount) {
+                    console.log('✅ Offer signed successfully. Signature:', paymentDiscount);
+                    console.log('🛒 Executing purchaseDiscountedPackage...');
+
+                    purchaseResult = await Purchases.purchaseDiscountedPackage({
+                      aPackage: package_,
+                      discount: paymentDiscount
+                    });
+                  } else {
+                    console.error('❌ Failed to sign promotional offer. Result was undefined.');
+                    toast({
+                      variant: "destructive",
+                      title: "Error de Configuración",
+                      description: "No se pudo firmar la oferta. Verifica la configuración en RevenueCat (iOS Subscription Key)."
+                    });
+                    // Do NOT fallback silently. User expects a discount.
+                    return { success: false, error: 'Error al aplicar oferta promocional (Firma fallida)' };
+                  }
+                } catch (signError: any) {
+                  console.error('❌ Error during getPromotionalOffer:', signError);
+
+                  // Fallback on signature error or specific RC errors
+                  // Error Code 18: Ineligible for offer (common for new users with Promo Offers)
+                  const isIneligible = signError.code === 18 || signError.message?.includes('ineligible') || signError.userInfo?.code === 18;
+
+                  if (isIneligible) {
+                    console.warn('⚠️ User ineligible for Promotional Offer. Falling back to Standard/Intro Price.');
+                    toast({
+                      description: "Oferta no disponible para tu cuenta usuando precio estándar."
+                    });
+                    purchaseResult = await Purchases.purchasePackage(purchaseOptions);
+                  } else {
+                    toast({
+                      variant: "destructive",
+                      title: "Error de Firma",
+                      description: `Error al firmar oferta: ${signError.message || signError}`
+                    });
+                    return { success: false, error: `Error firmando oferta: ${signError.message}` };
+                  }
+                }
+
+              } else {
+                console.warn(`⚠️ Discount ${targetOfferId} NOT found on product ${product.identifier}.`);
+                console.warn('Available discounts:', discounts.map((d: any) => d.identifier));
+
+                // Fallback if discount identifier is not found
+                console.log('🛒 Falling back to standard purchase logic due to missing discount ID');
+                purchaseResult = await Purchases.purchasePackage(purchaseOptions);
+              }
+            } else {
+              console.warn('⚠️ No discounts array available on iOS product details.');
+              // Fallback
+              purchaseResult = await Purchases.purchasePackage(purchaseOptions);
+            }
+          } catch (iosOfferError: any) {
+            console.error('❌ Critical Error applying iOS promotional offer:', iosOfferError);
+
+            // Check for ineligibility in the outer catch too, just in case
+            const isIneligible = iosOfferError.code === 18 || iosOfferError.message?.includes('ineligible');
+
+            if (isIneligible) {
+              console.log('⚠️ User ineligible (outer catch). executing standard purchase.');
+              purchaseResult = await Purchases.purchasePackage(purchaseOptions);
+            } else {
+              toast({ variant: "destructive", title: "Error", description: "Fallo crítico al procesar oferta." });
+              return { success: false, error: 'Error crítico en oferta' };
+            }
+          }
+        } else {
+          // Standard purchase
+          console.log('🛒 Initiating standard purchase for package:', package_.identifier);
+          purchaseResult = await Purchases.purchasePackage(purchaseOptions);
+        }
+
+        const { customerInfo, productIdentifier } = purchaseResult;
         console.log('✅ Purchase completed, checking entitlements...');
 
-        // Esperar confirmación de premium (entitlement activo)
+        // ... (rest of the function handling success/verification/toasts)
         const { info: confirmedInfo, premium } = await waitForPremium(customerInfo);
 
-        // Si el pago se completó pero el entitlement aún no se refleja,
-        // tratarlo como éxito de todos modos (RevenueCat lo procesará)
         if (!premium) {
           console.log('⚠️ Payment completed but entitlement not yet reflected. Treating as success.');
-          // No mostrar error - el pago fue exitoso, solo hay delay en propagación
         }
 
         console.log('✅ Purchase confirmed with premium entitlement');
 
-        // Emitir popup inmediatamente tras confirmar premium (no bloquear por DB/verify)
-        try {
-          const inferredPlanType = productId.includes('ANUAL') || productId.includes('yearly') ? 'yearly' : 'monthly';
-          const inferredPlanName = inferredPlanType === 'yearly' ? 'Suscripción Anual Premium' : 'Suscripción Mensual Premium';
-          window.dispatchEvent(new CustomEvent('iap:purchase-success', {
-            detail: { planType: inferredPlanType, planName: inferredPlanName, mode: 'purchase' }
-          }));
-        } catch {}
-
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const transactionId = (confirmedInfo as any)?.latestTransactionIdentifier ?? confirmedInfo.managementURL;
+          const finalProductId = productIdentifier || productId;
+          const inferredPlanType = finalProductId.includes('ANUAL') || finalProductId.includes('yearly') || finalProductId.includes('influencer') ? 'yearly' : 'monthly';
 
           const subscriptionData: SubscriptionData = {
             user_id: user.id,
             status: 'active',
-            plan_type: productId.includes('ANUAL') || productId.includes('yearly') ? 'yearly' : 'monthly',
+            plan_type: inferredPlanType,
             payment_method: paymentMethod,
             platform: platform,
             revenuecat_customer_id: confirmedInfo.originalAppUserId || user.id,
@@ -401,13 +589,27 @@ export const useInAppPurchase = () => {
             receipt_data: JSON.stringify(confirmedInfo),
           };
 
-          // Persistir y verificar en segundo plano (no bloquear UI/popup)
           void (async () => {
+            // ... background save logic (kept essentially same)
             try {
               await saveSubscriptionToDatabase(subscriptionData);
             } catch (persistError) {
               console.warn('⚠️ Compra exitosa, pero falló el guardado en DB:', persistError);
             }
+
+            // Small delay to ensure DB transaction is fully committed (or to allow retry)
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Dispatch event ALWAYS, even if DB save failed
+            // SubscriptionContext will fetch fresh data from DB
+            try {
+              const inferredPlanName = inferredPlanType === 'yearly' ? 'Suscripción Anual Premium' : 'Suscripción Mensual Premium';
+              console.log('🔔 Dispatching iap:purchase-success event');
+              window.dispatchEvent(new CustomEvent('iap:purchase-success', {
+                detail: { planType: inferredPlanType, planName: inferredPlanName, mode: 'purchase' }
+              }));
+            } catch { }
+
             try {
               if (platform === 'ios') {
                 await supabase.functions.invoke('verify-appstore-receipt', {
@@ -418,9 +620,7 @@ export const useInAppPurchase = () => {
                   body: { userId: user.id, packageName: 'com.gatofit.app', token: confirmedInfo.managementURL },
                 });
               }
-            } catch (verificationError) {
-              console.warn('Receipt verification skipped:', verificationError);
-            }
+            } catch (vErr) { console.warn(vErr); }
           })();
         }
 
@@ -437,75 +637,71 @@ export const useInAppPurchase = () => {
         console.error('Error purchasing product:', error);
 
         // Si el error es de cancelación, retornar silenciosamente
-        if (error?.code === 'PurchaseCancelledError' || 
-            error?.message?.includes('cancelled') ||
-            error?.message?.includes('canceled')) {
+        if (error?.code === 'PurchaseCancelledError' ||
+          error?.message?.includes('cancelled') ||
+          error?.userCancelled) {
           return { success: false, error: 'Compra cancelada' };
-        } 
-        
+        }
+
         if (error?.code === 'ProductNotAvailableForPurchaseError') {
           return { success: false, error: 'Producto no disponible' };
-        } 
-        
+        }
+
         if (error?.code === 'PurchaseInvalidError') {
           return { success: false, error: 'Recibo inválido' };
         }
 
         // ITEM_ALREADY_OWNED: El usuario ya tiene esta suscripción activa
-        // Esto puede pasar si:
-        // 1. Intentó comprar el mismo producto que ya tiene
-        // 2. Hay un problema con upgrades entre diferentes suscripciones
         if (error?.code === 'ProductAlreadyPurchasedError' ||
-            error?.message?.includes('ITEM_ALREADY_OWNED') ||
-            error?.message?.includes('already active')) {
+          error?.message?.includes('ITEM_ALREADY_OWNED') ||
+          error?.message?.includes('already active')) {
           console.log('⚠️ ITEM_ALREADY_OWNED - checking current subscription status...');
-          
+
           try {
             const { customerInfo } = await Purchases.getCustomerInfo();
             const hasActiveEntitlement = Object.keys(customerInfo.entitlements?.active || {}).length > 0;
-            
+
             if (hasActiveEntitlement) {
               console.log('✅ User already has active subscription');
               setIsPremium(true);
               (globalThis as any).__rcLastPremiumState = true;
-              
+
               toast({
                 title: 'Ya tienes suscripción activa',
-                description: 'Tu suscripción premium sigue activa. Para cambiar de plan, cancela primero la actual desde Google Play.',
+                description: 'Tu suscripción premium sigue activa.',
               });
-              
+
               return { success: true, customerInfo };
             }
           } catch (checkError) {
             console.warn('Could not verify subscription status:', checkError);
           }
-          
+
           toast({
             title: 'Suscripción existente',
-            description: 'Ya tienes una suscripción activa. Administra tus suscripciones desde Google Play Store.',
+            description: 'Ya tienes una suscripción activa.',
             variant: 'destructive',
           });
-          
+
           return { success: false, error: 'Ya tienes una suscripción activa' };
         }
 
-        // Para errores post-pago (el usuario ya pagó pero algo falló después),
-        // intentar verificar si el usuario ahora tiene una suscripción activa
+        // Para errores post-pago (el usuario ya pagó pero algo falló después)
         try {
           console.log('🔄 Checking if purchase was actually successful despite error...');
           const { customerInfo } = await Purchases.getCustomerInfo();
           const hasActiveEntitlement = Object.keys(customerInfo.entitlements?.active || {}).length > 0;
-          
+
           if (hasActiveEntitlement) {
             console.log('✅ User has active entitlement despite error - treating as success');
             setIsPremium(true);
             (globalThis as any).__rcLastPremiumState = true;
-            
+
             toast({
               title: '¡Éxito!',
               description: 'Tu suscripción premium ha sido activada',
             });
-            
+
             return { success: true, customerInfo };
           }
         } catch (checkError) {
@@ -547,11 +743,43 @@ export const useInAppPurchase = () => {
       if (hasPremium) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // Infer plan type from active subscrptions
+          const activeIds = (customerInfo as any)?.activeSubscriptions as string[] | undefined;
+          const planIsYearly = activeIds?.some(id => id?.includes('ANUAL') || id?.toLowerCase()?.includes('year') || id?.includes('influencer')) ?? false;
+          const inferredPlanType = planIsYearly ? 'yearly' : 'monthly';
+
           await saveSubscriptionToDatabase({
             user_id: user.id,
             status: 'active',
-            plan_type: 'monthly',
+            plan_type: inferredPlanType,
             payment_method: getPaymentMethod(),
+            platform: platform,
+            revenuecat_customer_id: customerInfo.originalAppUserId || user.id,
+          });
+        }
+      } else {
+        // Fallback: If user is NOT premium but WAS premium or has purchase history, ensure DB reflects expired.
+        // This handles cases where Webhook might have failed or delayed.
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // Check if user has ANY purchase history
+        const hasHistory = customerInfo.allPurchasedProductIdentifiers && customerInfo.allPurchasedProductIdentifiers.length > 0;
+
+        if (user && hasHistory) {
+          console.log('⚠️ User has purchase history but no active entitlement. Ensuring DB sync as EXPIRED.');
+
+          // Try to infer last plan type from history
+          // Simple inference: use the last item in the array or default to monthly
+          const lastId = customerInfo.allPurchasedProductIdentifiers[0] || '';
+          const lastPlanType = (lastId.toLowerCase().includes('year') || lastId.includes('ANUAL') || lastId.includes('influencer')) ? 'yearly' : 'monthly';
+
+          // Only update if we haven't checked recently or state changed
+          // (For implementation simplicity, we just upsert. Supabase handles it efficiently)
+          await saveSubscriptionToDatabase({
+            user_id: user.id,
+            status: 'expired',
+            plan_type: lastPlanType,
+            payment_method: getPaymentMethod(), // Might not be accurate if they switched, but sufficient for status sync
             platform: platform,
             revenuecat_customer_id: customerInfo.originalAppUserId || user.id,
           });

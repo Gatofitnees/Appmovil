@@ -9,6 +9,7 @@ export interface SupportTicketData {
   message: string;
   category: "bug" | "suggestion" | "question" | "other";
   attachments: File[];
+  email: string;
 }
 
 export const useSupportTicket = () => {
@@ -145,17 +146,17 @@ export const useSupportTicket = () => {
       const attachmentUrls: string[] = [];
       if (ticketData.attachments.length > 0) {
         console.log(`Uploading ${ticketData.attachments.length} attachments...`);
-        
+
         for (let i = 0; i < ticketData.attachments.length; i++) {
           const file = ticketData.attachments[i];
           const uploadedUrl = await uploadAttachment(file, ticketId);
-          
+
           if (uploadedUrl) {
             attachmentUrls.push(uploadedUrl);
           } else {
             console.warn(`Failed to upload attachment: ${file.name}`);
           }
-          
+
           setUploadProgress(((i + 1) / ticketData.attachments.length) * 100);
         }
       }
@@ -167,7 +168,8 @@ export const useSupportTicket = () => {
           subject: ticketData.subject,
           message: ticketData.message,
           category: ticketData.category,
-          attachmentUrls: attachmentUrls
+          attachmentUrls: attachmentUrls,
+          email: ticketData.email
         }
       });
 

@@ -31,6 +31,20 @@ export const useSwipeBack = () => {
       // Check if swipe direction is to the right
       const isRightSwipe = deltaX > threshold;
 
+
+      // Check if target or any parent should prevent swipe
+      let target = e.target as HTMLElement;
+      let preventSwipe = false;
+      while (target && target !== document.body) {
+        if (target.getAttribute && target.getAttribute('data-no-swipe-back') === 'true') {
+          preventSwipe = true;
+          break;
+        }
+        target = target.parentElement as HTMLElement;
+      }
+
+      if (preventSwipe) return;
+
       if (startedAtEdge && isHorizontalSwipe && isRightSwipe) {
         navigate(-1);
       }

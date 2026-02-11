@@ -64,14 +64,14 @@ export const useWebhookResponse = () => {
   const sendToWebhookWithResponse = async (imageUrl: string, imageBlob: Blob, isFromGallery: boolean = false): Promise<FoodAnalysisResult | null> => {
     setIsAnalyzing(true);
     setAnalysisError(null);
-    
-    console.log('📤 Sending to webhook:', { 
+
+    console.log('📤 Sending to webhook:', {
       blobSize: imageBlob.size,
       mimeType: imageBlob.type || 'no-type',
       isFromGallery,
       imageUrl
     });
-    
+
     // Validate that blob is not empty
     if (!imageBlob || imageBlob.size === 0) {
       console.error('❌ Invalid blob: empty or null');
@@ -79,13 +79,13 @@ export const useWebhookResponse = () => {
       setIsAnalyzing(false);
       return null;
     }
-    
+
     // Validate image file - more permissive for gallery images
     const validation = validateImageFile(
       new File([imageBlob], 'image.jpg', { type: imageBlob.type || 'image/jpeg' }),
       isFromGallery // Skip type check for gallery images
     );
-    
+
     if (!validation.isValid) {
       console.error('❌ Validation failed:', validation.error);
       setAnalysisError(validation.error || 'Archivo de imagen inválido');
@@ -108,11 +108,11 @@ export const useWebhookResponse = () => {
         setIsCompressing(false);
       }
     }
-    
+
     try {
       const formData = createSecureFormData(processedBlob, imageUrl);
-      
-      const response = await fetch('https://paneln8n.gatofit.com/webhook/e39f095b-fb33-4ce3-b41a-619a650149f5', {
+
+      const response = await fetch('https://n8n.gatofit.com/webhook/escaner-de-comida', {
         method: 'POST',
         body: formData,
       });
@@ -120,7 +120,7 @@ export const useWebhookResponse = () => {
       if (response.ok) {
         const responseText = await response.text();
         console.log('Webhook response received');
-        
+
         let parsedResponse: any;
         try {
           parsedResponse = JSON.parse(responseText);
@@ -130,10 +130,10 @@ export const useWebhookResponse = () => {
           logSecurityEvent('webhook_parse_error', 'Invalid JSON response');
           return null;
         }
-        
+
         // Sanitize the response data
         const sanitizedResponse = sanitizeWebhookData(parsedResponse);
-        
+
         // Check for new array format first
         if (Array.isArray(parsedResponse)) {
           if (parsedResponse.length === 0) {
@@ -145,10 +145,26 @@ export const useWebhookResponse = () => {
           if (firstItem && firstItem.output) {
             return parseWebhookFoodResponse(sanitizeWebhookData(firstItem.output));
           } else {
+            // Try to see if the first item IS the food data
+            if (firstItem && firstItem.custom_food_name) {
+              return parseWebhookFoodResponse(sanitizeWebhookData(firstItem));
+            }
             setAnalysisError(createSecureErrorMessage(new Error('Invalid response structure'), 'webhook'));
             logSecurityEvent('webhook_invalid_structure', 'Array format missing output');
             return null;
           }
+        }
+
+        // Check if response IS the food data (Flat structure)
+        if (parsedResponse && parsedResponse.custom_food_name) {
+          console.log('Detected flat response structure');
+          return parseWebhookFoodResponse(sanitizeWebhookData(parsedResponse));
+        }
+
+        // Check if response has 'output' key directly (Root object wrapper)
+        if (parsedResponse && parsedResponse.output && parsedResponse.output.custom_food_name) {
+          console.log('Detected root output wrapper');
+          return parseWebhookFoodResponse(sanitizeWebhookData(parsedResponse.output));
         }
 
         // Fallback to legacy format
@@ -166,7 +182,7 @@ export const useWebhookResponse = () => {
               logSecurityEvent('webhook_serialization_error', 'Object serialization issue');
               return null;
             }
-            
+
             try {
               const parsedComida = JSON.parse(legacyResult.Comida);
               return parseWebhookFoodResponse(sanitizeWebhookData(parsedComida));
@@ -184,14 +200,14 @@ export const useWebhookResponse = () => {
       } else if (response.status === 413) {
         // Handle 413 Request Entity Too Large specifically
         console.warn('Request too large (413), attempting with higher compression');
-        
+
         if (!shouldCompressForWebhook(imageBlob)) {
           // If original wasn't compressed, try compressing now
           try {
             setIsCompressing(true);
             const highlyCompressed = await compressForWebhook(imageBlob);
             setIsCompressing(false);
-            
+
             // Retry with compressed image
             return await sendToWebhookWithResponse(imageUrl, highlyCompressed);
           } catch (retryError) {
@@ -212,14 +228,14 @@ export const useWebhookResponse = () => {
     } catch (error) {
       console.error('Error sending to webhook:', error);
       logSecurityEvent('webhook_network_error', error instanceof Error ? error.message : 'Unknown error');
-      
+
       // If it's a network error and we haven't tried compression yet, try it
       if (!shouldCompressForWebhook(processedBlob) && error instanceof Error && error.message.includes('fetch')) {
         try {
           setIsCompressing(true);
           const compressedBlob = await compressForWebhook(imageBlob);
           setIsCompressing(false);
-          
+
           console.log('Retrying with compressed image after network error');
           return await sendToWebhookWithResponse(imageUrl, compressedBlob);
         } catch (retryError) {
@@ -227,11 +243,11 @@ export const useWebhookResponse = () => {
           console.error('Retry with compression also failed');
         }
       }
-      
+
       // Fallback with no-cors
       try {
         const fallbackFormData = createSecureFormData(processedBlob, imageUrl);
-        await fetch('https://paneln8n.gatofit.com/webhook/e39f095b-fb33-4ce3-b41a-619a650149f5', {
+        await fetch('https://n8n.gatofit.com/webhook-test/escaner-de-comida', {
           method: 'POST',
           mode: 'no-cors',
           body: fallbackFormData,
@@ -240,7 +256,7 @@ export const useWebhookResponse = () => {
       } catch (fallbackError) {
         console.error('Fallback request failed');
       }
-      
+
       setAnalysisError(createSecureErrorMessage(error, 'network'));
       return null;
     } finally {
@@ -255,7 +271,7 @@ export const useWebhookResponse = () => {
     }
 
     console.log('Parsing webhook food data with validation');
-    
+
     // Parse and validate ingredients
     const ingredients = comidaData.ingredients?.map(ingredient => ({
       name: sanitizeFoodName(ingredient.name || ''),
@@ -272,9 +288,11 @@ export const useWebhookResponse = () => {
       protein: parseFloat(comidaData.protein_g_consumed) || 0,
       carbs: parseFloat(comidaData.carbs_g_consumed) || 0,
       fat: parseFloat(comidaData.fat_g_consumed) || 0,
-      servingSize: comidaData.quantity_consumed || 1,
+      servingSize: typeof comidaData.quantity_consumed === 'string'
+        ? parseFloat(comidaData.quantity_consumed) || 1
+        : comidaData.quantity_consumed || 1,
       servingUnit: sanitizeFoodName(comidaData.unit_consumed || 'porción'),
-      healthScore: Math.min(Math.max(parseFloat(comidaData.healthScore) || 7, 1), 10),
+      healthScore: Math.min(Math.max(parseFloat(String(comidaData.healthScore)) || 7, 1), 10),
       ingredients
     };
 

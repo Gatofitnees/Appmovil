@@ -63,7 +63,7 @@ export const PremiumPlanCard: React.FC<PremiumPlanCardProps> = ({
         </div>
       );
     }
-    
+
     if (isDisabled) {
       return (
         <div className="flex items-center justify-center gap-2">
@@ -72,11 +72,11 @@ export const PremiumPlanCard: React.FC<PremiumPlanCardProps> = ({
         </div>
       );
     }
-    
+
     if (isLoading) {
       return 'Procesando...';
     }
-    
+
     return (
       <div className="flex items-center justify-center gap-2">
         <CreditCard className="h-5 w-5" />
@@ -89,15 +89,15 @@ export const PremiumPlanCard: React.FC<PremiumPlanCardProps> = ({
     if (isCurrentPlan) {
       return 'bg-green-500/20 text-green-400 cursor-not-allowed hover:bg-green-500/20';
     }
-    
+
     if (isDisabled) {
       return 'bg-gray-500/20 text-gray-400 cursor-not-allowed hover:bg-gray-500/20';
     }
-    
+
     if (isRecommended) {
       return 'bg-gradient-to-r from-primary to-blue-500 hover:from-primary/90 hover:to-blue-500/90 shadow-glow';
     }
-    
+
     return 'bg-secondary hover:bg-secondary/80';
   };
 
@@ -139,7 +139,7 @@ export const PremiumPlanCard: React.FC<PremiumPlanCardProps> = ({
             <Crown className="h-5 w-5 text-yellow-500" />
             <h3 className="text-xl font-bold">{plan.name}</h3>
           </div>
-          
+
           {/* Price Display */}
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-2">

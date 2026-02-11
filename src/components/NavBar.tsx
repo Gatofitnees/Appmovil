@@ -111,7 +111,7 @@ const NavBar: React.FC = () => {
                 navigate(item.path, { replace: true });
               }}
               className="relative flex items-center justify-center w-14 h-14 rounded-full transition-colors duration-200 z-10"
-              style={isActive ? { color: '#2094F3' } : {}}
+              style={isActive ? { color: branding.primaryButtonColor || '#2094F3' } : {}}
             >
               {isActive && (
                 <motion.div
@@ -133,7 +133,7 @@ const NavBar: React.FC = () => {
                   className={cn(
                     "h-5 w-5 transition-all duration-300",
                     isActive
-                      ? "text-[#2094F3] scale-110"
+                      ? "scale-110"
                       : "text-gray-400 opacity-70"
                   )}
                 />

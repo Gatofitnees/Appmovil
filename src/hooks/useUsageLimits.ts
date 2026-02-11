@@ -110,9 +110,9 @@ export const useUsageLimits = () => {
     isPremium: boolean
   ): LimitCheck => {
     const limits = {
-      routines: 3,
-      nutrition_photos: 5,
-      ai_chat_messages: 3
+      routines: 5,
+      nutrition_photos: 10,
+      ai_chat_messages: 5
     };
 
     if (isPremium) {
@@ -156,9 +156,9 @@ export const useUsageLimits = () => {
 
   const showLimitReachedToast = useCallback((type: 'routines' | 'nutrition_photos' | 'ai_chat_messages') => {
     const messages = {
-      routines: 'Has alcanzado el límite de 3 rutinas. Actualiza a Premium para crear rutinas ilimitadas.',
-      nutrition_photos: 'Has usado tus 5 fotos semanales. Actualiza a Premium para fotos ilimitadas.',
-      ai_chat_messages: 'Has usado tus 3 chats semanales de IA. Actualiza a Premium para chats ilimitados.'
+      routines: 'Has alcanzado el límite de 5 rutinas. Actualiza a Premium para crear rutinas ilimitadas.',
+      nutrition_photos: 'Has usado tus 10 créditos de prueba. Actualiza a Premium para escaneos ilimitados.',
+      ai_chat_messages: 'Has usado tus 5 chats semanales de IA. Actualiza a Premium para chats ilimitados.'
     };
 
     toast({

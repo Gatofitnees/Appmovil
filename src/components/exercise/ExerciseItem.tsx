@@ -32,8 +32,8 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
   return (
     <div
       className={`relative p-3 rounded-xl border flex items-center space-x-3 cursor-pointer transition-all duration-200 overflow-hidden ${isSelected
-          ? 'border-sky-500/30 bg-secondary/30 pl-4'
-          : 'border-border/50 hover:border-border pl-3'
+        ? 'border-sky-500/30 bg-secondary/30 pl-4'
+        : 'border-border/50 hover:border-border pl-3'
         } ${isAlreadyInRoutine ? 'opacity-60' : ''
         }`}
       onClick={() => onSelect(exercise.id)}

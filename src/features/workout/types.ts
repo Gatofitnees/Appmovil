@@ -15,6 +15,7 @@ export interface ExerciseSet {
 }
 
 export interface RoutineExercise extends ExerciseItem {
+  exercise_id?: number;
   sets: ExerciseSet[];
   notes?: string;
 }

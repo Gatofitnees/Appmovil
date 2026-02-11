@@ -11,12 +11,18 @@ import { LoadingSkeleton } from "@/features/workout/components/active-workout/Lo
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sparkles } from "lucide-react";
 import Button from "@/components/Button";
+import AICreationModal from "@/features/ai-routine/components/AICreationModal";
+import { RoutineExercise } from "@/features/workout/types";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PremiumModal } from "@/components/premium/PremiumModal";
 
 const CreateRoutinePage: React.FC = () => {
   const { toast } = useToast();
   const { routineId } = useParams<{ routineId?: string }>();
   const isEditing = !!routineId;
   const [showAIModal, setShowAIModal] = useState(false);
+  const { isPremium } = useSubscription();
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   // Para edición, siempre empezamos cargando. Para creación, nunca cargamos inicialmente.
   const [isDataLoaded, setIsDataLoaded] = useState(!isEditing);
@@ -24,6 +30,7 @@ const CreateRoutinePage: React.FC = () => {
   const {
     // State
     routineName,
+    routineDescription,
     routineType,
     routineExercises,
     validationErrors,
@@ -37,7 +44,9 @@ const CreateRoutinePage: React.FC = () => {
 
     // State setters
     setRoutineName,
+    setRoutineDescription,
     setRoutineType,
+    setRoutineExercises,
     setShowNoExercisesDialog,
     setShowSaveConfirmDialog,
     setShowDiscardChangesDialog,
@@ -58,7 +67,7 @@ const CreateRoutinePage: React.FC = () => {
     handleSaveRoutine,
     handleDiscardChanges,
     handleBackClick,
-    handleNotesUpdate,
+    handleExerciseUpdate,
 
     // Loading/Editing state
     loadRoutineData,
@@ -102,6 +111,34 @@ const CreateRoutinePage: React.FC = () => {
     return <LoadingSkeleton onBack={handleBackClick} />;
   }
 
+  const handleRoutineGenerated = (exercises: RoutineExercise[], name: string, description: string) => {
+    console.log('🔍 handleRoutineGenerated received exercises:', JSON.stringify(exercises.map(e => ({
+      name: e.name,
+      id: e.id,
+      exercise_id: e.exercise_id
+    })), null, 2));
+
+    setRoutineName(name);
+    setRoutineDescription(description);
+    setRoutineExercises(exercises);
+    setShowAIModal(false);
+
+    toast({
+      title: "¡Rutina Generada!",
+      description: "La IA ha creado tu rutina. Revisa los ejercicios y guarda.",
+      duration: 4000,
+    });
+  };
+
+  const handleAIButtonClick = () => {
+    // AI Routine Creator is now premium-only
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
+    setShowAIModal(true);
+  };
+
   return (
     <div className="min-h-screen pt-6 pb-24 px-4 max-w-md mx-auto">
       <RoutinePageHeader
@@ -113,10 +150,12 @@ const CreateRoutinePage: React.FC = () => {
 
       <RoutineFormContainer
         routineName={routineName}
+        routineDescription={routineDescription}
         routineType={routineType}
         routineExercises={routineExercises}
         validationErrors={validationErrors}
         onNameChange={setRoutineName}
+        onDescriptionChange={setRoutineDescription}
         onTypeChange={setRoutineType}
         handleAddSet={handleAddSet}
         handleSetUpdate={handleSetUpdate}
@@ -125,9 +164,9 @@ const CreateRoutinePage: React.FC = () => {
         handleReorderClick={handleReorderClick}
         handleSelectExercises={handleSelectExercises}
         onSave={handleSaveRoutineStart}
-        onExerciseUpdate={handleNotesUpdate}
+        onExerciseUpdate={handleExerciseUpdate}
         isEditing={isEditing}
-        onAIButtonClick={() => setShowAIModal(true)}
+        onAIButtonClick={handleAIButtonClick}
       />
 
       {/* Dialog Components */}
@@ -144,32 +183,12 @@ const CreateRoutinePage: React.FC = () => {
         isEditing={isEditing}
       />
 
-      {/* AI Coming Soon Dialog */}
-      <Dialog open={showAIModal} onOpenChange={setShowAIModal}>
-        <DialogContent className="sm:max-w-md border-primary/20 bg-card/95 backdrop-blur-xl">
-          <DialogHeader className="space-y-4 items-center text-center pb-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-              <Sparkles className="w-8 h-8 text-primary" />
-            </div>
-            <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-              Gatofit AI Magic
-            </DialogTitle>
-            <DialogDescription className="text-base text-muted-foreground pt-2">
-              Estamos entrenando a nuestra IA para crear rutinas personalizadas de nivel olímpico.
-              <br /><br />
-              <span className="font-medium text-foreground">Proximamente solo para usuarios Premium.</span>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center pt-2">
-            <Button
-              className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white border-0"
-              onClick={() => setShowAIModal(false)}
-            >
-              Entendido
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* AI Creation Modal */}
+      <AICreationModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onRoutineGenerated={handleRoutineGenerated}
+      />
 
       {/* Sheet Components */}
       <RoutineSheets
@@ -183,6 +202,13 @@ const CreateRoutinePage: React.FC = () => {
         routineExercises={routineExercises}
         navigateToSelectExercises={handleSelectExercises}
         handleReorderSave={handleReorderSave}
+      />
+
+      {/* Premium Modal for AI Routine Creator */}
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        feature="ai_routine_creator"
       />
     </div>
   );

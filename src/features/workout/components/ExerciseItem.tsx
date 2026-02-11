@@ -30,7 +30,10 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({
   const handleExerciseNameClick = () => {
     // Navigate to exercise details while preserving current route for return
     const currentPath = window.location.pathname;
-    navigate(`/workout/exercise-details/${exercise.id}`, {
+    // Use exercise_id (DB ID) if available, specifically for AI generated or imported exercises
+    // where 'id' might be a temporary timestamp.
+    const targetId = exercise.exercise_id || exercise.id;
+    navigate(`/workout/exercise-details/${targetId}`, {
       state: { returnTo: currentPath }
     });
   };

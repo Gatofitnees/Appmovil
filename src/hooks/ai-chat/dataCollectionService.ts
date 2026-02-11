@@ -1,4 +1,5 @@
-
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfileContext } from '@/contexts/ProfileContext';
 import { useHomePageData } from '@/hooks/useHomePageData';
@@ -12,6 +13,37 @@ export const useDataCollection = () => {
   const { macros } = useHomePageData();
   const { routines } = useRoutines();
   const { entries } = useFoodLog();
+  const [coachCompanyName, setCoachCompanyName] = useState<string>('gatofit');
+
+  useEffect(() => {
+    const fetchCoachCompany = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('coach_user_assignments')
+          .select(`
+            coach_id,
+            coach:coach_branding_public(company_name)
+          `)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (data && data.coach) {
+          // Supabase returns an array or object depending on relationship, handle typings safely if needed
+          // Assuming branding is 1:1 with coach profile which is 1:1 with coach_id
+          const branding = data.coach as any;
+          if (branding && branding.company_name) {
+            setCoachCompanyName(branding.company_name);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching coach company:', error);
+      }
+    };
+
+    fetchCoachCompany();
+  }, [user]);
 
   const collectUserData = (messages: ChatMessage[]): UserData => {
     // Filter today's food entries
@@ -39,6 +71,7 @@ export const useDataCollection = () => {
         id: user?.id,
         email: user?.email,
         name: profile?.full_name || profile?.username,
+        coach_company: coachCompanyName,
       },
       profile: {
         weight_kg: profile?.current_weight_kg,

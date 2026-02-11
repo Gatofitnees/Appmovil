@@ -1,21 +1,23 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import OnboardingLayout from "@/components/onboarding/OnboardingLayout";
 import OnboardingNavigation from "@/components/onboarding/OnboardingNavigation";
 import { Button } from "@/components/ui/button";
+import LoginModal from "@/components/onboarding/LoginModal";
 import welcomeVideo from "@/assets/lottie/presentar.mp4";
 
 const Welcome: React.FC = () => {
   const navigate = useNavigate();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleStart = () => {
     navigate("/onboarding/gender");
   };
 
   const handleLogin = () => {
-    navigate("/onboarding/login");
+    setShowLoginModal(true);
   };
 
   return (
@@ -79,6 +81,9 @@ const Welcome: React.FC = () => {
           </motion.p>
         </div>
       </div>
+
+      {/* Login Modal */}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </OnboardingLayout>
   );
 };

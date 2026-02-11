@@ -26,7 +26,7 @@ const DateSelectors: React.FC<DateSelectorsProps> = ({
   yearsValues,
 }) => {
   return (
-    <div className="flex space-x-2 h-[240px] mb-8">
+    <div className="flex space-x-2 h-[240px] mb-8" data-no-swipe-back="true">
       <div className="w-1/3">
         {daysValues.length > 0 && (
           <WheelSelector

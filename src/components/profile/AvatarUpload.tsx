@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useSecureAvatarUpload } from '@/hooks/useSecureAvatarUpload';
 import { Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useBranding } from '@/contexts/BrandingContext';
 
 interface AvatarUploadProps {
   currentAvatar?: string | null;
@@ -27,6 +28,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { uploadAvatar, isUploading } = useSecureAvatarUpload();
+  const { branding } = useBranding();
 
   const sizeClasses = {
     sm: 'h-16 w-16',
@@ -61,15 +63,24 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
     cameraInputRef.current?.click();
   };
 
+  const brandColor = branding.primaryButtonColor || '#ef4444';
+
   return (
     <div className="flex flex-col items-center space-y-3">
       <div className="relative">
-        <Avatar className={cn(
-          sizeClasses[size],
-          "border-2",
-          isAsesorado ? "border-red-500 shadow-lg shadow-red-500/20" :
-            isPremium ? "border-yellow-400 shadow-lg shadow-yellow-400/20" : "border border-black/10"
-        )}>
+        <Avatar
+          className={cn(
+            sizeClasses[size],
+            // Removed static border classes for isAsesorado
+            !isAsesorado && (isPremium ? "border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" : "border border-black/10")
+          )}
+          style={isAsesorado ? {
+            borderWidth: '2px', // Ensure border width is set
+            borderStyle: 'solid',
+            borderColor: brandColor,
+            boxShadow: `0 10px 15px -3px ${brandColor}33, 0 4px 6px -2px ${brandColor}1a`
+          } : undefined}
+        >
           <AvatarImage src={currentAvatar || undefined} alt={userName || 'Avatar'} />
           <AvatarFallback className="text-lg font-bold">
             {userName?.charAt(0)?.toUpperCase() || 'U'}

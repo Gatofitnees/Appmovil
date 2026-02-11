@@ -23,7 +23,7 @@ const BodyFatSelector: React.FC<BodyFatSelectorProps> = ({
   onBodyFatChange
 }) => {
   return (
-    <div className="space-y-2 w-full flex flex-col items-center">
+    <div className="space-y-2 w-full flex flex-col items-center" data-no-swipe-back="true">
       {/* Header moved to parent */}
       <div className="h-[200px] w-24">
         {fatValues.length > 0 && (

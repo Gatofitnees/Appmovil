@@ -19,12 +19,14 @@ export const useRoutineSave = (editRoutineId?: number) => {
 
   const {
     routineName,
+    routineDescription,
     routineType,
     routineExercises,
     setShowNoExercisesDialog,
     setShowSaveConfirmDialog,
     setIsSubmitting,
     setRoutineName,
+    setRoutineDescription,
     setRoutineType,
     setRoutineExercises
   } = useRoutineContext();
@@ -126,12 +128,14 @@ export const useRoutineSave = (editRoutineId?: number) => {
           editRoutineId,
           routineName,
           routineType,
-          routineExercises
+          routineExercises,
+          routineDescription
         )
         : saveRoutine(
           routineName,
           routineType,
-          routineExercises
+          routineExercises,
+          routineDescription
         );
 
       const savedRoutine = await Promise.race([savePromise, timeoutPromise]);
@@ -154,6 +158,7 @@ export const useRoutineSave = (editRoutineId?: number) => {
       sonnerToast.dismiss();
 
       setRoutineName('');
+      setRoutineDescription('');
       setRoutineType('');
       setRoutineExercises([]);
       clearStoredRoutine();

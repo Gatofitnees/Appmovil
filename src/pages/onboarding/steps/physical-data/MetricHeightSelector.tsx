@@ -15,7 +15,7 @@ const MetricHeightSelector: React.FC<MetricHeightSelectorProps> = ({
   onHeightChange
 }) => {
   return (
-    <div className="space-y-2 w-full flex flex-col items-center">
+    <div className="space-y-2 w-full flex flex-col items-center" data-no-swipe-back="true">
       {/* Label moved to parent for alignment */}
       <div className="h-[200px] w-24">
         {heightValues.length > 0 && (

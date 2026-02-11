@@ -18,8 +18,9 @@ import GoalRealism from "./steps/GoalRealism";
 import DesiredPace from "./steps/DesiredPace";
 import CommonObstacles from "./steps/CommonObstacles";
 import DesiredAchievements from "./steps/DesiredAchievements";
-import Gratitude from "./steps/Gratitude";
-import InitialRecommendation from "./steps/InitialRecommendation";
+import Gratitude from './steps/Gratitude';
+import PromoCode from './steps/PromoCode';
+import InitialRecommendation from './steps/InitialRecommendation';
 import FeaturesPreview from "./steps/FeaturesPreview";
 import CreateAccount from "./steps/CreateAccount";
 import Login from "./steps/Login";
@@ -51,6 +52,7 @@ export interface OnboardingData {
   obstacles?: string[];
   desiredAchievements?: string[];
   achievements?: string[];
+  promoCode?: string;
   email?: string;
   password?: string;
   firstName?: string;
@@ -138,17 +140,18 @@ const OnboardingFlow: React.FC = () => {
     "/onboarding/diet": 13,
     "/onboarding/desired-achievements": 14,
     "/onboarding/gratitude": 15,
-    "/onboarding/initial-recommendation": 16,
-    "/onboarding/features-preview": 17,
-    "/onboarding/create-account": 18,
-    "/onboarding/login": 19,
-    "/onboarding/app-transition": 20,
+    "/onboarding/promo-code": 16,
+    "/onboarding/initial-recommendation": 17,
+    "/onboarding/features-preview": 18,
+    "/onboarding/create-account": 19,
+    "/onboarding/login": 20,
+    "/onboarding/app-transition": 21,
   };
 
   const currentPath = location.pathname;
   // Default to 1 if not found, or handle specifically
   const currentStep = stepConfig[currentPath] || 1;
-  const totalSteps = 20;
+  const totalSteps = 21;
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   // Routes where we should NOT show the progress bar (like the final transition or welcome maybe?)
@@ -217,6 +220,7 @@ const OnboardingFlow: React.FC = () => {
                     <Route path="common-obstacles" element={<CommonObstacles />} />
                     <Route path="desired-achievements" element={<DesiredAchievements />} />
                     <Route path="gratitude" element={<Gratitude />} />
+                    <Route path="promo-code" element={<PromoCode />} />
                     <Route path="initial-recommendation" element={<InitialRecommendation />} />
                     <Route path="features-preview" element={<FeaturesPreview />} />
                     <Route path="create-account" element={<CreateAccount />} />

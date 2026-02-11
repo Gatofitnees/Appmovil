@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCoachAssignment } from '@/hooks/useCoachAssignment';
+import { useSubscription } from '@/hooks/useSubscription';
+import { PremiumModal } from '@/components/premium/PremiumModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,8 +14,15 @@ import { Bot, User } from 'lucide-react';
 const AIChat: React.FC = () => {
   const navigate = useNavigate();
   const { coachId } = useCoachAssignment();
+  const { isPremium } = useSubscription();
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const handleOpenAIChat = () => {
+    // AI Chat is now premium-only
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
     navigate('/ai-chat');
   };
 
@@ -102,6 +111,13 @@ const AIChat: React.FC = () => {
       ) : (
         ChatButton
       )}
+
+      {/* Premium Modal for AI Chat */}
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        feature="ai_chat"
+      />
     </div>
   );
 };

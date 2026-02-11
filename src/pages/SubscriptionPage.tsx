@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Crown, Sparkles, Loader2, AlertCircle, XCircle, Info } from 'lucide-react';
+import { ArrowLeft, Crown, Sparkles, Loader2, AlertCircle, XCircle, Info, Check } from 'lucide-react';
 import Button from '@/components/Button';
 import { useSubscription } from '@/hooks/subscription';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
@@ -10,6 +10,9 @@ import { PremiumPlanCard } from '@/components/subscription/PremiumPlanCard';
 import { SubscriptionStatus } from '@/components/subscription/SubscriptionStatus';
 import { PlanChangeConfirmDialog } from '@/components/subscription/PlanChangeConfirmDialog';
 import { CancelConfirmDialog } from '@/components/subscription/CancelConfirmDialog';
+import { PromoCodeInput } from '@/components/subscription/PromoCodeInput';
+import { PromoCodePricing } from '@/components/subscription/PromoCodePricing';
+import { usePromoCodePricing } from '@/hooks/useRevenueCatSubscription';
 
 import { PaymentFailureAlert } from '@/components/subscription/PaymentFailureAlert';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,14 +21,23 @@ import { useToast } from '@/hooks/use-toast';
 const SubscriptionPage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { 
-    subscription, 
-    plans, 
-    isPremium, 
-    upgradeSubscription, 
+  const {
+    subscription,
+    plans,
+    isPremium,
+    upgradeSubscription,
     cancelSubscription
   } = useSubscription();
   const { usage } = useUsageLimits();
+
+  // Promo code pricing
+  const {
+    hasPromoCode,
+    yearlyPrice,
+    isLoading: isPricingLoading,
+    reloadPricing
+  } = usePromoCodePricing();
+
   const [isLoading, setIsLoading] = useState(false);
   const [showPlanChangeDialog, setShowPlanChangeDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -67,7 +79,7 @@ const SubscriptionPage: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const success = urlParams.get('success');
     const subscriptionId = urlParams.get('subscription_id') || urlParams.get('ba_token');
-    
+
     if (success === 'true' && subscriptionId && !isLoading) {
       handlePayPalReturn(subscriptionId);
     }
@@ -81,7 +93,7 @@ const SubscriptionPage: React.FC = () => {
 
       // Recuperar código de descuento del localStorage si existe
       const discountCode = localStorage.getItem('pending_discount_code');
-      
+
       const { data, error } = await supabase.functions.invoke('verify-paypal-payment', {
         body: {
           subscriptionId,
@@ -97,15 +109,15 @@ const SubscriptionPage: React.FC = () => {
       if (error) throw error;
 
       if (data?.success) {
-        const bonusMessage = data.subscription?.bonusMonthsApplied 
+        const bonusMessage = data.subscription?.bonusMonthsApplied
           ? ` ¡Incluye ${data.subscription.bonusMonthsApplied} meses gratis!`
           : '';
-        
+
         toast({
           title: "¡Pago confirmado!",
           description: `Tu suscripción premium ha sido activada exitosamente.${bonusMessage}`,
         });
-        
+
         // Limpiar URL y recargar datos
         window.history.replaceState({}, '', '/subscription');
         setTimeout(() => window.location.reload(), 1000);
@@ -119,7 +131,7 @@ const SubscriptionPage: React.FC = () => {
         description: "No pudimos confirmar tu pago. Contacta soporte si el problema persiste.",
         variant: "destructive"
       });
-      
+
       // Limpiar URL incluso si hay error
       window.history.replaceState({}, '', '/subscription');
     } finally {
@@ -174,7 +186,7 @@ const SubscriptionPage: React.FC = () => {
 
   const handleConfirmPlanChange = async () => {
     if (!selectedPlan) return;
-    
+
     setIsLoading(true);
     try {
       const success = await upgradeSubscription(selectedPlan);
@@ -189,7 +201,7 @@ const SubscriptionPage: React.FC = () => {
 
   const handleCancelSubscription = async () => {
     setIsLoading(true);
-    
+
     // SPECIAL CASE: Permanent cancellation during grace period
     if (subscription?.status === 'payment_failed') {
       try {
@@ -205,7 +217,7 @@ const SubscriptionPage: React.FC = () => {
             }
           });
         }
-        
+
         // 2. Update DB to FREE
         const { error: updateError } = await supabase
           .from('user_subscriptions')
@@ -223,19 +235,19 @@ const SubscriptionPage: React.FC = () => {
           .eq('user_id', user.id);
 
         if (updateError) throw updateError;
-        
+
         // 3. Mark payment failure as resolved
         await supabase
           .from('subscription_payment_failures')
           .update({ resolved_at: new Date().toISOString() })
           .eq('user_id', user.id)
           .is('resolved_at', null);
-        
+
         toast({
           title: "Suscripción cancelada",
           description: "Has vuelto al plan gratuito. Puedes suscribirte nuevamente cuando desees.",
         });
-        
+
         setTimeout(() => window.location.reload(), 1000);
       } catch (error) {
         console.error('Error cancelling during grace period:', error);
@@ -283,7 +295,7 @@ const SubscriptionPage: React.FC = () => {
             title: "Suscripción cancelada",
             description: data.message || "Tu suscripción ha sido cancelada exitosamente",
           });
-          
+
           // Reload to update subscription status
           window.location.reload();
         } else {
@@ -294,7 +306,7 @@ const SubscriptionPage: React.FC = () => {
         await cancelSubscription();
         window.location.reload();
       }
-      
+
       setShowCancelDialog(false);
     } catch (error) {
       console.error('Error cancelling subscription:', error);
@@ -346,7 +358,7 @@ const SubscriptionPage: React.FC = () => {
           title: "Suscripción reactivada",
           description: "Tu suscripción ha sido reactivada exitosamente",
         });
-        
+
         window.location.reload();
       } else if (data?.error === 'expired') {
         toast({
@@ -455,12 +467,29 @@ const SubscriptionPage: React.FC = () => {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            {isPremium ? 
-              'Cambia tu plan cuando quieras' : 
+            {isPremium ?
+              'Cambia tu plan cuando quieras' :
               'Desbloquea todo el potencial de tu entrenamiento'
             }
           </p>
         </div>
+
+        {/* Promo Code Input - Only for non-premium users */}
+        {!isPremium && (
+          <div className="space-y-4">
+            <PromoCodeInput onCodeApplied={reloadPricing} />
+
+            {/* Promo Code Pricing Display */}
+            {hasPromoCode && (
+              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-green-500 font-medium">
+                  Código aplicado: Precio especial de {yearlyPrice}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Subscription Plans */}
         <div className="space-y-4" data-plans-section>
@@ -498,70 +527,70 @@ const SubscriptionPage: React.FC = () => {
         </div>
 
         {/* Subscription Already Cancelled - Not Expired Yet */}
-        {isPremium && 
-         subscription?.status === 'active' && 
-         subscription?.auto_renewal === false && 
-         subscription?.expires_at && 
-         new Date(subscription.expires_at) > new Date() && (
-          <div className="neu-card p-6 border border-yellow-500/20 bg-yellow-500/5">
-            <div className="flex items-start gap-3">
-              <Info className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-              <div className="space-y-3 flex-1">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-base">Suscripción cancelada</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tu suscripción ya fue cancelada y no se renovará automáticamente.
-                    Seguirás teniendo acceso premium hasta {new Date(subscription.expires_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    ¿Cambiaste de opinión? Puedes reactivar tu suscripción ahora.
-                  </p>
+        {isPremium &&
+          subscription?.status === 'active' &&
+          subscription?.auto_renewal === false &&
+          subscription?.expires_at &&
+          new Date(subscription.expires_at) > new Date() && (
+            <div className="neu-card p-6 border border-yellow-500/20 bg-yellow-500/5">
+              <div className="flex items-start gap-3">
+                <Info className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <div className="space-y-3 flex-1">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-base">Suscripción cancelada</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Tu suscripción ya fue cancelada y no se renovará automáticamente.
+                      Seguirás teniendo acceso premium hasta {new Date(subscription.expires_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      ¿Cambiaste de opinión? Puedes reactivar tu suscripción ahora.
+                    </p>
+                  </div>
+                  {subscription?.paypal_subscription_id && (
+                    <Button
+                      variant="primary"
+                      onClick={handleReactivateSubscription}
+                      disabled={isLoading}
+                      className="w-full sm:w-auto"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Reactivando...
+                        </>
+                      ) : (
+                        <>
+                          <Crown className="h-4 w-4 mr-2" />
+                          Reactivar suscripción
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
-                {subscription?.paypal_subscription_id && (
-                  <Button
-                    variant="primary"
-                    onClick={handleReactivateSubscription}
-                    disabled={isLoading}
-                    className="w-full sm:w-auto"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Reactivando...
-                      </>
-                    ) : (
-                      <>
-                        <Crown className="h-4 w-4 mr-2" />
-                        Reactivar suscripción
-                      </>
-                    )}
-                  </Button>
-                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Subscription Expired or Cancelled and Expired - Renew Section */}
-        {((subscription?.status === 'expired') || 
-          (subscription?.status === 'active' && 
-           subscription?.auto_renewal === false && 
-           subscription?.expires_at && 
-           new Date(subscription.expires_at) <= new Date())) && (
-          <div className="neu-card p-6 border border-primary/20 bg-primary/5">
-            <div className="flex items-start gap-3">
-              <Crown className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-              <div className="space-y-3 flex-1">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-base">Renovar suscripción</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tu suscripción ha expirado. Para volver a disfrutar de los beneficios premium, selecciona un nuevo plan arriba.
-                  </p>
+        {((subscription?.status === 'expired') ||
+          (subscription?.status === 'active' &&
+            subscription?.auto_renewal === false &&
+            subscription?.expires_at &&
+            new Date(subscription.expires_at) <= new Date())) && (
+            <div className="neu-card p-6 border border-primary/20 bg-primary/5">
+              <div className="flex items-start gap-3">
+                <Crown className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <div className="space-y-3 flex-1">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-base">Renovar suscripción</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Tu suscripción ha expirado. Para volver a disfrutar de los beneficios premium, selecciona un nuevo plan arriba.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Footer Info */}
         <div className="text-center text-xs text-muted-foreground space-y-2 pt-4">
@@ -588,13 +617,13 @@ const SubscriptionPage: React.FC = () => {
       />
 
       {/* Cancel Confirmation Dialog */}
-        <CancelConfirmDialog
-          isOpen={showCancelDialog}
-          onClose={() => setShowCancelDialog(false)}
-          onConfirm={handleCancelSubscription}
-          isLoading={isLoading}
-          isPaymentFailed={subscription?.status === 'payment_failed'}
-        />
+      <CancelConfirmDialog
+        isOpen={showCancelDialog}
+        onClose={() => setShowCancelDialog(false)}
+        onConfirm={handleCancelSubscription}
+        isLoading={isLoading}
+        isPaymentFailed={subscription?.status === 'payment_failed'}
+      />
     </div>
   );
 };

@@ -8,6 +8,7 @@ import ExerciseList from "./ExerciseList";
 
 interface RoutineFormContainerProps {
   routineName: string;
+  routineDescription: string;
   routineType: string;
   routineExercises: RoutineExercise[];
   validationErrors: {
@@ -15,6 +16,7 @@ interface RoutineFormContainerProps {
     type: boolean;
   };
   onNameChange: (name: string) => void;
+  onDescriptionChange: (description: string) => void;
   onTypeChange: (type: string) => void;
   handleAddSet: (index: number) => void;
   handleSetUpdate: (exerciseIndex: number, setIndex: number, field: string, value: number) => void;
@@ -30,10 +32,12 @@ interface RoutineFormContainerProps {
 
 const RoutineFormContainer: React.FC<RoutineFormContainerProps> = ({
   routineName,
+  routineDescription,
   routineType,
   routineExercises,
   validationErrors,
   onNameChange,
+  onDescriptionChange,
   onTypeChange,
   handleAddSet,
   handleSetUpdate,
@@ -89,9 +93,11 @@ const RoutineFormContainer: React.FC<RoutineFormContainerProps> = ({
       }}>
         <RoutineForm
           routineName={routineName}
+          routineDescription={routineDescription}
           routineType={routineType}
           validationErrors={validationErrors}
           onNameChange={onNameChange}
+          onDescriptionChange={onDescriptionChange}
           onTypeChange={onTypeChange}
         />
 

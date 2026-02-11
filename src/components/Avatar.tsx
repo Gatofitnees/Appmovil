@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ProgressRing from "./ProgressRing";
 import { cn } from "@/lib/utils";
 import { Crown } from "lucide-react";
+import { useBranding } from "@/contexts/BrandingContext";
 
 interface AvatarProps {
   src?: string;
@@ -24,6 +25,7 @@ const Avatar: React.FC<AvatarProps> = ({
 }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const { branding } = useBranding();
 
   const sizeClasses = {
     sm: "w-10 h-10 text-xs",
@@ -45,7 +47,7 @@ const Avatar: React.FC<AvatarProps> = ({
     .substring(0, 2);
 
   const ringSize = size === "sm" ? 40 : size === "md" ? 64 : 80;
-  const ringStrokeWidth = size === "sm" ? 2 : 3;
+  // const ringStrokeWidth = size === "sm" ? 2 : 3; // Unused
 
   // Log para debug
 
@@ -65,13 +67,15 @@ const Avatar: React.FC<AvatarProps> = ({
   const shouldShowImage = src && !imageError && imageLoaded;
   const shouldShowInitials = !src || imageError || !imageLoaded;
 
+  const brandColor = branding.primaryButtonColor || '#ef4444'; // Fallback to red if missing
+
   return (
     <div className={cn("relative inline-flex", className)}>
       <ProgressRing
         progress={progress}
         size={ringSize}
       />
-      {/* Premium golden ring - Hidden if isAsesorado is true to prioritize red border */}
+      {/* Premium golden ring - Hidden if isAsesorado is true to prioritize custom border */}
       {isPremium && !isAsesorado && (
         <div
           className="absolute inset-0 rounded-full border-2 border-gradient-to-r from-yellow-400 to-orange-500"
@@ -85,12 +89,12 @@ const Avatar: React.FC<AvatarProps> = ({
         </div>
       )}
 
-      {/* Asesorado red ring */}
+      {/* Asesorado custom ring */}
       {isAsesorado && (
         <div
           className="absolute inset-0 rounded-full border-2"
           style={{
-            background: 'linear-gradient(45deg, #ef4444, #dc2626)',
+            background: `linear-gradient(45deg, ${brandColor}, ${brandColor})`,
             padding: '2px',
             borderRadius: '50%'
           }}
@@ -101,10 +105,15 @@ const Avatar: React.FC<AvatarProps> = ({
       <div
         className={cn(
           "absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-secondary flex items-center justify-center overflow-hidden",
-          isAsesorado ? "border-2 border-red-500 shadow-lg shadow-red-500/20" :
-            isPremium ? "border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" : "border border-black/10",
+          // Removed static border classes for isAsesorado to use dynamic style
+          !isAsesorado && (isPremium ? "border-2 border-yellow-400 shadow-lg shadow-yellow-400/20" : "border border-black/10"),
           sizeClasses[size]
         )}
+        style={isAsesorado ? {
+          borderWidth: '2px',
+          borderColor: brandColor,
+          boxShadow: `0 10px 15px -3px ${brandColor}33, 0 4px 6px -2px ${brandColor}1a` // approximate shadow-lg with opacity
+        } : undefined}
       >
         {src && !imageError && (
           <img

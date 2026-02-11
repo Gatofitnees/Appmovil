@@ -34,6 +34,12 @@ export const FoodEditPage: React.FC<FoodEditPageProps> = ({ onSave }) => {
     healthScore: 7
   });
 
+  const [editingIngredient, setEditingIngredient] = useState<{
+    index: number;
+    field: string;
+    value: string | number;
+  } | null>(null);
+
   const [editingMacro, setEditingMacro] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showIngredients, setShowIngredients] = useState(false);
@@ -47,7 +53,7 @@ export const FoodEditPage: React.FC<FoodEditPageProps> = ({ onSave }) => {
   useEffect(() => {
     if (initialData) {
       console.log('Loading initial data:', initialData);
-      
+
       setFormData({
         custom_food_name: initialData.custom_food_name || '',
         quantity_consumed: initialData.quantity_consumed || 1,
@@ -68,23 +74,54 @@ export const FoodEditPage: React.FC<FoodEditPageProps> = ({ onSave }) => {
     }
   }, [initialData]);
 
+  const recalculateTotals = (currentIngredients: any[]) => {
+    if (currentIngredients.length === 0) return;
+
+    const totals = currentIngredients.reduce((acc, ing) => ({
+      calories: acc.calories + (ing.calories || 0),
+      protein: acc.protein + (ing.protein || 0),
+      carbs: acc.carbs + (ing.carbs || 0),
+      fat: acc.fat + (ing.fat || 0)
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+    setFormData(prev => ({
+      ...prev,
+      calories_consumed: Math.round(totals.calories),
+      protein_g_consumed: parseFloat(totals.protein.toFixed(1)),
+      carbs_g_consumed: parseFloat(totals.carbs.toFixed(1)),
+      fat_g_consumed: parseFloat(totals.fat.toFixed(1))
+    }));
+  };
+
   const adjustPortion = (delta: number) => {
     const newQuantity = Math.max(0.5, formData.quantity_consumed + delta);
     const ratio = newQuantity / formData.quantity_consumed;
-    
+
+    // Scale ingredients
+    const scaledIngredients = ingredients.map(ing => ({
+      ...ing,
+      grams: Math.round(ing.grams * ratio),
+      calories: Math.round(ing.calories * ratio),
+      protein: parseFloat((ing.protein * ratio).toFixed(1)),
+      carbs: parseFloat((ing.carbs * ratio).toFixed(1)),
+      fat: parseFloat((ing.fat * ratio).toFixed(1))
+    }));
+
+    setIngredients(scaledIngredients);
+
     setFormData(prev => ({
       ...prev,
       quantity_consumed: newQuantity,
       calories_consumed: Math.round(prev.calories_consumed * ratio),
-      protein_g_consumed: Math.round(prev.protein_g_consumed * ratio),
-      carbs_g_consumed: Math.round(prev.carbs_g_consumed * ratio),
-      fat_g_consumed: Math.round(prev.fat_g_consumed * ratio)
+      protein_g_consumed: parseFloat((prev.protein_g_consumed * ratio).toFixed(1)),
+      carbs_g_consumed: parseFloat((prev.carbs_g_consumed * ratio).toFixed(1)),
+      fat_g_consumed: parseFloat((prev.fat_g_consumed * ratio).toFixed(1))
     }));
   };
 
   const handleSave = async () => {
     setIsSaving(true);
-    
+
     try {
       const saveData: Partial<FoodLogEntry> = {
         custom_food_name: formData.custom_food_name,
@@ -106,7 +143,7 @@ export const FoodEditPage: React.FC<FoodEditPageProps> = ({ onSave }) => {
       console.log('Saving food data:', saveData);
 
       let success = false;
-      
+
       if (isEditing && initialData?.id) {
         success = await updateEntry(initialData.id, saveData);
       } else {
@@ -130,14 +167,58 @@ export const FoodEditPage: React.FC<FoodEditPageProps> = ({ onSave }) => {
     }
   };
 
-  const updateMacro = (type: string, value: number) => {
-    setFormData(prev => ({ ...prev, [`${type}_consumed`]: value }));
-  };
+  const updateMacro = (type: string, value: string | number) => {
+    // Helper to calc calories from macros
+    const calculateCalories = (p: number, c: number, f: number) => Math.round((p * 4) + (c * 4) + (f * 9));
 
+    // If editing an ingredient
+    if (editingIngredient) {
+      const newIngredients = [...ingredients];
+      const index = editingIngredient.index;
+      const field = editingIngredient.field; // Use the stored field directly
+
+      const finalValue = field === 'name' ? String(value) : Number(value);
+      (newIngredients[index] as any)[field] = finalValue;
+
+      // If we updated a macro field, recalculate ingredient calories
+      if (['protein', 'carbs', 'fat'].includes(field)) {
+        const ing = newIngredients[index];
+        // Ensure we treat them as numbers (they might be strings from modal if not careful, but we cast finalValue above)
+        // But we should also read other fields safely
+        const p = field === 'protein' ? Number(finalValue) : (ing.protein || 0);
+        const c = field === 'carbs' ? Number(finalValue) : (ing.carbs || 0);
+        const f = field === 'fat' ? Number(finalValue) : (ing.fat || 0);
+
+        ing.calories = calculateCalories(p, c, f);
+      }
+
+      setIngredients(newIngredients);
+      recalculateTotals(newIngredients);
+      setEditingIngredient(null);
+    } else {
+      // Logic for editing top-level macros 
+      const numValue = Number(value);
+      setFormData(prev => {
+        const newData = { ...prev, [`${type}_consumed`]: numValue };
+
+        // If updating a macro (stripping _consumed suffix to check type)
+        const baseType = type.replace('_consumed', '');
+        if (['protein_g', 'carbs_g', 'fat_g'].includes(type) || ['protein', 'carbs', 'fat'].includes(baseType)) {
+          // We need current values for others
+          const p = type === 'protein_g_consumed' ? numValue : prev.protein_g_consumed;
+          const c = type === 'carbs_g_consumed' ? numValue : prev.carbs_g_consumed;
+          const f = type === 'fat_g_consumed' ? numValue : prev.fat_g_consumed;
+
+          newData.calories_consumed = calculateCalories(p, c, f);
+        }
+        return newData;
+      });
+    }
+  };
 
   const handleFoodDataUpdate = (updatedData: any) => {
     console.log('Updating food data from AI response:', updatedData);
-    
+
     // Update form data with the new values
     setFormData(prev => ({
       ...prev,
@@ -150,18 +231,18 @@ export const FoodEditPage: React.FC<FoodEditPageProps> = ({ onSave }) => {
       fat_g_consumed: updatedData.fat_g_consumed,
       healthScore: updatedData.healthScore
     }));
-    
+
     // Update ingredients
     if (updatedData.ingredients && updatedData.ingredients.length > 0) {
       setIngredients(updatedData.ingredients);
       setShowIngredients(true);
     }
-    
+
     console.log('Food data updated successfully');
   };
 
-  const handleIngredientUpdate = (index: number, data: any) => {
-    setIngredients(prev => prev.map((ing, i) => i === index ? data : ing));
+  const handleIngredientClick = (index: number, field: string, value: string | number) => {
+    setEditingIngredient({ index, field, value });
   };
 
   // Create the food data object with all current state including ingredients
@@ -214,7 +295,7 @@ export const FoodEditPage: React.FC<FoodEditPageProps> = ({ onSave }) => {
           ingredients={ingredients}
           showIngredients={showIngredients}
           onToggleShow={() => setShowIngredients(!showIngredients)}
-          onIngredientUpdate={handleIngredientUpdate}
+          onIngredientClick={handleIngredientClick}
         />
 
         <ActionButtons
@@ -226,16 +307,19 @@ export const FoodEditPage: React.FC<FoodEditPageProps> = ({ onSave }) => {
       </div>
 
       <MacroEditModal
-        editingMacro={editingMacro}
-        currentValue={editingMacro ? formData[editingMacro as keyof typeof formData] as number : 0}
-        onClose={() => setEditingMacro(null)}
+        editingMacro={editingIngredient ? editingIngredient.field : editingMacro}
+        currentValue={editingIngredient ? editingIngredient.value : (editingMacro ? formData[editingMacro as keyof typeof formData] as number : 0)}
+        onClose={() => {
+          setEditingMacro(null);
+          setEditingIngredient(null);
+        }}
         onUpdate={updateMacro}
       />
 
       <ChangeResultsDialog
         isOpen={showChangeResults}
         onClose={() => setShowChangeResults(false)}
-        onSubmit={() => {}}
+        onSubmit={() => { }}
         onUpdate={handleFoodDataUpdate}
         foodData={currentFoodData}
       />

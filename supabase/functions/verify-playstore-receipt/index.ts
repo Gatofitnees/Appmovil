@@ -44,7 +44,7 @@ async function getGoogleAccessToken() {
 
   // Para esta función, asumimos que usamos la API de Google directamente
   // En producción, necesitarías una librería para firmar JWTs
-  
+
   return serviceAccount.private_key;
 }
 
@@ -74,7 +74,9 @@ async function validatePlayStoreReceipt(
   const data = await response.json();
 
   // Verificar que la suscripción esté activa
-  const isActive = data.paymentState === 1; // 1 = Received, 0 = Pending
+  // 1 = Received (Pago completo), 2 = Free Trial (Prueba gratuita)
+  const isTrial = data.paymentState === 2;
+  const isActive = data.paymentState === 1 || isTrial;
 
   if (!isActive) {
     return {
@@ -88,10 +90,12 @@ async function validatePlayStoreReceipt(
     expiryTimeMillis: data.expiryTimeMillis,
     purchaseType: data.purchaseType,
     orderId: data.orderId,
+    isTrial: isTrial,
   };
 }
 
 serve(async (req) => {
+  // ... (CORS logic kept same)
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -131,21 +135,30 @@ serve(async (req) => {
     const planType = productId.includes('yearly') ? 'yearly' : 'monthly';
     const expiresDate = new Date(parseInt(validationResult.expiryTimeMillis || '0'));
 
-    // Actualizar suscripción en la base de datos
+    // Datos para actualizar
+    const subscriptionData: any = {
+      user_id: userId,
+      status: 'active', // Considerar 'trialing' si tu esquema lo soporta, o usar trial_ends_at
+      plan_type: planType,
+      payment_method: 'google_play',
+      store_platform: 'android', // Mapeo correcto a store_platform
+      google_play_purchase_token: token, // Guardar token específico
+      google_play_order_id: validationResult.orderId,
+      expires_at: expiresDate.toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Si es trial, agregar datos de trial
+    if (validationResult.isTrial) {
+      subscriptionData.trial_ends_at = expiresDate.toISOString();
+      subscriptionData.status = 'active'; // O 'trialing'
+    }
+
+    // Actualizar suscripción en la base de datos CORRECTA (user_subscriptions)
     const { data: subscription, error } = await supabase
-      .from('subscriptions')
+      .from('user_subscriptions')
       .upsert(
-        {
-          user_id: userId,
-          status: 'active',
-          plan_type: planType,
-          payment_method: 'google_play',
-          platform: 'android',
-          receipt_data: token,
-          order_id: validationResult.orderId,
-          expires_at: expiresDate.toISOString(),
-          created_at: new Date().toISOString(),
-        },
+        subscriptionData,
         { onConflict: 'user_id' }
       )
       .select('*')

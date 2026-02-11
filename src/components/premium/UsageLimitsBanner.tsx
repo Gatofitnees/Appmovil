@@ -25,17 +25,17 @@ export const UsageLimitsBanner: React.FC<UsageLimitsBannerProps> = ({
       case 'routines':
         return {
           current: usage.routines_created,
-          limit: 3
+          limit: 5
         };
       case 'nutrition':
         return {
           current: usage.nutrition_photos_used,
-          limit: 5
+          limit: 10
         };
       case 'ai_chat':
         return {
           current: usage.ai_chat_messages_used,
-          limit: 3
+          limit: 5
         };
     }
   };

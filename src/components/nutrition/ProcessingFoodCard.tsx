@@ -63,7 +63,7 @@ export const ProcessingFoodCard: React.FC<ProcessingFoodCardProps> = ({
   return (
     <div
       className={cn(
-        "neu-card-inset opacity-90 overflow-hidden rounded-xl",
+        "neu-card overflow-hidden rounded-xl",
         !error && "animate-pulse",
         className
       )}
@@ -77,11 +77,11 @@ export const ProcessingFoodCard: React.FC<ProcessingFoodCardProps> = ({
           />
           {!error && (
             <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-l-xl">
-              <ProgressRing 
-                progress={currentStep.progress} 
-                size={50} 
-                strokeWidth={5} 
-                className={isCompressing ? "text-yellow-500" : "text-primary"} 
+              <ProgressRing
+                progress={currentStep.progress}
+                size={50}
+                strokeWidth={5}
+                className={isCompressing ? "text-yellow-500" : "text-primary"}
               />
               <span className="absolute text-xs font-bold text-white">
                 {currentStep.progress}%
@@ -89,12 +89,12 @@ export const ProcessingFoodCard: React.FC<ProcessingFoodCardProps> = ({
             </div>
           )}
         </div>
-        <div className="flex-1 p-3 flex flex-col justify-center items-center bg-muted/20 rounded-r-xl">
+        <div className="flex-1 p-3 flex flex-col justify-center items-center rounded-r-xl">
           {error ? (
             <div className="text-center w-full">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-                <h4 className="text-sm font-semibold text-destructive">Comida no detectada</h4>
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <h4 className="text-sm font-semibold text-red-500">Comida no detectada</h4>
               </div>
               <p className="text-xs text-muted-foreground mb-3 px-2">
                 {error}

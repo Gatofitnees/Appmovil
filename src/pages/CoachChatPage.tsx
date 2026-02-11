@@ -34,6 +34,7 @@ const CoachChatPage: React.FC = () => {
     const [coachProfile, setCoachProfile] = useState<any>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,6 +55,23 @@ const CoachChatPage: React.FC = () => {
 
         fetchCoachProfile();
     }, [coachId]);
+
+    // Keyboard detection
+    useEffect(() => {
+        const handleResize = () => {
+            const isKeyboardOpen = window.visualViewport ?
+                window.visualViewport.height < window.innerHeight * 0.75 : false;
+            setKeyboardVisible(isKeyboardOpen);
+        };
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+            handleResize(); // Initial check
+            return () => {
+                window.visualViewport?.removeEventListener('resize', handleResize);
+            };
+        }
+    }, []);
 
     // Load Conversation and Messages
     useEffect(() => {
@@ -396,7 +414,11 @@ const CoachChatPage: React.FC = () => {
             {/* Input Area - Safe Area Bottom aware */}
             <div
                 className="p-3 border-t bg-background z-20"
-                style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+                style={{
+                    paddingBottom: isKeyboardVisible
+                        ? '0.75rem'
+                        : 'max(1.5rem, env(safe-area-inset-bottom))' // Increased margin when keyboard closed
+                }}
             >
                 <div className="flex gap-2 items-end">
                     <input

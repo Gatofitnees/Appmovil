@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
+import { RankSystemProvider } from "./contexts/RankSystemContext";
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import MainTabsLayout from "./layouts/MainTabsLayout";
@@ -58,6 +59,7 @@ import SafeAreaBars from "./components/SafeAreaBars";
 import { PurchaseSuccessGlobal } from "./components/subscription/PurchaseSuccessGlobal";
 import { StreakListener } from "./components/streak/StreakListener";
 import { StreakProvider } from "./contexts/StreakContext";
+import { AppUpdateChecker } from "./components/AppUpdateChecker";
 
 // Component to setup daily notifications
 const DailyNotificationsSetup: React.FC = () => {
@@ -292,278 +294,281 @@ function App() {
       <SubscriptionProvider>
         <ProfileProvider>
           <BrandingProvider>
-            <DocumentTitleUpdater />
-            <DynamicBrandingApplier />
-            <DailyNotificationsSetup />
-            <WorkoutCacheProvider>
-              <Router>
-                <SwipeBackHandler />
-                <AndroidBackButtonHandler />
-                <WorkoutRecoveryHandler />
-                <PaymentFailurePopupHandler />
-                <GlobalPaymentFailureBanner />
-                <PurchaseSuccessGlobal />
-                {/* Safe area bars for notch and home indicator */}
-                <SafeAreaBars />
-                <StreakProvider>
-                  <StreakListener />
-                  <LayoutWrapper>
+            <RankSystemProvider>
+              <DocumentTitleUpdater />
+              <DynamicBrandingApplier />
+              <DailyNotificationsSetup />
+              <AppUpdateChecker />
+              <WorkoutCacheProvider>
+                <Router>
+                  <SwipeBackHandler />
+                  <AndroidBackButtonHandler />
+                  <WorkoutRecoveryHandler />
+                  <PaymentFailurePopupHandler />
+                  <GlobalPaymentFailureBanner />
+                  <PurchaseSuccessGlobal />
+                  {/* Safe area bars for notch and home indicator */}
+                  <SafeAreaBars />
+                  <StreakProvider>
+                    <StreakListener />
+                    <LayoutWrapper>
 
-                    <RoutineProvider>
-                      <Routes>
-                        <Route path="/onboarding/*" element={<OnboardingFlow />} />
-                        <Route
-                          path="/"
-                          element={
-                            <ProtectedRoute>
-                              <Navigate to="/home" replace />
-                            </ProtectedRoute>
-                          }
-                        />
+                      <RoutineProvider>
+                        <Routes>
+                          <Route path="/onboarding/*" element={<OnboardingFlow />} />
+                          <Route
+                            path="/"
+                            element={
+                              <ProtectedRoute>
+                                <Navigate to="/home" replace />
+                              </ProtectedRoute>
+                            }
+                          />
 
-                        {/* Persistent Tabs Layout */}
-                        <Route element={<ProtectedRoute><MainTabsLayout /></ProtectedRoute>}>
-                          <Route path="/home" element={<div />} />
-                          <Route path="/workout" element={<div />} />
-                          <Route path="/nutrition" element={<div />} />
-                          <Route path="/ranking" element={<div />} />
-                          <Route path="/social" element={<div />} />
-                        </Route>
+                          {/* Persistent Tabs Layout */}
+                          <Route element={<ProtectedRoute><MainTabsLayout /></ProtectedRoute>}>
+                            <Route path="/home" element={<div />} />
+                            <Route path="/workout" element={<div />} />
+                            <Route path="/nutrition" element={<div />} />
+                            <Route path="/ranking" element={<div />} />
+                            <Route path="/social" element={<div />} />
+                          </Route>
 
-                        <Route
-                          path="/ai-chat"
-                          element={
-                            <ProtectedRoute>
-                              <AIChatPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/coach-chat"
-                          element={
-                            <ProtectedRoute>
-                              <CoachChatPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/profile"
-                          element={
-                            <ProtectedRoute>
-                              <ProfilePage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/subscription"
-                          element={
-                            <ProtectedRoute>
-                              <SubscriptionPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/support"
-                          element={
-                            <ProtectedRoute>
-                              <SupportPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/profile/body-measurements"
-                          element={
-                            <ProtectedRoute>
-                              <BodyMeasurementsPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/profile/user-information"
-                          element={
-                            <ProtectedRoute>
-                              <UserInformationPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/profile/progress"
-                          element={
-                            <ProtectedRoute>
-                              <ProgressPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/profile/calendar"
-                          element={
-                            <ProtectedRoute>
-                              <CalendarPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/settings"
-                          element={
-                            <ProtectedRoute>
-                              <SettingsPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/public-profile/:userId"
-                          element={
-                            <ProtectedRoute>
-                              <PublicProfilePage />
-                            </ProtectedRoute>
-                          }
-                        />
+                          <Route
+                            path="/ai-chat"
+                            element={
+                              <ProtectedRoute>
+                                <AIChatPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/coach-chat"
+                            element={
+                              <ProtectedRoute>
+                                <CoachChatPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile"
+                            element={
+                              <ProtectedRoute>
+                                <ProfilePage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/subscription"
+                            element={
+                              <ProtectedRoute>
+                                <SubscriptionPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/support"
+                            element={
+                              <ProtectedRoute>
+                                <SupportPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile/body-measurements"
+                            element={
+                              <ProtectedRoute>
+                                <BodyMeasurementsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile/user-information"
+                            element={
+                              <ProtectedRoute>
+                                <UserInformationPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile/progress"
+                            element={
+                              <ProtectedRoute>
+                                <ProgressPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/profile/calendar"
+                            element={
+                              <ProtectedRoute>
+                                <CalendarPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/settings"
+                            element={
+                              <ProtectedRoute>
+                                <SettingsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/public-profile/:userId"
+                            element={
+                              <ProtectedRoute>
+                                <PublicProfilePage />
+                              </ProtectedRoute>
+                            }
+                          />
 
-                        <Route
-                          path="/workout/programs"
-                          element={
-                            <ProtectedRoute>
-                              <WeeklyProgramsPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/programs/create"
-                          element={
-                            <ProtectedRoute>
-                              <CreateWeeklyProgramPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/programs/view/:programId"
-                          element={
-                            <ProtectedRoute>
-                              <ViewWeeklyProgramPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/programs/edit/:programId"
-                          element={
-                            <ProtectedRoute>
-                              <EditWeeklyProgramPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/gatofit-programs"
-                          element={
-                            <ProtectedRoute>
-                              <GatofitProgramsPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/gatofit-programs/:programId"
-                          element={
-                            <ProtectedRoute>
-                              <GatofitProgramDetailPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/create"
-                          element={
-                            <ProtectedRoute>
-                              <CreateRoutinePage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/edit/:routineId"
-                          element={
-                            <ProtectedRoute>
-                              <CreateRoutinePage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/active/:routineId"
-                          element={
-                            <ProtectedRoute>
-                              <ActiveWorkoutPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/summary/:workoutId"
-                          element={
-                            <ProtectedRoute>
-                              <WorkoutSummaryPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/select-exercises"
-                          element={
-                            <ProtectedRoute>
-                              <SelectExercisesPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/exercise-details/:id"
-                          element={
-                            <ProtectedRoute>
-                              <ExerciseDetailsPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/workout/create-exercise"
-                          element={
-                            <ProtectedRoute>
-                              <CreateExercisePage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/routine/:routineId"
-                          element={
-                            <ProtectedRoute>
-                              <RoutineDetailPage />
-                            </ProtectedRoute>
-                          }
-                        />
+                          <Route
+                            path="/workout/programs"
+                            element={
+                              <ProtectedRoute>
+                                <WeeklyProgramsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/programs/create"
+                            element={
+                              <ProtectedRoute>
+                                <CreateWeeklyProgramPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/programs/view/:programId"
+                            element={
+                              <ProtectedRoute>
+                                <ViewWeeklyProgramPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/programs/edit/:programId"
+                            element={
+                              <ProtectedRoute>
+                                <EditWeeklyProgramPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/gatofit-programs"
+                            element={
+                              <ProtectedRoute>
+                                <GatofitProgramsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/gatofit-programs/:programId"
+                            element={
+                              <ProtectedRoute>
+                                <GatofitProgramDetailPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/create"
+                            element={
+                              <ProtectedRoute>
+                                <CreateRoutinePage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/edit/:routineId"
+                            element={
+                              <ProtectedRoute>
+                                <CreateRoutinePage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/active/:routineId"
+                            element={
+                              <ProtectedRoute>
+                                <ActiveWorkoutPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/summary/:workoutId"
+                            element={
+                              <ProtectedRoute>
+                                <WorkoutSummaryPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/select-exercises"
+                            element={
+                              <ProtectedRoute>
+                                <SelectExercisesPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/exercise-details/:id"
+                            element={
+                              <ProtectedRoute>
+                                <ExerciseDetailsPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/workout/create-exercise"
+                            element={
+                              <ProtectedRoute>
+                                <CreateExercisePage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/routine/:routineId"
+                            element={
+                              <ProtectedRoute>
+                                <RoutineDetailPage />
+                              </ProtectedRoute>
+                            }
+                          />
 
-                        <Route
-                          path="/nutrition/search"
-                          element={
-                            <ProtectedRoute>
-                              <FoodSearchPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/food-edit"
-                          element={
-                            <ProtectedRoute>
-                              <FoodEditPage />
-                            </ProtectedRoute>
-                          }
-                        />
-                        <Route
-                          path="/nutrition-program"
-                          element={
-                            <ProtectedRoute>
-                              <ProgressiveNutritionProgramPage />
-                            </ProtectedRoute>
-                          }
-                        />
+                          <Route
+                            path="/nutrition/search"
+                            element={
+                              <ProtectedRoute>
+                                <FoodSearchPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/food-edit"
+                            element={
+                              <ProtectedRoute>
+                                <FoodEditPage />
+                              </ProtectedRoute>
+                            }
+                          />
+                          <Route
+                            path="/nutrition-program"
+                            element={
+                              <ProtectedRoute>
+                                <ProgressiveNutritionProgramPage />
+                              </ProtectedRoute>
+                            }
+                          />
 
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </RoutineProvider>
-                  </LayoutWrapper>
-                </StreakProvider>
-              </Router>
-            </WorkoutCacheProvider>
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </RoutineProvider>
+                    </LayoutWrapper>
+                  </StreakProvider>
+                </Router>
+              </WorkoutCacheProvider>
+            </RankSystemProvider>
           </BrandingProvider>
         </ProfileProvider>
       </SubscriptionProvider>

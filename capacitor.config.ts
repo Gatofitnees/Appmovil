@@ -50,6 +50,13 @@ const config: CapacitorConfig = {
       smallIcon: 'ic_stat_icon_config_sample',
       iconColor: '#3B82F6',
       sound: 'default'
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#000000',
+      overlaysWebView: true,
+      // Enable edge-to-edge for Android 15+
+      androidEdgeToEdge: true
     }
   },
   android: {

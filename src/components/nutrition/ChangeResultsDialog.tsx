@@ -69,7 +69,7 @@ export const ChangeResultsDialog: React.FC<ChangeResultsDialogProps> = ({
         const firstItem = responseData[0];
         if (firstItem && firstItem.output) {
           const output = firstItem.output;
-          
+
           // Parse ingredients
           const ingredients = output.ingredients?.map((ing: any) => ({
             name: ing.name || '',
@@ -103,7 +103,7 @@ export const ChangeResultsDialog: React.FC<ChangeResultsDialogProps> = ({
   const handleSubmit = async () => {
     if (request.trim() && foodData) {
       setIsLoading(true);
-      
+
       try {
         // Preparar la carga útil con toda la información de la comida
         const payload = {
@@ -125,7 +125,7 @@ export const ChangeResultsDialog: React.FC<ChangeResultsDialogProps> = ({
         console.log('Enviando datos al webhook:', payload);
 
         // Enviar al webhook y esperar respuesta
-        const response = await fetch('https://paneln8n.gatofit.com/webhook/4a08cf38-9d1c-43a4-a5cc-6e554a0b6f71', {
+        const response = await fetch('https://n8n.gatofit.com/webhook/correccion-de-comida', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -135,15 +135,15 @@ export const ChangeResultsDialog: React.FC<ChangeResultsDialogProps> = ({
 
         if (response.ok) {
           console.log('Datos enviados exitosamente al webhook');
-          
+
           // Cambiar a estado de actualización
           setIsLoading(false);
           setIsUpdating(true);
-          
+
           try {
             const responseText = await response.text();
             console.log('Respuesta del webhook recibida:', responseText);
-            
+
             let responseData;
             try {
               responseData = JSON.parse(responseText);
@@ -151,10 +151,10 @@ export const ChangeResultsDialog: React.FC<ChangeResultsDialogProps> = ({
               console.error('Error parseando respuesta del webhook:', parseError);
               throw new Error('Respuesta inválida del servidor');
             }
-            
+
             // Parsear y validar la respuesta
             const updatedData = parseWebhookResponse(responseData);
-            
+
             if (updatedData && onUpdate) {
               console.log('Actualizando datos de comida:', updatedData);
               onUpdate(updatedData);
@@ -196,15 +196,6 @@ export const ChangeResultsDialog: React.FC<ChangeResultsDialogProps> = ({
             <Sparkles className="h-5 w-5 text-primary" />
             Cambiar resultados con IA
           </DialogTitle>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onClose}
-            className="h-6 w-6 p-0 hover:bg-secondary/20"
-            disabled={isProcessing}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -231,7 +222,7 @@ export const ChangeResultsDialog: React.FC<ChangeResultsDialogProps> = ({
             >
               Cancelar
             </Button>
-            
+
             <Button
               variant="primary"
               className="flex-1"

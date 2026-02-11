@@ -20,7 +20,7 @@ const ImperialHeightSelector: React.FC<ImperialHeightSelectorProps> = ({
   onHeightInChange
 }) => {
   return (
-    <div className="space-y-2 w-full">
+    <div className="space-y-2 w-full" data-no-swipe-back="true">
       {/* Label moved to parent */}
       <div className="flex justify-center gap-4 h-[200px]">
         <div className="flex flex-col items-center w-20">

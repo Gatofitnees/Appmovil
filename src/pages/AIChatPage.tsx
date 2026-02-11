@@ -24,6 +24,7 @@ const AIChatPage: React.FC = () => {
     getAIChatUsageInfo
   } = useAIChatWithLimits();
 
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [usageInfo, setUsageInfo] = useState({ current: 0, limit: 3, canSend: true, isOverLimit: false });
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -46,13 +47,18 @@ const AIChatPage: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      const isKeyboardOpen = window.visualViewport &&
-        window.visualViewport.height < window.innerHeight * 0.75;
+      const isKeyboardOpen = window.visualViewport ?
+        window.visualViewport.height < window.innerHeight * 0.75 : false;
+
+      setKeyboardVisible(isKeyboardOpen);
 
       if (chatContentRef.current) {
         if (isKeyboardOpen && window.visualViewport) {
           const keyboardHeight = window.innerHeight - window.visualViewport.height;
-          chatContentRef.current.style.paddingBottom = `${keyboardHeight}px`;
+          // We don't necessarily need to set padding manually if flex works, 
+          // but keeping original logic partially if it helped before:
+          // chatContentRef.current.style.paddingBottom = `${keyboardHeight}px`; 
+          // Actually, let's rely on standard resizing behavior + our new input margin.
         } else {
           chatContentRef.current.style.paddingBottom = '';
         }
@@ -61,6 +67,7 @@ const AIChatPage: React.FC = () => {
 
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleResize);
+      handleResize(); // Initial check
       return () => {
         window.visualViewport?.removeEventListener('resize', handleResize);
       };
@@ -142,7 +149,9 @@ const AIChatPage: React.FC = () => {
       <div
         className="flex-shrink-0 bg-background border-t border-muted/20 z-20"
         style={{
-          paddingBottom: 'max(0.5rem, var(--safe-area-inset-bottom, 0px))',
+          paddingBottom: isKeyboardVisible
+            ? '0.5rem'
+            : 'max(1.5rem, env(safe-area-inset-bottom))', // Added extra bottom margin as requested
           paddingLeft: 'max(0.5rem, var(--safe-area-inset-left, 0px))',
           paddingRight: 'max(0.5rem, var(--safe-area-inset-right, 0px))',
           paddingTop: '0.5rem'
@@ -165,7 +174,7 @@ const AIChatPage: React.FC = () => {
         currentUsage={usageInfo.current}
         limit={usageInfo.limit}
       />
-    </div>
+    </div >
   );
 };
 

@@ -12,6 +12,7 @@ import AuthButtons from "@/components/onboarding/auth/AuthButtons";
 import BackButton from "@/components/onboarding/auth/BackButton";
 import useAuthForm from "@/hooks/useAuthForm";
 import { usePlatform } from "@/hooks/usePlatform";
+import { applyPromoCodeToUser } from '@/services/promoCodeService';
 
 const CreateAccount: React.FC = () => {
   const navigate = useNavigate();
@@ -89,6 +90,18 @@ const CreateAccount: React.FC = () => {
           try {
             await saveOnboardingToProfile(context.data);
             console.log('Onboarding data saved successfully after email signup');
+
+            // Apply promo code if exists
+            if (context.data.promoCode && data?.user?.id) {
+              try {
+                console.log('Applying promo code:', context.data.promoCode);
+                await applyPromoCodeToUser(data.user.id, context.data.promoCode);
+                console.log('Promo code applied successfully');
+              } catch (promoError) {
+                console.error('Error applying promo code:', promoError);
+                // Don't block the flow if promo code fails
+              }
+            }
           } catch (saveError) {
             console.error('Error saving onboarding data after email signup:', saveError);
           }

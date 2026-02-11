@@ -17,13 +17,13 @@ const FeatureCard: React.FC<{
 }> = ({ title, description, icon }) => {
   return (
     <div
-      className="flex flex-col items-center justify-center p-6 rounded-3xl bg-secondary/20 border border-white/5 text-center min-h-[320px] h-auto w-full max-w-sm mx-auto shadow-sm backdrop-blur-sm"
+      className="flex flex-col items-center justify-center p-5 rounded-3xl bg-secondary/20 border border-white/5 text-center min-h-[260px] h-auto w-full max-w-sm mx-auto shadow-sm backdrop-blur-sm"
     >
-      <div className="bg-primary/10 p-8 rounded-full mb-8">
-        {React.cloneElement(icon as React.ReactElement, { size: 64 })}
+      <div className="bg-primary/10 p-6 rounded-full mb-6">
+        {React.cloneElement(icon as React.ReactElement, { size: 48 })}
       </div>
-      <h3 className="font-bold text-3xl mb-4">{title}</h3>
-      <p className="text-muted-foreground text-xl leading-relaxed">{description}</p>
+      <h3 className="font-bold text-2xl mb-3">{title}</h3>
+      <p className="text-muted-foreground text-base leading-relaxed">{description}</p>
     </div>
   );
 };

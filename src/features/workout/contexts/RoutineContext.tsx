@@ -6,10 +6,11 @@ import { RoutineExercise } from '../types';
 interface RoutineContextType {
   // State
   routineName: string;
+  routineDescription: string;
   routineType: string;
   routineExercises: RoutineExercise[];
   isSubmitting: boolean;
-  
+
   // UI State
   showNoExercisesDialog: boolean;
   showSaveConfirmDialog: boolean;
@@ -18,13 +19,14 @@ interface RoutineContextType {
   showReorderSheet: boolean;
   currentExerciseIndex: number | null;
   pendingNavigation: string | null;
-  
+
   // State setters
   setRoutineName: (name: string) => void;
+  setRoutineDescription: (description: string) => void;
   setRoutineType: (type: string) => void;
   setRoutineExercises: (exercises: RoutineExercise[]) => void;
   setIsSubmitting: (isSubmitting: boolean) => void;
-  
+
   // UI State setters
   setShowNoExercisesDialog: (show: boolean) => void;
   setShowSaveConfirmDialog: (show: boolean) => void;
@@ -42,10 +44,11 @@ const RoutineContext = createContext<RoutineContextType | undefined>(undefined);
 export const RoutineProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Core routine state
   const [routineName, setRoutineName] = useState('');
+  const [routineDescription, setRoutineDescription] = useState('');
   const [routineType, setRoutineType] = useState('');
   const [routineExercises, setRoutineExercises] = useState<RoutineExercise[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // UI state
   const [showNoExercisesDialog, setShowNoExercisesDialog] = useState(false);
   const [showSaveConfirmDialog, setShowSaveConfirmDialog] = useState(false);
@@ -58,10 +61,11 @@ export const RoutineProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const value = {
     // State
     routineName,
+    routineDescription,
     routineType,
     routineExercises,
     isSubmitting,
-    
+
     // UI State
     showNoExercisesDialog,
     showSaveConfirmDialog,
@@ -70,13 +74,14 @@ export const RoutineProvider: React.FC<{ children: React.ReactNode }> = ({ child
     showReorderSheet,
     currentExerciseIndex,
     pendingNavigation,
-    
+
     // State setters
     setRoutineName,
+    setRoutineDescription,
     setRoutineType,
     setRoutineExercises,
     setIsSubmitting,
-    
+
     // UI State setters
     setShowNoExercisesDialog,
     setShowSaveConfirmDialog,
@@ -97,10 +102,10 @@ export const RoutineProvider: React.FC<{ children: React.ReactNode }> = ({ child
 // Hook to use the context
 export const useRoutineContext = () => {
   const context = useContext(RoutineContext);
-  
+
   if (context === undefined) {
     throw new Error('useRoutineContext must be used within a RoutineProvider');
   }
-  
+
   return context;
 };

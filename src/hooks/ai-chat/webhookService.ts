@@ -1,16 +1,23 @@
 import { UserData } from './types';
 
-const WEBHOOK_URL = 'https://paneln8n.gatofit.com/webhook/5ad29227-88fb-46ab-bff9-c44cb4e1d957';
+const WEBHOOK_URL = 'https://n8n.gatofit.com/webhook/agente-de-ia';
 
-export const sendToWebhook = async (message: string, userData: UserData): Promise<any> => {
+export const sendToWebhook = async (message: string, userData: UserData, action: 'chat' | 'reset_memory' = 'chat'): Promise<any> => {
   // Filter userData to only include identity (as requested)
   const identityPayload = {
-    user: userData.user
+    user: {
+      ...userData.user,
+      coach_company: userData.user.coach_company || 'gatofit',
+    }
   };
 
   const payload = {
+    action,
     message: message.trim(),
-    user_data: identityPayload,
+    user_data: {
+      ...userData,
+      user: identityPayload.user,
+    },
   };
 
   console.log('🔍 [AI CHAT DEBUG] Enviando petición al webhook:', payload);
