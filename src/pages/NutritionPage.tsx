@@ -24,6 +24,7 @@ import { useLocalTimezone } from "@/hooks/useLocalTimezone";
 import { NutritionProgramButton } from "@/components/nutrition/NutritionProgramButton";
 
 
+
 const NutritionPage: React.FC = () => {
     const [isCameraVisible, setIsCameraVisible] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -33,7 +34,7 @@ const NutritionPage: React.FC = () => {
     const { getLocalDateString } = useLocalTimezone();
 
     const { profile } = useProfile();
-    const { entries, datesWithEntries, deleteEntry, isLoading, addEntry } = useFoodLog(getLocalDateString(selectedDate));
+    const { entries, datesWithEntries, deleteEntry, isLoading, addEntry, refetch } = useFoodLog(getLocalDateString(selectedDate));
     const { refreshUsageLimits } = useUsageLimitsRefresh();
 
     // Call hooks at the top level - never inside useMemo or useCallback
@@ -184,8 +185,6 @@ const NutritionPage: React.FC = () => {
                 isOpen={showPremiumModal}
                 onClose={() => setShowPremiumModal(false)}
                 feature="nutrition"
-                currentUsage={usageInfo.current}
-                limit={usageInfo.limit}
             />
         </div>
     );

@@ -4,20 +4,27 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
-  plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+export default defineConfig(({ mode }) => {
+  const isBuild = mode === 'production';
+
+  return {
+    server: {
+      host: "::",
+      port: 8080,
     },
-  },
-  assetsInclude: ['**/*.lottie'],
-}));
+    plugins: [
+      react(),
+      mode === 'development' &&
+      componentTagger(),
+    ].filter(Boolean),
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+        ...(isBuild ? {
+          "@capacitor-firebase/messaging": path.resolve(__dirname, "./node_modules/@capacitor-firebase/messaging/dist/plugin.cjs.js"),
+        } : {}),
+      },
+    },
+    assetsInclude: ['**/*.lottie'],
+  };
+});

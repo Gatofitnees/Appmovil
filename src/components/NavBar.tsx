@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useBranding } from "@/contexts/BrandingContext";
 import { motion } from "framer-motion";
+import { useHaptics } from "@/hooks/useHaptics";
 
 // --- Custom Icons (Memoized for performance) ---
 
@@ -91,6 +92,7 @@ const NavBar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { branding } = useBranding();
+  const { hapticSelection } = useHaptics();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none" style={{ paddingBottom: 'calc(var(--safe-area-inset-bottom) + 0.5rem)' }}>
@@ -108,6 +110,7 @@ const NavBar: React.FC = () => {
               key={item.id}
               onClick={() => {
                 if (isActive) return;
+                hapticSelection();
                 navigate(item.path, { replace: true });
               }}
               className="relative flex items-center justify-center w-14 h-14 rounded-full transition-colors duration-200 z-10"

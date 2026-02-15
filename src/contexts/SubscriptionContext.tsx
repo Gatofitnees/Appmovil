@@ -10,6 +10,7 @@ interface SubscriptionContextType {
     isLoading: boolean;
     isPremium: boolean;
     isAsesorado: boolean;
+    isError: boolean;
     checkPremiumStatus: () => Promise<boolean>;
     checkUserPremiumStatus: (userId: string) => Promise<boolean>;
     upgradeSubscription: (planType: 'monthly' | 'yearly' | 'asesorados', transactionId?: string) => Promise<boolean>;
@@ -25,6 +26,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     const [isLoading, setIsLoading] = useState(true);
     const [isPremium, setIsPremium] = useState(false);
     const [isAsesorado, setIsAsesorado] = useState(false);
+    const [isError, setIsError] = useState(false);
     const { toast } = useToast();
 
     const { user } = useAuth();
@@ -32,6 +34,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     useEffect(() => {
         if (user) {
             setIsLoading(true);
+            setIsError(false);
             fetchSubscriptionData();
 
             // Listen for IAP events to refresh data immediately
@@ -51,12 +54,14 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
             setSubscription(null);
             setIsPremium(false);
             setIsAsesorado(false);
+            setIsError(false);
             setIsLoading(false);
         }
         fetchPlans();
     }, [user]);
 
     const fetchSubscriptionData = async () => {
+        setIsError(false);
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
@@ -72,6 +77,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
 
             if (error) {
                 console.error('Error fetching subscription:', error);
+                setIsError(true);
                 setIsLoading(false);
                 return;
             }
@@ -83,11 +89,16 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
 
                 // If not already detected via plan, check coach assignment
                 if (!isActiveAsesorado) {
-                    const { data: coachAssignment } = await supabase
+                    const { data: coachAssignment, error: coachError } = await supabase
                         .from('coach_user_assignments')
                         .select('coach_id')
                         .eq('user_id', user.id)
                         .maybeSingle();
+
+                    if (coachError) {
+                        console.error("Error fetching coach assignment", coachError);
+                        // We don't necessarily fail everything if this fails, but awareness is good
+                    }
 
                     if (coachAssignment) {
                         isActiveAsesorado = true;
@@ -121,11 +132,16 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
                 setIsPremium(newIsPremium);
             } else {
                 // If no subscription record, still check coach assignment
-                const { data: coachAssignment } = await supabase
+                const { data: coachAssignment, error: coachError } = await supabase
                     .from('coach_user_assignments')
                     .select('coach_id')
                     .eq('user_id', user.id)
                     .maybeSingle();
+
+                if (coachError) {
+                    console.error("Error fetching coach assignment in fallback", coachError);
+                    setIsError(true);
+                }
 
                 setSubscription(null);
                 setIsAsesorado(!!coachAssignment);
@@ -133,6 +149,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
             }
         } catch (error) {
             console.error('Error in fetchSubscriptionData:', error);
+            setIsError(true);
         } finally {
             setIsLoading(false);
         }
@@ -300,6 +317,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
             isLoading,
             isPremium,
             isAsesorado,
+            isError,
             checkPremiumStatus,
             checkUserPremiumStatus,
             upgradeSubscription,

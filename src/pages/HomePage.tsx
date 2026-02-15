@@ -13,6 +13,8 @@ import AssignedLibraryItems from "../components/home/AssignedLibraryItems";
 import FloatingActionButton from "../components/FloatingActionButton";
 import { usePlatform } from "@/hooks/usePlatform";
 
+
+
 const HomePage: React.FC = () => {
   const { isIOS, isAndroid } = usePlatform();
   const { toast } = useToast();
@@ -26,7 +28,8 @@ const HomePage: React.FC = () => {
     loading,
     datesWithWorkouts,
     macros,
-    handleDateSelect
+    handleDateSelect,
+    refetch
   } = useHomePageData();
 
   // Profile and home data are already fetched by their respective hooks on mount.
@@ -90,7 +93,6 @@ const HomePage: React.FC = () => {
       />
       <MacrosCard macros={macros} onAddFood={handleAddFood} />
       <AssignedLibraryItems />
-
     </div>
   );
 };

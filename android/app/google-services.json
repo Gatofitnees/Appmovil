@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "175681669860",
+    "project_id": "app-gatofit",
+    "storage_bucket": "app-gatofit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:175681669860:android:1c253f12d7ccef8627baf1",
+        "android_client_info": {
+          "package_name": "com.gatofit.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "175681669860-6r9ejdog30rsm6l5auge5bmdnrak4n6e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPar-B3IXGUJm1g3z85DJhMJ_r0myyl0I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "175681669860-6r9ejdog30rsm6l5auge5bmdnrak4n6e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "175681669860-ionmff8fd0d0ob3iohoojtcvs34l7egp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.gatofit.app",
+                "app_store_id": "6756280819"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

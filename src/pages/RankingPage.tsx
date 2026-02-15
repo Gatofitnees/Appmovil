@@ -15,20 +15,16 @@ import { useCoachAssignment } from '@/hooks/useCoachAssignment';
 
 import { StreakShieldModal } from "@/components/streak/StreakShieldModal";
 
+
+
 const RankingPage: React.FC = () => {
   const [selectedType, setSelectedType] = useState<RankingType>('streak');
   const [showShieldModal, setShowShieldModal] = useState(false);
-  const { streakData, isLoading: streakLoading } = useStreaks();
-  const { rankings, isLoading: rankingsLoading, fetchRankings } = useRankings(20);
-  const { branding, loading: brandingLoading } = useBranding();
+  const { streakData, isLoading: streakLoading, refetch: refetchStreak } = useStreaks();
   const { coachId, loading: coachLoading } = useCoachAssignment();
-
-  // Refetch rankings when coachId is available
-  useEffect(() => {
-    if (!coachLoading) {
-      fetchRankings(selectedType, 20, coachId);
-    }
-  }, [coachId, coachLoading]);
+  const { branding, loading: brandingLoading } = useBranding();
+  // Pass coachId and skip=coachLoading to avoid flashing global stats
+  const { rankings, isLoading: rankingsLoading, fetchRankings } = useRankings(20, coachId, coachLoading);
 
   const handleTypeChange = (type: RankingType) => {
     setSelectedType(type);

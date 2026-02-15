@@ -11,7 +11,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: React.ReactNode;
 }
 
-const Button: React.FC<ButtonProps> = ({
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
   children,
   variant = "primary",
   size = "md",
@@ -20,7 +20,7 @@ const Button: React.FC<ButtonProps> = ({
   rightIcon,
   className,
   ...props
-}) => {
+}, ref) => {
   const { branding } = useBranding();
 
   const baseClasses = "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 shadow-neu-button active:shadow-neu-button-active overflow-hidden";
@@ -55,6 +55,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
+      ref={ref}
       className={cn(
         baseClasses,
         variantClasses[variant],
@@ -71,6 +72,8 @@ const Button: React.FC<ButtonProps> = ({
       {rightIcon && <span className="ml-2">{rightIcon}</span>}
     </button>
   );
-};
+});
+
+Button.displayName = "Button";
 
 export default Button;

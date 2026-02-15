@@ -10,6 +10,7 @@ interface RoutineContextType {
   routineType: string;
   routineExercises: RoutineExercise[];
   isSubmitting: boolean;
+  loadedRoutineId: number | null;
 
   // UI State
   showNoExercisesDialog: boolean;
@@ -26,6 +27,7 @@ interface RoutineContextType {
   setRoutineType: (type: string) => void;
   setRoutineExercises: (exercises: RoutineExercise[]) => void;
   setIsSubmitting: (isSubmitting: boolean) => void;
+  setLoadedRoutineId: (id: number | null) => void;
 
   // UI State setters
   setShowNoExercisesDialog: (show: boolean) => void;
@@ -57,6 +59,7 @@ export const RoutineProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [showReorderSheet, setShowReorderSheet] = useState(false);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState<number | null>(null);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [loadedRoutineId, setLoadedRoutineId] = useState<number | null>(null);
 
   const value = {
     // State
@@ -65,6 +68,7 @@ export const RoutineProvider: React.FC<{ children: React.ReactNode }> = ({ child
     routineType,
     routineExercises,
     isSubmitting,
+    loadedRoutineId,
 
     // UI State
     showNoExercisesDialog,
@@ -90,6 +94,7 @@ export const RoutineProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setShowReorderSheet,
     setCurrentExerciseIndex,
     setPendingNavigation,
+    setLoadedRoutineId,
   };
 
   return (

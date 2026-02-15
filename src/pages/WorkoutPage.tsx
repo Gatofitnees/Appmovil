@@ -15,6 +15,8 @@ import DateSelector from "@/components/common/DateSelector";
 import { useActiveProgramUnified } from "@/hooks/useActiveProgramUnified";
 import WorkoutListItem from "@/components/workout/WorkoutListItem";
 
+
+
 const WorkoutPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -287,8 +289,6 @@ const WorkoutPage: React.FC = () => {
         isOpen={showPremiumModal}
         onClose={() => setShowPremiumModal(false)}
         feature="routines"
-        currentUsage={usageInfo.current}
-        limit={usageInfo.limit}
       />
     </div>
   );

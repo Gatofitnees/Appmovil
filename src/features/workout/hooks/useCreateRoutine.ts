@@ -1,5 +1,6 @@
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useRoutineContext } from "../contexts/RoutineContext";
 import { useRoutinePersistence } from "./useRoutinePersistence";
 import { useRoutineNavigation } from "./navigation";
@@ -28,6 +29,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     showExerciseOptionsSheet,
     showReorderSheet,
     currentExerciseIndex,
+    loadedRoutineId,
     setRoutineName,
     setRoutineDescription,
     setRoutineType,
@@ -37,7 +39,36 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     setShowDiscardChangesDialog,
     setShowExerciseOptionsSheet,
     setShowReorderSheet,
+    setLoadedRoutineId,
   } = useRoutineContext();
+
+  const location = useLocation();
+
+  // Handle returning from Exercise Selection
+  useEffect(() => {
+    if (location.state?.selectedExercises && location.state?.shouldAddToExisting) {
+      const newExercises = location.state.selectedExercises as RoutineExercise[];
+
+      console.log("Recibiendo ejercicios seleccionados:", newExercises.length);
+
+      // Create a map of existing exercises for quick lookup by ID to prevent duplicates
+      const existingMap = new Map(routineExercises.map(ex => [ex.id, ex]));
+
+      // Filter out exercises that are already in the routine
+      const uniqueNewExercises = newExercises.filter(newEx => !existingMap.has(newEx.id));
+
+      // Append the new unique exercises to the existing list
+      // This preserves the order of existing exercises and their sets/reps
+      const finalExercises = [...routineExercises, ...uniqueNewExercises];
+
+      setRoutineExercises(finalExercises);
+
+      // Clear the state to prevent reprocessing (though useEffect dependency protects us mostly)
+      // modifying history might be risky during render, but this effect runs after.
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, setRoutineExercises, routineExercises]);
+
 
   // Initialize form handling
   const {
@@ -89,6 +120,12 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
 
   // Función para cargar los datos de la rutina a editar
   const loadRoutineData = useCallback(async (routineId: number) => {
+    // Si ya tenemos cargada esta rutina, no volver a pedirla
+    if (loadedRoutineId === routineId) {
+      console.log("Rutina ya cargada en memoria, omitiendo fetch.");
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Obtener datos de la rutina
@@ -136,12 +173,15 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
               reps_max: item.reps_max || 0,
               rest_seconds: item.rest_between_sets_seconds || 60
             })),
-            notes: ""
+            notes: item.notes || ""
           };
         });
 
         setRoutineExercises(formattedExercises);
       }
+
+      // Marcar como cargada para evitar sobrescrituras futuras
+      setLoadedRoutineId(routineId);
 
       console.log("Rutina cargada para edición:", routineData.name);
     } catch (error: any) {
@@ -154,7 +194,7 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
     } finally {
       setIsLoading(false);
     }
-  }, [setRoutineName, setRoutineType, setRoutineExercises, toast]);
+  }, [setRoutineName, setRoutineType, setRoutineExercises, toast, loadedRoutineId, setLoadedRoutineId]);
 
   return {
     // State

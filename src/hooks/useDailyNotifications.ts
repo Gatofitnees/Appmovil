@@ -36,6 +36,16 @@ export const useDailyNotifications = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // 0. Request Permissions Explicitly on Load
+        const permStatus = await LocalNotifications.checkPermissions();
+        if (permStatus.display !== 'granted') {
+          const request = await LocalNotifications.requestPermissions();
+          if (request.display !== 'granted') {
+            console.warn('User denied notification permissions');
+            return;
+          }
+        }
+
         // 1. Check today's status
         const todayStr = getCurrentLocalDate();
         const { startOfDay, endOfDay } = getLocalDayRange(new Date());
@@ -70,7 +80,14 @@ export const useDailyNotifications = () => {
           const scheduleTime = new Date();
           scheduleTime.setHours(12, 0, 0, 0);
 
-          // If 12 PM today has passed, schedule for tomorrow
+          // If 12 PM today has passed, check if we should schedule for tomorrow?
+          // Logic: "Schedule for tomorrow" seems risky if the user hasn't done it *today*.
+          // But maybe they want to be reminded tomorrow at 12?
+          // Current logic: If 12 PM passed, modify checks for *tomorrow*? No.
+          // Correct logic: If 12 PM passed, schedule for tomorrow ONLY IF we don't want a late notification today.
+          // BUT the user might want a notification NOW if they haven't done it.
+          // Let's keep existing logic but just fix the "tomorrow" check to be safe.
+
           if (scheduleTime <= now) {
             scheduleTime.setDate(scheduleTime.getDate() + 1);
           }

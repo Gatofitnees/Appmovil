@@ -47,8 +47,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         <div className="p-4">
           {/* Exercise Header */}
           <div className="flex items-center justify-between mb-3">
-            <div 
-              className="flex-1 cursor-pointer" 
+            <div
+              className="flex-1 cursor-pointer"
               onClick={() => onViewDetails(exercise.id)}
             >
               <h3 className="font-medium text-base">{exercise.name}</h3>
@@ -57,7 +57,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 {exercise.equipment_required && ` • ${exercise.equipment_required}`}
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -70,7 +70,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               >
                 <Clock className="h-5 w-5" />
               </Button>
-              
+
               {/* Statistics button - icon only */}
               <Button
                 variant="outline"
@@ -95,23 +95,23 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           )}
 
 
-        <RestTimerModal
-          open={showTimerModal}
-          onOpenChange={setShowTimerModal}
-          exerciseName={exercise.name}
-          remaining={remaining}
-          duration={duration}
-          baseSeconds={restSeconds}
-          status={status}
-          onStart={() => start(restSeconds)}
-          onPause={pause}
-          onResume={resume}
-          onEnd={() => {
-            end();
-            setShowTimerModal(false);
-          }}
-          onAdjust={adjust}
-        />
+          <RestTimerModal
+            open={showTimerModal}
+            onOpenChange={setShowTimerModal}
+            exerciseName={exercise.name}
+            remaining={remaining}
+            duration={duration}
+            baseSeconds={restSeconds}
+            status={status}
+            onStart={() => start(restSeconds)}
+            onPause={pause}
+            onResume={resume}
+            onEnd={() => {
+              end();
+              setShowTimerModal(false);
+            }}
+            onAdjust={adjust}
+          />
           {/* Sets */}
           <div className="space-y-3">
             {/* Header for the table-like layout */}
@@ -121,22 +121,22 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               <div className="text-xs font-medium text-muted-foreground">Peso</div>
               <div className="text-xs font-medium text-muted-foreground">Reps</div>
             </div>
-            
+
             {exercise.sets.map((set, setIndex) => (
-              <SetRow 
-                key={`set-${setIndex}`} 
-                set={set} 
+              <SetRow
+                key={`set-${setIndex}`}
+                set={set}
                 exerciseIndex={exerciseIndex}
                 setIndex={setIndex}
                 onInputChange={onInputChange}
               />
             ))}
           </div>
-          
+
           {/* Exercise Actions */}
           <div className="mt-3 flex space-x-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               className="flex-1"
               onClick={() => onAddSet(exerciseIndex)}
@@ -144,9 +144,9 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               <Copy className="h-3 w-3 mr-1" />
               Añadir serie
             </Button>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               size="sm"
               className="flex-1"
               onClick={handleNotesClick}

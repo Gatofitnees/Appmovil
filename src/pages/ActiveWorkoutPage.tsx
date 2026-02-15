@@ -14,6 +14,8 @@ import DiscardChangesDialog from "@/features/workout/components/dialogs/DiscardC
 import { Button } from "@/components/ui/button";
 import { WorkoutSummaryModal } from "@/features/workout/components/WorkoutSummaryModal";
 import ReorderSheet from "@/features/workout/components/sheets/ReorderSheet";
+import { useHaptics } from "@/hooks/useHaptics";
+import { ImpactStyle, NotificationType } from "@capacitor/haptics";
 
 const ActiveWorkoutPage: React.FC = () => {
   const { routineId } = useParams<{ routineId: string }>();
@@ -52,6 +54,15 @@ const ActiveWorkoutPage: React.FC = () => {
     handleCloseSummary,
     moveExercise
   } = useActiveWorkout(routineId ? parseInt(routineId) : undefined, cachedStartTime);
+
+  const { hapticImpact, hapticNotification } = useHaptics();
+
+  // Haptic feedback on summary show
+  React.useEffect(() => {
+    if (showSummary) {
+      hapticNotification(NotificationType.Success);
+    }
+  }, [showSummary]);
 
   if (loading) {
     return <LoadingSkeleton onBack={handleBack} />;
@@ -104,7 +115,10 @@ const ActiveWorkoutPage: React.FC = () => {
           <Button
             variant="default"
             className="w-full"
-            onClick={handleSaveWorkout}
+            onClick={() => {
+              hapticImpact(ImpactStyle.Medium);
+              handleSaveWorkout();
+            }}
             disabled={isSaving}
           >
             {isSaving ? "Guardando entrenamiento..." : "Guardar entrenamiento"}

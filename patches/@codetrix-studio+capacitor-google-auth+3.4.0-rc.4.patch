@@ -1,0 +1,139 @@
+diff --git a/node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec b/node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec
+index 6432925..87807e6 100644
+--- a/node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec
++++ b/node_modules/@codetrix-studio/capacitor-google-auth/CodetrixStudioCapacitorGoogleAuth.podspec
+@@ -8,8 +8,8 @@
+     s.author = 'CodetrixStudio'
+     s.source = { :git => 'https://github.com/CodetrixStudio/CapacitorGoogleAuth.git', :tag => s.version.to_s }
+     s.source_files = 'ios/Plugin/**/*.{swift,h,m,c,cc,mm,cpp}'
+-    s.ios.deployment_target  = '12.0'
++    s.ios.deployment_target  = '13.0'
+     s.dependency 'Capacitor'
+-    s.dependency 'GoogleSignIn', '~> 6.2.4'
++    s.dependency 'GoogleSignIn'
+     s.static_framework = true
+   end
+diff --git a/node_modules/@codetrix-studio/capacitor-google-auth/android/.project b/node_modules/@codetrix-studio/capacitor-google-auth/android/.project
+new file mode 100644
+index 0000000..bf5095e
+--- /dev/null
++++ b/node_modules/@codetrix-studio/capacitor-google-auth/android/.project
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<projectDescription>
++	<name>codetrix-studio-capacitor-google-auth</name>
++	<comment>Project codetrix-studio-capacitor-google-auth created by Buildship.</comment>
++	<projects>
++	</projects>
++	<buildSpec>
++		<buildCommand>
++			<name>org.eclipse.buildship.core.gradleprojectbuilder</name>
++			<arguments>
++			</arguments>
++		</buildCommand>
++	</buildSpec>
++	<natures>
++		<nature>org.eclipse.buildship.core.gradleprojectnature</nature>
++	</natures>
++	<filteredResources>
++		<filter>
++			<id>1767124980512</id>
++			<name></name>
++			<type>30</type>
++			<matcher>
++				<id>org.eclipse.core.resources.regexFilterMatcher</id>
++				<arguments>node_modules|\.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
++			</matcher>
++		</filter>
++	</filteredResources>
++</projectDescription>
+diff --git a/node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift b/node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift
+index fd39ed9..1d3724a 100644
+--- a/node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift
++++ b/node_modules/@codetrix-studio/capacitor-google-auth/ios/Plugin/Plugin.swift
+@@ -73,21 +73,24 @@ public class GoogleAuth: CAPPlugin {
+         DispatchQueue.main.async {
+             if self.googleSignIn.hasPreviousSignIn() && !self.forceAuthCode {
+                 self.googleSignIn.restorePreviousSignIn() { user, error in
+-                if let error = error {
+-                    self.signInCall?.reject(error.localizedDescription);
+-                    return;
+-                }
+-                self.resolveSignInCallWith(user: user!)
++                    if let error = error {
++                        self.signInCall?.reject(error.localizedDescription);
++                        return;
++                    }
++                    self.resolveSignInCallWith(user: user!, serverAuthCode: nil)
+                 }
+             } else {
+                 let presentingVc = self.bridge!.viewController!;
+                 
+-                self.googleSignIn.signIn(with: self.googleSignInConfiguration, presenting: presentingVc, hint: nil, additionalScopes: self.additionalScopes) { user, error in
++                self.googleSignIn.configuration = self.googleSignInConfiguration;
++                
++                self.googleSignIn.signIn(withPresenting: presentingVc, hint: nil, additionalScopes: self.additionalScopes) { result, error in
+                     if let error = error {
+                         self.signInCall?.reject(error.localizedDescription, "\(error._code)");
+                         return;
+                     }
+-                    self.resolveSignInCallWith(user: user!);
++                    // GoogleSignIn v7+ returns GIDSignInResult, which supports both explicit result.user and result.serverAuthCode
++                    self.resolveSignInCallWith(user: result!.user, serverAuthCode: result!.serverAuthCode)
+                 };
+             }
+         }
+@@ -96,19 +99,26 @@ public class GoogleAuth: CAPPlugin {
+     @objc
+     func refresh(_ call: CAPPluginCall) {
+         DispatchQueue.main.async {
+-            if self.googleSignIn.currentUser == nil {
++            guard let currentUser = self.googleSignIn.currentUser else {
+                 call.reject("User not logged in.");
+                 return
+             }
+-            self.googleSignIn.currentUser!.authentication.do { (authentication, error) in
+-                guard let authentication = authentication else {
+-                    call.reject(error?.localizedDescription ?? "Something went wrong.");
++            
++            // GoogleSignIn v7+ uses refreshTokensIfNeeded direct method
++            currentUser.refreshTokensIfNeeded { user, error in
++                if let error = error {
++                     call.reject(error.localizedDescription);
++                     return;
++                }
++                guard let user = user else {
++                    call.reject("Something went wrong.");
+                     return;
+                 }
++                
+                 let authenticationData: [String: Any] = [
+-                    "accessToken": authentication.accessToken,
+-                    "idToken": authentication.idToken ?? NSNull(),
+-                    "refreshToken": authentication.refreshToken
++                    "accessToken": user.accessToken.tokenString,
++                    "idToken": user.idToken?.tokenString ?? NSNull(),
++                    "refreshToken": user.refreshToken.tokenString
+                 ]
+                 call.resolve(authenticationData);
+             }
+@@ -159,14 +169,14 @@ public class GoogleAuth: CAPPlugin {
+         return nil;
+     }
+ 
+-    func resolveSignInCallWith(user: GIDGoogleUser) {
++    func resolveSignInCallWith(user: GIDGoogleUser, serverAuthCode: String?) {
+         var userData: [String: Any] = [
+             "authentication": [
+-                "accessToken": user.authentication.accessToken,
+-                "idToken": user.authentication.idToken,
+-                "refreshToken": user.authentication.refreshToken
++                "accessToken": user.accessToken.tokenString,
++                "idToken": user.idToken?.tokenString,
++                "refreshToken": user.refreshToken.tokenString
+             ],
+-            "serverAuthCode": user.serverAuthCode ?? NSNull(),
++            "serverAuthCode": serverAuthCode ?? NSNull(),
+             "email": user.profile?.email ?? NSNull(),
+             "familyName": user.profile?.familyName ?? NSNull(),
+             "givenName": user.profile?.givenName ?? NSNull(),

@@ -7,6 +7,7 @@ import NutritionPage from '@/pages/NutritionPage';
 import RankingPage from '@/pages/RankingPage';
 import SocialPage from '@/pages/SocialPage';
 import { DailyPremiumOffer } from '@/components/premium/DailyPremiumOffer';
+import { StreakListener } from '@/components/streak/StreakListener';
 
 const MainTabsLayout: React.FC = () => {
     const location = useLocation();
@@ -57,6 +58,9 @@ const MainTabsLayout: React.FC = () => {
 
             {/* Navigation Bar - Always visible on top (z-index wise) */}
             <NavBar />
+
+            {/* Streak Listener - Now here to wait for loading */}
+            <StreakListener />
 
             {/* Daily Premium Offer Overlay */}
             <DailyPremiumOffer />

@@ -1,17 +1,50 @@
 {
   "images" : [
     {
-      "filename" : "Título primario (1024 x 1024 px)-2 3.png",
+      "filename" : "Título primario (1024 x 1024 px)-4 3.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "Título primario (1024 x 1024 px)-2 4.png",
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Título primario (1024 x 1024 px)-4 6.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "Título primario (1024 x 1024 px)-4 4.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "Título primario (1024 x 1024 px)-2.png",
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Título primario (1024 x 1024 px)-4 7.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "Título primario (1024 x 1024 px)-4 5.png",
+      "idiom" : "universal",
+      "scale" : "3x"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "Título primario (1024 x 1024 px)-4 8.png",
       "idiom" : "universal",
       "scale" : "3x"
     }

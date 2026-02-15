@@ -13,15 +13,18 @@ import { useFollowersList } from '@/hooks/useFollowersList';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCoachAssignment } from '@/hooks/useCoachAssignment';
 
+
+
 const SocialPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFollowers, setShowFollowers] = useState(false);
   const [showFollowing, setShowFollowing] = useState(false);
-  const { coachId } = useCoachAssignment();
-  const { rankings, isLoading, error } = useRankings(100, coachId); // Límite de 100 usuarios
+  const { coachId, loading: coachLoading } = useCoachAssignment();
+  // Delay fetching until we know if we need to filter by coach
+  const { rankings, isLoading, error, fetchRankings } = useRankings(100, coachId, coachLoading);
   const { user } = useAuth();
-  const { stats } = useUserStats(user?.id);
-  const { followers, following, isLoading: followersLoading } = useFollowersList(user?.id);
+  const { stats, refetch: refetchUserStats } = useUserStats(user?.id);
+  const { followers, following, isLoading: followersLoading, refetch: refetchFollowers } = useFollowersList(user?.id);
   const navigate = useNavigate();
 
 
@@ -169,7 +172,7 @@ const SocialPage: React.FC = () => {
               No hay usuarios disponibles
             </p>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="space-y-3 max-h-96 overflow-y-auto overflow-x-hidden hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
               {topUsers.map((rankingUser, index) => (
                 <div
                   key={rankingUser.user_id}
@@ -212,7 +215,7 @@ const SocialPage: React.FC = () => {
                 No se encontraron usuarios con "{searchQuery}"
               </p>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="space-y-3 max-h-96 overflow-y-auto overflow-x-hidden hide-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {filteredUsers.map((rankingUser) => (
                   <div
                     key={rankingUser.user_id}

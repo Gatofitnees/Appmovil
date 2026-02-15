@@ -17,12 +17,16 @@ export interface RankingUser {
 
 export type RankingType = 'streak' | 'experience';
 
-export const useRankings = (limit?: number, coachId?: string | null) => {
+export const useRankings = (limit?: number, coachId?: string | null, skip: boolean = false) => {
   const [rankings, setRankings] = useState<RankingUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRankings = async (type: RankingType = 'streak', customLimit?: number, passedCoachId?: string | null) => {
+    // If skip is explicitly true, abort (unless this is a manual call? No, usually component controlled)
+    // Actually, manual calls to fetchRankings should PROBABLY override skip? 
+    // But for the initial useEffect, we want to respect it.
+
     try {
       setIsLoading(true);
       setError(null);
@@ -159,8 +163,10 @@ export const useRankings = (limit?: number, coachId?: string | null) => {
   };
 
   useEffect(() => {
-    fetchRankings('streak', limit, coachId);
-  }, [coachId]);
+    if (!skip) {
+      fetchRankings('streak', limit, coachId);
+    }
+  }, [coachId, skip]);
 
   return {
     rankings,

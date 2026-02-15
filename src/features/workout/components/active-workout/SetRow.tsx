@@ -84,7 +84,10 @@ export const SetRow: React.FC<SetRowProps> = ({
   };
 
   return (
-    <div className="bg-background/50 rounded-lg border border-white/5 p-2">
+    <div
+      className="bg-background/50 rounded-lg border border-white/5 p-2"
+      id={exerciseIndex === 0 && setIndex === 0 ? "tutorial-set-input" : undefined}
+    >
       <div className="grid grid-cols-4 gap-2">
         {/* Serie column */}
         <div className="flex items-center">

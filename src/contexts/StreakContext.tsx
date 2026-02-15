@@ -111,8 +111,19 @@ export const StreakProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 )
                 .subscribe();
 
+            // Add visibility change listener to refetch when app comes to foreground
+            const handleVisibilityChange = () => {
+                if (document.visibilityState === 'visible') {
+                    console.log('App active, refreshing streak data...');
+                    fetchStreakData();
+                }
+            };
+
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
             return () => {
                 supabase.removeChannel(channel);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
             };
         } else {
             setStreakData(null);

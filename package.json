@@ -8,11 +8,14 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docgen": "docgen --api GoogleAuthPlugin --output-readme README.md",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@capacitor-community/apple-sign-in": "^7.1.0",
     "@capacitor-community/http": "^1.4.1",
+    "@capacitor-firebase/messaging": "^7.5.0",
     "@capacitor/android": "^7.3.0",
     "@capacitor/app": "^7.0.0",
     "@capacitor/browser": "^7.0.3",
@@ -21,6 +24,8 @@
     "@capacitor/core": "^7.3.0",
     "@capacitor/device": "^7.0.1",
     "@capacitor/dialog": "^7.0.3",
+    "@capacitor/filesystem": "^7.1.6",
+    "@capacitor/haptics": "^7.0.3",
     "@capacitor/ios": "^7.3.0",
     "@capacitor/local-notifications": "^7.0.0",
     "@capacitor/status-bar": "^7.0.4",
@@ -87,6 +92,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",
@@ -99,6 +105,7 @@
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
     "lovable-tagger": "^1.1.7",
+    "patch-package": "^8.0.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",

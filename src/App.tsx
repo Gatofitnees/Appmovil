@@ -53,17 +53,30 @@ import { useBranding } from "./contexts/BrandingContext";
 import { useDynamicBranding } from "./hooks/useDynamicBranding";
 import { useSwipeBack } from "./hooks/useSwipeBack";
 import { useDailyNotifications } from "./hooks/useDailyNotifications";
+import { useCoachChatNotifications } from "./hooks/useCoachChatNotifications";
+import { usePushNotifications } from "./hooks/usePushNotifications";
 import { useAndroidBackButton } from "./hooks/useAndroidBackButton";
 import { useLocation } from 'react-router-dom';
 import SafeAreaBars from "./components/SafeAreaBars";
 import { PurchaseSuccessGlobal } from "./components/subscription/PurchaseSuccessGlobal";
-import { StreakListener } from "./components/streak/StreakListener";
 import { StreakProvider } from "./contexts/StreakContext";
 import { AppUpdateChecker } from "./components/AppUpdateChecker";
 
 // Component to setup daily notifications
 const DailyNotificationsSetup: React.FC = () => {
   useDailyNotifications();
+  return null;
+};
+
+// Component to setup push notifications
+const PushNotificationsSetup: React.FC = () => {
+  usePushNotifications();
+  return null;
+};
+
+// Component to setup coach chat notifications
+const CoachChatNotificationsSetup: React.FC = () => {
+  useCoachChatNotifications();
   return null;
 };
 
@@ -297,7 +310,6 @@ function App() {
             <RankSystemProvider>
               <DocumentTitleUpdater />
               <DynamicBrandingApplier />
-              <DailyNotificationsSetup />
               <AppUpdateChecker />
               <WorkoutCacheProvider>
                 <Router>
@@ -309,8 +321,11 @@ function App() {
                   <PurchaseSuccessGlobal />
                   {/* Safe area bars for notch and home indicator */}
                   <SafeAreaBars />
+                  <CoachChatNotificationsSetup />
+                  <PushNotificationsSetup />
+                  <DailyNotificationsSetup />
+                  <DailyNotificationsSetup />
                   <StreakProvider>
-                    <StreakListener />
                     <LayoutWrapper>
 
                       <RoutineProvider>
