@@ -16,7 +16,6 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		A1F438C329E6F2B700123456 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F438C229E6F2B700123456 /* SceneDelegate.swift */; };
-		C914B2722EF1C23E0017C5E8 /* Gatofit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = C914B2712EF1C23E0017C5E8 /* Gatofit.storekit */; };
 		C966E16D2F3E38E800F5AF11 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C966E16C2F3E38E800F5AF11 /* GoogleService-Info.plist */; };
 		C966E1792F3E788400F5AF11 /* NotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C966E1722F3E788400F5AF11 /* NotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -59,7 +58,6 @@
 		A1F438C229E6F2B700123456 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
-		C914B2712EF1C23E0017C5E8 /* Gatofit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; name = Gatofit.storekit; path = Pods/Gatofit.storekit; sourceTree = "<group>"; };
 		C966E16C2F3E38E800F5AF11 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		C966E1722F3E788400F5AF11 /* NotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
@@ -109,7 +107,6 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
-				C914B2712EF1C23E0017C5E8 /* Gatofit.storekit */,
 				504EC3061FED79650016851F /* App */,
 				C966E1732F3E788400F5AF11 /* Notificacion */,
 				504EC3051FED79650016851F /* Products */,
@@ -247,7 +244,6 @@
 			files = (
 				504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */,
 				C966E16D2F3E38E800F5AF11 /* GoogleService-Info.plist in Resources */,
-				C914B2722EF1C23E0017C5E8 /* Gatofit.storekit in Resources */,
 				50B271D11FEDC1A000F3C39B /* public in Resources */,
 				504EC30F1FED79650016851F /* Assets.xcassets in Resources */,
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
