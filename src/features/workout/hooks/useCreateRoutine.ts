@@ -45,29 +45,17 @@ export const useCreateRoutine = (initialExercises: RoutineExercise[] = [], editR
   const location = useLocation();
 
   // Handle returning from Exercise Selection
+  // Handle returning from Exercise Selection
+  // MOVED TO useRoutinePersistence.ts
+  // We rely on the persistence hook to handle state updates from location
+  // to avoid race conditions and double-updates.
+  /*
   useEffect(() => {
     if (location.state?.selectedExercises && location.state?.shouldAddToExisting) {
-      const newExercises = location.state.selectedExercises as RoutineExercise[];
-
-      console.log("Recibiendo ejercicios seleccionados:", newExercises.length);
-
-      // Create a map of existing exercises for quick lookup by ID to prevent duplicates
-      const existingMap = new Map(routineExercises.map(ex => [ex.id, ex]));
-
-      // Filter out exercises that are already in the routine
-      const uniqueNewExercises = newExercises.filter(newEx => !existingMap.has(newEx.id));
-
-      // Append the new unique exercises to the existing list
-      // This preserves the order of existing exercises and their sets/reps
-      const finalExercises = [...routineExercises, ...uniqueNewExercises];
-
-      setRoutineExercises(finalExercises);
-
-      // Clear the state to prevent reprocessing (though useEffect dependency protects us mostly)
-      // modifying history might be risky during render, but this effect runs after.
-      window.history.replaceState({}, document.title);
+       // ... logic removed ...
     }
   }, [location.state, setRoutineExercises, routineExercises]);
+  */
 
 
   // Initialize form handling

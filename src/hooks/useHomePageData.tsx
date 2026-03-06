@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfileContext } from "@/contexts/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocalTimezone } from "./useLocalTimezone";
+import { useQuery } from "@tanstack/react-query";
 
 interface WorkoutSummary {
   id: number;
@@ -27,10 +28,6 @@ export const useHomePageData = () => {
   const { user } = useAuth();
   const { profile } = useProfileContext();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [hasCompletedWorkout, setHasCompletedWorkout] = useState(false);
-  const [workoutSummaries, setWorkoutSummaries] = useState<WorkoutSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [datesWithWorkouts, setDatesWithWorkouts] = useState<Date[]>([]);
   const { getLocalDateString, getLocalDayRange } = useLocalTimezone();
 
   // Stable initial macros to prevent re-renders
@@ -96,118 +93,109 @@ export const useHomePageData = () => {
     getLocalDayRange(selectedDate), [selectedDate, getLocalDayRange]
   );
 
-  // Consolidated fetch function
-  const fetchAllHomeData = useCallback(async (isInitialLoad = false) => {
-    if (!user?.id) return;
+  const fetchAllHomeData = async () => {
+    if (!user?.id) throw new Error("No user");
 
-    if (isInitialLoad) setLoading(true);
+    const [foodRes, workoutRes, datesRes] = await Promise.all([
+      supabase
+        .from('daily_food_log_entries')
+        .select('calories_consumed, protein_g_consumed, carbs_g_consumed, fat_g_consumed')
+        .eq('user_id', user.id)
+        .eq('log_date', selectedDateString),
 
-    try {
-      // Execute all major queries in parallel
-      const [foodRes, workoutRes, datesRes] = await Promise.all([
-        supabase
-          .from('daily_food_log_entries')
-          .select('calories_consumed, protein_g_consumed, carbs_g_consumed, fat_g_consumed')
-          .eq('user_id', user.id)
-          .eq('log_date', selectedDateString),
+      supabase
+        .from('workout_logs')
+        .select(`
+          id,
+          routine_name_snapshot,
+          duration_completed_minutes,
+          calories_burned_estimated,
+          workout_date,
+          workout_log_exercise_details(exercise_name_snapshot)
+        `)
+        .eq('user_id', user.id)
+        .gte('workout_date', dayRange.startOfDay)
+        .lte('workout_date', dayRange.endOfDay)
+        .order('workout_date', { ascending: false }),
 
-        supabase
-          .from('workout_logs')
-          .select(`
-            id,
-            routine_name_snapshot,
-            duration_completed_minutes,
-            calories_burned_estimated,
-            workout_date,
-            workout_log_exercise_details(exercise_name_snapshot)
-          `)
-          .eq('user_id', user.id)
-          .gte('workout_date', dayRange.startOfDay)
-          .lte('workout_date', dayRange.endOfDay)
-          .order('workout_date', { ascending: false }),
+      supabase
+        .from('workout_logs')
+        .select('workout_date')
+        .eq('user_id', user.id)
+        .order('workout_date', { ascending: false })
+        .limit(50)
+    ]);
 
-        isInitialLoad || datesWithWorkouts.length === 0 ?
-          supabase
-            .from('workout_logs')
-            .select('workout_date')
-            .eq('user_id', user.id)
-            .order('workout_date', { ascending: false })
-            .limit(50)
-          : Promise.resolve({ data: null, error: null })
-      ]);
+    let finalMacros = { ...macros };
+    if (foodRes.data) {
+      const totals = foodRes.data.reduce(
+        (sum, entry) => ({
+          calories: sum.calories + (entry.calories_consumed || 0),
+          protein: sum.protein + (entry.protein_g_consumed || 0),
+          carbs: sum.carbs + (entry.carbs_g_consumed || 0),
+          fats: sum.fats + (entry.fat_g_consumed || 0)
+        }),
+        { calories: 0, protein: 0, carbs: 0, fats: 0 }
+      );
 
-      // 1. Process Food / Macros
-      if (foodRes.data) {
-        const totals = foodRes.data.reduce(
-          (sum, entry) => ({
-            calories: sum.calories + (entry.calories_consumed || 0),
-            protein: sum.protein + (entry.protein_g_consumed || 0),
-            carbs: sum.carbs + (entry.carbs_g_consumed || 0),
-            fats: sum.fats + (entry.fat_g_consumed || 0)
-          }),
-          { calories: 0, protein: 0, carbs: 0, fats: 0 }
+      finalMacros = {
+        ...macros,
+        calories: { ...macros.calories, current: Math.round(totals.calories) },
+        protein: { ...macros.protein, current: Math.round(totals.protein) },
+        carbs: { ...macros.carbs, current: Math.round(totals.carbs) },
+        fats: { ...macros.fats, current: Math.round(totals.fats) }
+      };
+    }
+
+    let formattedWorkouts: WorkoutSummary[] = [];
+    let completed = false;
+
+    if (workoutRes.data && workoutRes.data.length > 0) {
+      formattedWorkouts = workoutRes.data.map(workout => {
+        const exerciseNames = Array.from(
+          new Set(
+            workout.workout_log_exercise_details.map((detail: any) => detail.exercise_name_snapshot)
+          )
         );
 
-        setMacros(prev => ({
-          ...prev,
-          calories: { ...prev.calories, current: Math.round(totals.calories) },
-          protein: { ...prev.protein, current: Math.round(totals.protein) },
-          carbs: { ...prev.carbs, current: Math.round(totals.carbs) },
-          fats: { ...prev.fats, current: Math.round(totals.fats) }
-        }));
-      }
+        let duration = workout.duration_completed_minutes || Math.max(15, exerciseNames.length * 3);
+        let calories = workout.calories_burned_estimated || Math.round(duration * 6);
 
-      // 2. Process Workouts
-      if (workoutRes.data && workoutRes.data.length > 0) {
-        const workouts = workoutRes.data.map(workout => {
-          const exerciseNames = Array.from(
-            new Set(
-              workout.workout_log_exercise_details.map((detail: any) => detail.exercise_name_snapshot)
-            )
-          );
-
-          let duration = workout.duration_completed_minutes || Math.max(15, exerciseNames.length * 3);
-          let calories = workout.calories_burned_estimated || Math.round(duration * 6);
-
-          return {
-            id: workout.id,
-            name: workout.routine_name_snapshot || "Entrenamiento",
-            duration: `${duration} min`,
-            calories: calories,
-            date: workout.workout_date,
-            exercises: exerciseNames.slice(0, 3),
-            exerciseCount: exerciseNames.length,
-            totalSets: workout.workout_log_exercise_details.length
-          };
-        });
-
-        setWorkoutSummaries(workouts);
-        setHasCompletedWorkout(true);
-      } else {
-        setWorkoutSummaries([]);
-        setHasCompletedWorkout(false);
-      }
-
-      // 3. Process Workout Dates (only if fetched)
-      if (datesRes.data && datesRes.data.length > 0) {
-        const dates = datesRes.data.map(item => {
-          const serverDate = new Date(item.workout_date);
-          return new Date(serverDate.getTime() + (serverDate.getTimezoneOffset() * 60000));
-        });
-        setDatesWithWorkouts(dates);
-      }
-
-    } catch (error) {
-      console.error("Error loading home page data:", error);
-    } finally {
-      setLoading(false);
+        return {
+          id: workout.id,
+          name: workout.routine_name_snapshot || "Entrenamiento",
+          duration: `${duration} min`,
+          calories: calories,
+          date: workout.workout_date,
+          exercises: exerciseNames.slice(0, 3),
+          exerciseCount: exerciseNames.length,
+          totalSets: workout.workout_log_exercise_details.length
+        };
+      });
+      completed = true;
     }
-  }, [user?.id, selectedDateString, dayRange.startOfDay, dayRange.endOfDay, datesWithWorkouts.length]);
 
-  // Initial load and whenever critical params change
-  useEffect(() => {
-    fetchAllHomeData(true);
-  }, [user?.id, selectedDateString]); // Consolidated effect
+    let dates: Date[] = [];
+    if (datesRes.data && datesRes.data.length > 0) {
+      dates = datesRes.data.map(item => {
+        const serverDate = new Date(item.workout_date);
+        return new Date(serverDate.getTime() + (serverDate.getTimezoneOffset() * 60000));
+      });
+    }
+
+    return {
+      macros: finalMacros,
+      workouts: formattedWorkouts,
+      completed,
+      dates
+    };
+  };
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['home_data', user?.id, selectedDateString],
+    queryFn: fetchAllHomeData,
+    enabled: !!user?.id,
+  });
 
   const handleDateSelect = useCallback((date: Date) => {
     setSelectedDate(date);
@@ -215,12 +203,12 @@ export const useHomePageData = () => {
 
   return {
     selectedDate,
-    hasCompletedWorkout,
-    workoutSummaries,
-    loading,
-    datesWithWorkouts,
-    macros,
+    hasCompletedWorkout: data?.completed || false,
+    workoutSummaries: data?.workouts || [],
+    loading: isLoading,
+    datesWithWorkouts: data?.dates || [],
+    macros: data?.macros || macros,
     handleDateSelect,
-    refetch: fetchAllHomeData
+    refetch
   };
 };

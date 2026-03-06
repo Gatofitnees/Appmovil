@@ -1,38 +1,33 @@
-import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 export const useCoachAssignment = () => {
   const { user } = useAuth();
-  const [coachId, setCoachId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCoachAssignment = async () => {
-      try {
-        if (!user) {
-          setCoachId(null);
-          setLoading(false);
-          return;
-        }
+  const fetchCoachAssignment = async (): Promise<string | null> => {
+    if (!user) return null;
 
-        const { data: assignment } = await supabase
-          .from('coach_user_assignments')
-          .select('coach_id')
-          .eq('user_id', user.id)
-          .single();
+    const { data: assignment, error } = await supabase
+      .from('coach_user_assignments')
+      .select('coach_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-        setCoachId(assignment?.coach_id || null);
-      } catch (error) {
-        console.error('Error fetching coach assignment:', error);
-        setCoachId(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (error) {
+      console.error('Error fetching coach assignment:', error);
+      return null;
+    }
 
-    fetchCoachAssignment();
-  }, [user]);
+    return assignment?.coach_id || null;
+  };
+
+  const { data: coachId = null, isLoading: loading } = useQuery({
+    queryKey: ['coach_assignment', user?.id],
+    queryFn: fetchCoachAssignment,
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000 // Cache for 5 minutes
+  });
 
   return { coachId, loading };
 };

@@ -5,9 +5,11 @@ import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useRoutinesWithLimits = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const routinesHook = useRoutines();
   const { isPremium, isAsesorado } = useSubscription();
@@ -42,7 +44,8 @@ export const useRoutinesWithLimits = () => {
         await incrementUsage('routines');
       }
 
-      await routinesHook.refetch();
+      // Invalidate React Query cache so the library list updates immediately
+      await queryClient.invalidateQueries({ queryKey: ['routines'] });
 
       return data;
     } catch (error) {
@@ -83,7 +86,8 @@ export const useRoutinesWithLimits = () => {
         await decrementUsage('routines');
       }
 
-      await routinesHook.refetch();
+      // Invalidate React Query cache so the library list updates immediately
+      await queryClient.invalidateQueries({ queryKey: ['routines'] });
 
       toast({
         title: "Rutina eliminada",

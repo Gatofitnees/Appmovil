@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Weight, Ruler, Target, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -122,9 +122,9 @@ const BodyMeasurementsPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="weight">Peso (kg)</Label>
-                <Input
+                <NumericInput
                   id="weight"
-                  type="number"
+                  allowDecimals
                   value={formData.current_weight_kg}
                   onChange={(e) => handleInputChange('current_weight_kg', e.target.value)}
                   placeholder="70"
@@ -133,9 +133,9 @@ const BodyMeasurementsPage: React.FC = () => {
 
               <div>
                 <Label htmlFor="height">Altura (cm)</Label>
-                <Input
+                <NumericInput
                   id="height"
-                  type="number"
+                  allowDecimals
                   value={formData.height_cm}
                   onChange={(e) => handleInputChange('height_cm', e.target.value)}
                   placeholder="175"
@@ -146,9 +146,9 @@ const BodyMeasurementsPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="bodyFat">% Graso</Label>
-                <Input
+                <NumericInput
                   id="bodyFat"
-                  type="number"
+                  allowDecimals
                   value={formData.body_fat_percentage}
                   onChange={(e) => handleInputChange('body_fat_percentage', e.target.value)}
                   placeholder="15"
@@ -157,9 +157,9 @@ const BodyMeasurementsPage: React.FC = () => {
 
               <div>
                 <Label htmlFor="targetWeight">Peso Objetivo (kg)</Label>
-                <Input
+                <NumericInput
                   id="targetWeight"
-                  type="number"
+                  allowDecimals
                   value={formData.target_weight_kg}
                   onChange={(e) => handleInputChange('target_weight_kg', e.target.value)}
                   placeholder="68"
@@ -187,9 +187,9 @@ const BodyMeasurementsPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="chest">Pecho</Label>
-                <Input
+                <NumericInput
                   id="chest"
-                  type="number"
+                  allowDecimals
                   value={formData.chest_circumference_cm}
                   onChange={(e) => handleInputChange('chest_circumference_cm', e.target.value)}
                   placeholder="100"
@@ -198,9 +198,9 @@ const BodyMeasurementsPage: React.FC = () => {
 
               <div>
                 <Label htmlFor="arm">Brazo</Label>
-                <Input
+                <NumericInput
                   id="arm"
-                  type="number"
+                  allowDecimals
                   value={formData.arm_circumference_cm}
                   onChange={(e) => handleInputChange('arm_circumference_cm', e.target.value)}
                   placeholder="35"
@@ -211,9 +211,9 @@ const BodyMeasurementsPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="leg">Pierna</Label>
-                <Input
+                <NumericInput
                   id="leg"
-                  type="number"
+                  allowDecimals
                   value={formData.leg_circumference_cm}
                   onChange={(e) => handleInputChange('leg_circumference_cm', e.target.value)}
                   placeholder="55"
@@ -222,9 +222,9 @@ const BodyMeasurementsPage: React.FC = () => {
 
               <div>
                 <Label htmlFor="abdomen">Abdomen</Label>
-                <Input
+                <NumericInput
                   id="abdomen"
-                  type="number"
+                  allowDecimals
                   value={formData.abdomen_circumference_cm}
                   onChange={(e) => handleInputChange('abdomen_circumference_cm', e.target.value)}
                   placeholder="85"

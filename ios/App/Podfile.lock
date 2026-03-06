@@ -26,6 +26,9 @@ PODS:
     - Capacitor
   - CapacitorDialog (7.0.4):
     - Capacitor
+  - CapacitorFacebookEvents (7.0.7):
+    - Capacitor
+    - FBSDKCoreKit (= 18.0.0)
   - CapacitorFilesystem (7.1.7):
     - Capacitor
     - IONFilesystemLib (~> 1.0.1)
@@ -36,11 +39,19 @@ PODS:
     - Capacitor
   - CapacitorLocalNotifications (7.0.5):
     - Capacitor
+  - CapacitorPluginAppTrackingTransparency (3.0.0):
+    - Capacitor
   - CapacitorStatusBar (7.0.5):
     - Capacitor
   - CodetrixStudioCapacitorGoogleAuth (0.0.1):
     - Capacitor
     - GoogleSignIn
+  - FBAEMKit (18.0.0):
+    - FBSDKCoreKit_Basics (= 18.0.0)
+  - FBSDKCoreKit (18.0.0):
+    - FBAEMKit (= 18.0.0)
+    - FBSDKCoreKit_Basics (= 18.0.0)
+  - FBSDKCoreKit_Basics (18.0.0)
   - FirebaseCore (11.7.0):
     - FirebaseCoreInternal (~> 11.7.0)
     - GoogleUtilities/Environment (~> 8.0)
@@ -125,10 +136,12 @@ DEPENDENCIES:
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorDevice (from `../../node_modules/@capacitor/device`)"
   - "CapacitorDialog (from `../../node_modules/@capacitor/dialog`)"
+  - CapacitorFacebookEvents (from `../../node_modules/capacitor-facebook-events`)
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorFirebaseMessaging (from `../../node_modules/@capacitor-firebase/messaging`)"
   - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
   - "CapacitorLocalNotifications (from `../../node_modules/@capacitor/local-notifications`)"
+  - CapacitorPluginAppTrackingTransparency (from `../../node_modules/capacitor-plugin-app-tracking-transparency`)
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CodetrixStudioCapacitorGoogleAuth (from `../../node_modules/@codetrix-studio/capacitor-google-auth`)"
   - GoogleSignIn (>= 7.1.0)
@@ -140,6 +153,9 @@ SPEC REPOS:
   trunk:
     - AppAuth
     - AppCheckCore
+    - FBAEMKit
+    - FBSDKCoreKit
+    - FBSDKCoreKit_Basics
     - FirebaseCore
     - FirebaseCoreInternal
     - FirebaseInstallations
@@ -174,6 +190,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/device"
   CapacitorDialog:
     :path: "../../node_modules/@capacitor/dialog"
+  CapacitorFacebookEvents:
+    :path: "../../node_modules/capacitor-facebook-events"
   CapacitorFilesystem:
     :path: "../../node_modules/@capacitor/filesystem"
   CapacitorFirebaseMessaging:
@@ -182,6 +200,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/haptics"
   CapacitorLocalNotifications:
     :path: "../../node_modules/@capacitor/local-notifications"
+  CapacitorPluginAppTrackingTransparency:
+    :path: "../../node_modules/capacitor-plugin-app-tracking-transparency"
   CapacitorStatusBar:
     :path: "../../node_modules/@capacitor/status-bar"
   CodetrixStudioCapacitorGoogleAuth:
@@ -201,12 +221,17 @@ SPEC CHECKSUMS:
   CapacitorCordova: ae35646a9b46cfd00d637f195509c86594026aad
   CapacitorDevice: 7389e5651a6aaf2a0c0faa3fd7d19ecfbcdcd7cc
   CapacitorDialog: 870022e984975fad89eb4bbac84afb3cc2a666ea
+  CapacitorFacebookEvents: 3fb34857679f4cb6594e9e7deb5a4d55dc13fb05
   CapacitorFilesystem: 742b01a2dddcaff56d98fa22e1b444a6e9d7fb4c
   CapacitorFirebaseMessaging: 6db74cce2af7a8b8b3f617735bc722d528d5116b
   CapacitorHaptics: d17da7dd984cae34111b3f097ccd3e21f9feec62
   CapacitorLocalNotifications: 0f205f98e95216a8b695bd4cb6992b4270aae356
+  CapacitorPluginAppTrackingTransparency: c865112679beaad5bccd65a5bbac6e6eacaeb14b
   CapacitorStatusBar: b4bdcf487553983ffc68d81dfe1668bacb48252f
   CodetrixStudioCapacitorGoogleAuth: e87f795ce4714e23c7c309fca5f87769522eea85
+  FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
+  FBSDKCoreKit: d3f479a69127acebb1c6aad91c1a33907bcf6c2f
+  FBSDKCoreKit_Basics: 017b6dc2a1862024815a8229e75661e627ac1e29
   FirebaseCore: 3227e35f4197a924206fbcdc0349325baf4f5de4
   FirebaseCoreInternal: d6c17dafc8dc33614733a8b52df78fcb4394c881
   FirebaseInstallations: 9347e719c3d52d8d7b9074b2c32407dd027305e9
@@ -223,6 +248,6 @@ SPEC CHECKSUMS:
   RevenueCat: eab035bbab271faccfef5c36eaff2a1ffef14dc0
   RevenuecatPurchasesCapacitor: 17db9f0b99ec5c4055d84af83d38bc5038f50ff2
 
-PODFILE CHECKSUM: 64fbd893d545a1023671955e5e4cee474cd95eeb
+PODFILE CHECKSUM: 58b56ee0ef2635c6d3c218ebcdb759924de47b53
 
 COCOAPODS: 1.16.2

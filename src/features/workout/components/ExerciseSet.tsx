@@ -2,6 +2,7 @@ import React from "react";
 import { Trash2 } from "lucide-react";
 import { ExerciseSet as ExerciseSetType } from "../types";
 import { NumericInput } from "@/components/ui/numeric-input";
+import { KeyboardInput } from "@/components/ui/keyboard-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ExerciseSetProps {
@@ -82,11 +83,11 @@ const ExerciseSet: React.FC<ExerciseSetProps> = ({ set, setIndex, onSetUpdate, o
 
         {/* Reps Input */}
         <div className="h-8 w-full bg-zinc-950/30 rounded-md border border-white/10 px-0 flex items-center group focus-within:border-white/20 transition-colors">
-          <input
-            type="text"
+          <KeyboardInput
             className="w-full h-full bg-transparent border-none text-sm text-center placeholder:text-zinc-600 outline-none text-white font-medium focus:ring-0 rounded-md"
             value={repsValue}
-            onChange={(e) => handleRepsChange(e.target.value)}
+            extraKey="-"
+            onValueChange={handleRepsChange}
             onFocus={handleRepsFocus}
             placeholder="8-12"
           />

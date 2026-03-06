@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Check } from 'lucide-react';
@@ -28,9 +28,9 @@ interface PortionSelectorProps {
   selectedDate?: string;
 }
 
-const PortionSelector: React.FC<PortionSelectorProps> = ({ 
-  food, 
-  onCancel, 
+const PortionSelector: React.FC<PortionSelectorProps> = ({
+  food,
+  onCancel,
   onConfirm,
   selectedDate
 }) => {
@@ -110,13 +110,12 @@ const PortionSelector: React.FC<PortionSelectorProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="quantity">Cantidad</Label>
-            <Input
+            <NumericInput
               id="quantity"
-              type="number"
+              allowDecimals
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               min="1"
-              step="1"
             />
           </div>
           <div>

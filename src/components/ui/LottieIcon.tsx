@@ -40,11 +40,10 @@ export const LottieIcon: React.FC<LottieIconProps> = memo(({
                 src={src}
                 loop
                 autoplay
-                // Ensure the canvas knows it should resize if the container changes, 
-                // though our container is fixed.
                 renderConfig={{
                     autoResize: true,
-                    freezeOnOffscreen: false
+                    freezeOnOffscreen: false,
+                    devicePixelRatio: typeof window !== 'undefined' ? (window.devicePixelRatio || 2) : 2
                 }}
                 style={{ width: '100%', height: '100%' }}
             />

@@ -6,6 +6,8 @@ export interface WorkoutSession {
     set_number: number;
     weight_kg_used: number | null;
     reps_completed: number | null;
+    rir?: number | null;
+    partial_reps?: number | null;
   }[];
   maxWeight: number | null;
   totalReps: number;

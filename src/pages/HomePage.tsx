@@ -91,7 +91,7 @@ const HomePage: React.FC = () => {
         showProgramModal={true}
         selectedDate={selectedDate}
       />
-      <MacrosCard macros={macros} onAddFood={handleAddFood} />
+      <MacrosCard macros={macros} onAddFood={handleAddFood} hideAddFoodButton />
       <AssignedLibraryItems />
     </div>
   );

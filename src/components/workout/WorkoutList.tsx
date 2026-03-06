@@ -11,7 +11,8 @@ interface WorkoutRoutine {
   exercise_count?: number;
   estimated_duration_minutes?: number;
   is_predefined?: boolean;
-  source_type?: 'created' | 'downloaded';
+  source_type?: 'created' | 'downloaded' | 'gatofit_program';
+  muscles?: string[];
 }
 
 interface WorkoutListProps {

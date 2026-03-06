@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Edit, MoreVertical, PlayCircle, Trash, Share2, EyeOff, Users } from "lucide-react";
-import { 
+import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/Card";
 import { useToast } from "@/hooks/use-toast";
 import { useSharedRoutines } from "@/hooks/useSharedRoutines";
+import { useQueryClient } from "@tanstack/react-query";
+import { fetchRoutineDetailsById } from "@/features/workout/hooks/useRoutineDetail";
 
 interface WorkoutListItemProps {
   routine: {
@@ -39,7 +41,8 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
   const { publishRoutine, unpublishRoutine, checkIfPublished, isPublishing } = useSharedRoutines();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
-  
+  const queryClient = useQueryClient();
+
   // Check if routine is published on mount
   useEffect(() => {
     const checkStatus = async () => {
@@ -48,27 +51,27 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
     };
     checkStatus();
   }, [routine.id, checkIfPublished]);
-  
+
   // Determina los textos a mostrar según el tipo de rutina
-  const typeLabel = routine.type 
-    ? routine.type.charAt(0).toUpperCase() + routine.type.slice(1) 
+  const typeLabel = routine.type
+    ? routine.type.charAt(0).toUpperCase() + routine.type.slice(1)
     : "General";
-  
-  const exerciseLabel = routine.exercise_count === 1 
+
+  const exerciseLabel = routine.exercise_count === 1
     ? "1 ejercicio"
     : `${routine.exercise_count} ejercicios`;
-  
+
   const timeLabel = routine.estimated_duration_minutes
     ? `${routine.estimated_duration_minutes} min`
     : "15-30 min";
 
   const isDownloaded = routine.source_type === 'downloaded';
   const isFromGatofitProgram = routine.source_type === 'gatofit_program';
-    
+
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      
+
       let success = false;
       if (onDeleteRoutine) {
         // Usar el método del hook que maneja créditos
@@ -80,14 +83,14 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
           .from('routines')
           .delete()
           .eq('id', routine.id);
-          
+
         if (routineError) {
           console.error("Error deleting routine:", routineError);
           throw routineError;
         }
         success = true;
       }
-      
+
       if (success) {
         toast({
           title: "Rutina eliminada",
@@ -106,7 +109,7 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
       setIsDeleting(false);
     }
   };
-  
+
   const handleEditRoutine = () => {
     window.location.href = `/workout/edit/${routine.id}`;
   };
@@ -121,9 +124,22 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
     }
   };
 
+  const handlePrefetch = () => {
+    queryClient.prefetchQuery({
+      queryKey: ['routine', routine.id],
+      queryFn: () => fetchRoutineDetailsById(routine.id),
+      staleTime: 1000 * 60 * 5,
+    });
+  };
+
   // Use a wrapper div with the onClick handler instead of putting it directly on the Card
   return (
-    <div onClick={() => onStartWorkout(routine.id)} className="cursor-pointer">
+    <div
+      onClick={() => onStartWorkout(routine.id)}
+      onMouseEnter={handlePrefetch}
+      onTouchStart={handlePrefetch}
+      className="cursor-pointer"
+    >
       <Card className="hover:shadow-lg transition-shadow border-none">
         <div className="p-4">
           {/* Título y Menú */}
@@ -143,7 +159,7 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
                 </div>
               )}
             </div>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <button className="p-1 rounded-full hover:bg-secondary/30 flex-shrink-0">
@@ -151,7 +167,7 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background/95 backdrop-blur-sm border border-secondary">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
                     handleEditRoutine();
@@ -162,8 +178,8 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
                   <Edit className="mr-2 h-4 w-4" />
                   Editar
                 </DropdownMenuItem>
-                
-                <DropdownMenuItem 
+
+                <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
                     handlePublishToggle();
@@ -183,9 +199,9 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
                     </>
                   )}
                 </DropdownMenuItem>
-                
+
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDelete();
@@ -199,7 +215,7 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          
+
           {/* Detalles */}
           <div className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
             <span>{typeLabel} • {exerciseLabel}</span>
@@ -219,13 +235,13 @@ const WorkoutListItem: React.FC<WorkoutListItemProps> = ({
               </span>
             )}
           </div>
-          
+
           <div className="flex justify-between items-center">
             <div className="text-xs text-muted-foreground">
               Duración: {timeLabel}
             </div>
-            
-            <button 
+
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 onStartWorkout(routine.id);

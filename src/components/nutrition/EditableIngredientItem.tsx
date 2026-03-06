@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Check, X, Edit3 } from 'lucide-react';
 import NutrientIcon from '@/components/nutrition/NutrientIcon';
+import { NumericInput } from '@/components/ui/numeric-input';
 
 interface EditableIngredientItemProps {
   ingredient: any;
@@ -60,17 +61,15 @@ export const EditableIngredientItem: React.FC<EditableIngredientItemProps> = Rea
           <h4 className="font-medium text-foreground truncate">
             {ingredient.custom_food_name || ingredient.recipe_name || ingredient.food_items?.name || 'Alimento sin nombre'}
           </h4>
-          
+
           <div className="flex items-center gap-2">
             {isEditingQuantity ? (
               <div className="flex items-center gap-1">
-                <Input
-                  type="number"
+                <NumericInput
+                  allowDecimals
                   value={tempQuantity}
                   onChange={(e) => setTempQuantity(e.target.value)}
-                  className="w-16 h-7 text-xs"
-                  min="0"
-                  step="0.1"
+                  className="w-16 h-7 text-xs items-center p-1 text-center font-medium"
                 />
                 <span className="text-xs text-muted-foreground">g</span>
                 <Button

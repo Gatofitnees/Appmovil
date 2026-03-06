@@ -1,8 +1,15 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { SubscriptionPlan, UserSubscription } from '@/hooks/subscription/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+interface SubscriptionData {
+    subscription: UserSubscription | null;
+    isPremium: boolean;
+    isAsesorado: boolean;
+}
 
 interface SubscriptionContextType {
     subscription: UserSubscription | null;
@@ -21,52 +28,42 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [subscription, setSubscription] = useState<UserSubscription | null>(null);
-    const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isPremium, setIsPremium] = useState(false);
-    const [isAsesorado, setIsAsesorado] = useState(false);
-    const [isError, setIsError] = useState(false);
-    const { toast } = useToast();
-
     const { user } = useAuth();
+    const { toast } = useToast();
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        if (user) {
-            setIsLoading(true);
-            setIsError(false);
-            fetchSubscriptionData();
+    // 1. Query for Subscription Plans
+    const { data: plans = [] } = useQuery({
+        queryKey: ['subscription_plans'],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('subscription_plans')
+                .select('*')
+                .eq('is_active', true)
+                .in('plan_type', ['monthly', 'yearly'])
+                .order('price_usd');
 
-            // Listen for IAP events to refresh data immediately
-            const handlePurchaseUpdate = () => {
-                console.log('🔄 SubscriptionContext: Refreshing data due to purchase/restore');
-                fetchSubscriptionData();
-            };
+            if (error) throw error;
 
-            window.addEventListener('iap:purchase-success', handlePurchaseUpdate);
-            window.addEventListener('iap:subscription-restored', handlePurchaseUpdate);
+            return (data || [])
+                .filter(plan => plan.plan_type !== 'free')
+                .map(plan => ({
+                    ...plan,
+                    plan_type: plan.plan_type as 'monthly' | 'yearly',
+                    features: typeof plan.features === 'string'
+                        ? JSON.parse(plan.features)
+                        : plan.features as { routines_limit: number; nutrition_photos_weekly: number; ai_chat_messages_weekly: number; }
+                })) as SubscriptionPlan[];
+        },
+        staleTime: 24 * 60 * 60 * 1000 // Cache plans for 24 hours
+    });
 
-            return () => {
-                window.removeEventListener('iap:purchase-success', handlePurchaseUpdate);
-                window.removeEventListener('iap:subscription-restored', handlePurchaseUpdate);
-            };
-        } else {
-            setSubscription(null);
-            setIsPremium(false);
-            setIsAsesorado(false);
-            setIsError(false);
-            setIsLoading(false);
-        }
-        fetchPlans();
-    }, [user]);
-
-    const fetchSubscriptionData = async () => {
-        setIsError(false);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
+    // 2. Query for User Subscription Data
+    const { data: subData, isLoading, isError, refetch } = useQuery<SubscriptionData>({
+        queryKey: ['user_subscription', user?.id],
+        queryFn: async () => {
             if (!user) {
-                setIsLoading(false);
-                return;
+                return { subscription: null, isPremium: false, isAsesorado: false };
             }
 
             const { data, error } = await supabase
@@ -77,61 +74,19 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
 
             if (error) {
                 console.error('Error fetching subscription:', error);
-                setIsError(true);
-                setIsLoading(false);
-                return;
+                throw error;
             }
 
+            let subscription = data ? (data as UserSubscription) : null;
+            let isActiveAsesorado = false;
+
             if (data) {
-                setSubscription(data as UserSubscription);
                 const planType = data.plan_type as string;
-                let isActiveAsesorado = planType === 'asesorados' && data.status === 'active';
+                isActiveAsesorado = planType === 'asesorados' && data.status === 'active';
+            }
 
-                // If not already detected via plan, check coach assignment
-                if (!isActiveAsesorado) {
-                    const { data: coachAssignment, error: coachError } = await supabase
-                        .from('coach_user_assignments')
-                        .select('coach_id')
-                        .eq('user_id', user.id)
-                        .maybeSingle();
-
-                    if (coachError) {
-                        console.error("Error fetching coach assignment", coachError);
-                        // We don't necessarily fail everything if this fails, but awareness is good
-                    }
-
-                    if (coachAssignment) {
-                        isActiveAsesorado = true;
-                    }
-                }
-
-                setIsAsesorado(isActiveAsesorado);
-
-                // STRICT EXPIRATION CHECK:
-                // Even if status is 'active', we must verify the expiration date.
-                // This handles cancelled trials where the webhook might be delayed or if status wasn't updated.
-                const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
-                const isExpired = expiresAt && expiresAt < new Date();
-
-                const isValidStatus = data.status === 'active' || data.status === 'trialing';
-                const hasValidPlan = planType === 'monthly' || planType === 'yearly' || isActiveAsesorado;
-
-                // User is premium ONLY if:
-                // 1. Has valid plan/status
-                // 2. AND is NOT expired (or has no expiration date set, assuming lifetime/auto-renew without date yet)
-                const newIsPremium = hasValidPlan && isValidStatus && !isExpired;
-
-                console.log('🔄 SubscriptionContext: Premium Check', {
-                    newIsPremium,
-                    planType,
-                    status: data.status,
-                    expiresAt: data.expires_at,
-                    isExpired
-                });
-
-                setIsPremium(newIsPremium);
-            } else {
-                // If no subscription record, still check coach assignment
+            // Always check coach assignment if we don't have active asesorado from plan
+            if (!isActiveAsesorado) {
                 const { data: coachAssignment, error: coachError } = await supabase
                     .from('coach_user_assignments')
                     .select('coach_id')
@@ -139,48 +94,58 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
                     .maybeSingle();
 
                 if (coachError) {
-                    console.error("Error fetching coach assignment in fallback", coachError);
-                    setIsError(true);
+                    console.error("Error fetching coach assignment", coachError);
                 }
 
-                setSubscription(null);
-                setIsAsesorado(!!coachAssignment);
-                setIsPremium(false);
+                if (coachAssignment) {
+                    isActiveAsesorado = true;
+                }
             }
-        } catch (error) {
-            console.error('Error in fetchSubscriptionData:', error);
-            setIsError(true);
-        } finally {
-            setIsLoading(false);
+
+            let isPremium = false;
+
+            if (data) {
+                const planType = data.plan_type as string;
+                const expiresAt = data.expires_at ? new Date(data.expires_at) : null;
+                const isExpired = expiresAt && expiresAt < new Date();
+
+                const isValidStatus = data.status === 'active' || data.status === 'trialing';
+                const hasValidPlan = planType === 'monthly' || planType === 'yearly' || isActiveAsesorado;
+
+                isPremium = hasValidPlan && isValidStatus && !isExpired;
+            }
+
+            return {
+                subscription,
+                isPremium,
+                isAsesorado: isActiveAsesorado
+            };
+        },
+        enabled: !!user?.id,
+        staleTime: 5 * 60 * 1000 // Cache subscription validity for 5 minutes
+    });
+
+    const subscription = subData?.subscription || null;
+    const isPremium = subData?.isPremium || false;
+    const isAsesorado = subData?.isAsesorado || false;
+
+    useEffect(() => {
+        if (user) {
+            // Listen for IAP events to refresh data immediately
+            const handlePurchaseUpdate = () => {
+                console.log('🔄 SubscriptionContext: Refreshing data due to purchase/restore');
+                queryClient.invalidateQueries({ queryKey: ['user_subscription', user.id] });
+            };
+
+            window.addEventListener('iap:purchase-success', handlePurchaseUpdate);
+            window.addEventListener('iap:subscription-restored', handlePurchaseUpdate);
+
+            return () => {
+                window.removeEventListener('iap:purchase-success', handlePurchaseUpdate);
+                window.removeEventListener('iap:subscription-restored', handlePurchaseUpdate);
+            };
         }
-    };
-
-    const fetchPlans = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('subscription_plans')
-                .select('*')
-                .eq('is_active', true)
-                .in('plan_type', ['monthly', 'yearly'])
-                .order('price_usd');
-
-            if (error) throw error;
-
-            const transformedPlans: SubscriptionPlan[] = (data || [])
-                .filter(plan => plan.plan_type !== 'free')
-                .map(plan => ({
-                    ...plan,
-                    plan_type: plan.plan_type as 'monthly' | 'yearly',
-                    features: typeof plan.features === 'string'
-                        ? JSON.parse(plan.features)
-                        : plan.features as { routines_limit: number; nutrition_photos_weekly: number; ai_chat_messages_weekly: number; }
-                }));
-
-            setPlans(transformedPlans);
-        } catch (error) {
-            console.error('Error fetching plans:', error);
-        }
-    };
+    }, [user, queryClient]);
 
     const checkPremiumStatus = async () => {
         try {
@@ -192,11 +157,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
             });
 
             if (error) throw error;
-
-            const premium = data as boolean;
-            // We don't update local state here to avoid race conditions with the main fetch
-            // But we could trigger a refetch if needed
-            return premium;
+            return data as boolean;
         } catch (error) {
             console.error('Error checking premium status:', error);
             return false;
@@ -227,16 +188,17 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
             if (!user) throw new Error('Usuario no autenticado');
 
             const plan = plans.find(p => p.plan_type === planType);
-            if (!plan) throw new Error('Plan no encontrado');
+            if (!plan && planType !== 'asesorados') throw new Error('Plan no encontrado');
 
             const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + plan.duration_days);
+            // Fallback to 30 days if plan isn't mapped
+            expiresAt.setDate(expiresAt.getDate() + (plan ? plan.duration_days : 30));
 
             const { data: existingSubscription } = await supabase
                 .from('user_subscriptions')
                 .select('id')
                 .eq('user_id', user.id)
-                .single();
+                .maybeSingle();
 
             if (existingSubscription) {
                 const { error } = await supabase
@@ -267,7 +229,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
                 if (error) throw error;
             }
 
-            await fetchSubscriptionData();
+            await queryClient.invalidateQueries({ queryKey: ['user_subscription', user.id] });
             return true;
         } catch (error) {
             console.error('Error upgrading subscription:', error);
@@ -291,7 +253,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
 
             if (error) throw error;
 
-            await fetchSubscriptionData();
+            await queryClient.invalidateQueries({ queryKey: ['user_subscription', user.id] });
 
             toast({
                 title: "Suscripción cancelada",
@@ -322,7 +284,9 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
             checkUserPremiumStatus,
             upgradeSubscription,
             cancelSubscription,
-            refetch: fetchSubscriptionData
+            refetch: async () => {
+                await refetch();
+            }
         }}>
             {children}
         </SubscriptionContext.Provider>

@@ -61,6 +61,7 @@ import SafeAreaBars from "./components/SafeAreaBars";
 import { PurchaseSuccessGlobal } from "./components/subscription/PurchaseSuccessGlobal";
 import { StreakProvider } from "./contexts/StreakContext";
 import { AppUpdateChecker } from "./components/AppUpdateChecker";
+import { useAppTrackingTransparency } from "./hooks/useAppTrackingTransparency";
 
 // Component to setup daily notifications
 const DailyNotificationsSetup: React.FC = () => {
@@ -269,6 +270,12 @@ const PaymentFailurePopupHandler: React.FC = () => {
   );
 };
 
+// Component to handle App Tracking Transparency on iOS
+const AppTrackingTransparencyHandler: React.FC = () => {
+  useAppTrackingTransparency();
+  return null;
+};
+
 // Wrapper for global layout styles that need router context
 const LayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -319,6 +326,7 @@ function App() {
                   <PaymentFailurePopupHandler />
                   <GlobalPaymentFailureBanner />
                   <PurchaseSuccessGlobal />
+                  <AppTrackingTransparencyHandler />
                   {/* Safe area bars for notch and home indicator */}
                   <SafeAreaBars />
                   <CoachChatNotificationsSetup />

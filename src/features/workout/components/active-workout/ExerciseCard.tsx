@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart2, Clock, Copy, Pencil } from "lucide-react";
+import { BarChart2, Clock, Copy, Pencil, ArrowLeftRight } from "lucide-react";
 import { SetRow } from "./SetRow";
 import { ExerciseNotesDialog } from "./ExerciseNotesDialog";
 import { WorkoutExercise } from "../../types/workout";
@@ -30,6 +30,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
 }) => {
   const [showNotesDialog, setShowNotesDialog] = useState(false);
   const [showTimerModal, setShowTimerModal] = useState(false);
+  const [showAuto, setShowAuto] = useState(false);
   const restSeconds = useMemo(() => exercise.rest_between_sets_seconds ?? 60, [exercise.rest_between_sets_seconds]);
   const { remaining, duration, status, start, pause, resume, end, adjust } = useRestTimer(restSeconds);
 
@@ -48,14 +49,33 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           {/* Exercise Header */}
           <div className="flex items-center justify-between mb-3">
             <div
-              className="flex-1 cursor-pointer"
+              className="flex-1 cursor-pointer flex items-center gap-3"
               onClick={() => onViewDetails(exercise.id)}
             >
-              <h3 className="font-medium text-base">{exercise.name}</h3>
-              <p className="text-xs text-muted-foreground">
-                {exercise.muscle_group_main}
-                {exercise.equipment_required && ` • ${exercise.equipment_required}`}
-              </p>
+              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-white/10 bg-secondary/80 flex items-center justify-center text-muted-foreground font-semibold">
+                {exercise.thumbnail_url ? (
+                  <img src={exercise.thumbnail_url} alt={exercise.name} className="w-full h-full object-cover" />
+                ) : exercise.image_url ? (
+                  <img src={exercise.image_url} alt={exercise.name} className="w-full h-full object-cover" />
+                ) : exercise.video_url ? (
+                  <video
+                    src={`${exercise.video_url}#t=0.1`}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{exercise.name.charAt(0)}</span>
+                )}
+              </div>
+              <div>
+                <h3 className="font-medium text-base leading-tight">{exercise.name}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {exercise.muscle_group_main}
+                  {exercise.equipment_required && ` • ${exercise.equipment_required}`}
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -116,10 +136,16 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           <div className="space-y-3">
             {/* Header for the table-like layout */}
             <div className="grid grid-cols-4 gap-2 px-2">
-              <div className="text-xs font-medium text-muted-foreground">Serie</div>
-              <div className="text-xs font-medium text-muted-foreground">Ant</div>
-              <div className="text-xs font-medium text-muted-foreground">Peso</div>
-              <div className="text-xs font-medium text-muted-foreground">Reps</div>
+              <div className="text-xs font-medium text-muted-foreground flex items-center">Serie</div>
+              <div
+                className="text-xs font-medium text-muted-foreground flex items-center justify-center gap-1 cursor-pointer hover:bg-white/5 rounded-md px-1 py-0.5 transition-colors"
+                onClick={() => setShowAuto(prev => !prev)}
+              >
+                {showAuto ? "Auto" : "Ant"}
+                <ArrowLeftRight className="h-3 w-3" />
+              </div>
+              <div className="text-xs font-medium text-muted-foreground flex items-center justify-center">Peso</div>
+              <div className="text-xs font-medium text-muted-foreground flex items-center justify-center">Reps</div>
             </div>
 
             {exercise.sets.map((set, setIndex) => (
@@ -128,6 +154,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 set={set}
                 exerciseIndex={exerciseIndex}
                 setIndex={setIndex}
+                showAuto={showAuto}
                 onInputChange={onInputChange}
               />
             ))}

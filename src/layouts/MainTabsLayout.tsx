@@ -8,10 +8,14 @@ import RankingPage from '@/pages/RankingPage';
 import SocialPage from '@/pages/SocialPage';
 import { DailyPremiumOffer } from '@/components/premium/DailyPremiumOffer';
 import { StreakListener } from '@/components/streak/StreakListener';
+import { useGlobalPrefetch } from '@/hooks/useGlobalPrefetch';
 
 const MainTabsLayout: React.FC = () => {
     const location = useLocation();
     const pathname = location.pathname;
+
+    // Start global prefetching for routines
+    useGlobalPrefetch();
 
     // Function to determine if a specific tab is active
     const isTabActive = (path: string) => {

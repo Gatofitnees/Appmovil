@@ -8,6 +8,7 @@ import { useRoutinePersistence } from "./useRoutinePersistence";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useUsageLimits } from "@/hooks/useUsageLimits";
 import { toast as sonnerToast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const useRoutineSave = (editRoutineId?: number) => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export const useRoutineSave = (editRoutineId?: number) => {
   const { incrementUsage, checkLimitWithoutFetch, showLimitReachedToast } = useUsageLimits();
   const saveInProgressRef = useRef(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const queryClient = useQueryClient();
 
   const {
     routineName,
@@ -150,6 +152,9 @@ export const useRoutineSave = (editRoutineId?: number) => {
       if (savedRoutine && !editRoutineId && !isPremium) {
         await incrementUsage('routines');
       }
+
+      // Invalidate React Query cache so the library list updates immediately
+      await queryClient.invalidateQueries({ queryKey: ['routines'] });
 
       console.log(editRoutineId
         ? "Rutina actualizada exitosamente:"

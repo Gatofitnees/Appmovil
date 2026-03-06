@@ -14,6 +14,8 @@ interface TemporaryExercise {
     notes: string;
     previous_weight: number | null;
     previous_reps: number | null;
+    rir?: number | null;
+    partial_reps?: number | null;
   }>;
   notes: string; // Routine creator notes
   user_notes?: string; // User workout notes
@@ -26,14 +28,16 @@ const createValidSet = (setNumber: number) => ({
   reps: null,
   notes: "",
   previous_weight: null,
-  previous_reps: null
+  previous_reps: null,
+  rir: null,
+  partial_reps: null
 });
 
 // Helper function to format exercises with valid sets
 const formatExerciseWithValidSets = (exercise: any): TemporaryExercise => {
   // Ensure the exercise has at least one valid set
   let sets = exercise.sets || [];
-  
+
   // If no sets or invalid sets, create one default set
   if (!sets.length || sets.some((set: any) => !set.set_number || set.set_number < 1)) {
     sets = [createValidSet(1)];
@@ -46,7 +50,9 @@ const formatExerciseWithValidSets = (exercise: any): TemporaryExercise => {
       reps: set.reps || null,
       notes: set.notes || "",
       previous_weight: set.previous_weight || null,
-      previous_reps: set.previous_reps || null
+      previous_reps: set.previous_reps || null,
+      rir: set.rir || null,
+      partial_reps: set.partial_reps || null
     }));
   }
 
@@ -63,16 +69,16 @@ const formatExerciseWithValidSets = (exercise: any): TemporaryExercise => {
 
 export const useTemporaryExercises = (routineId: number | undefined) => {
   const [temporaryExercises, setTemporaryExercises] = useState<TemporaryExercise[]>([]);
-  
+
   const getStorageKey = (id: number) => `temp_exercises_${id}`;
-  
+
   // Load temporary exercises from sessionStorage on mount
   useEffect(() => {
     if (!routineId) return;
-    
+
     const storageKey = getStorageKey(routineId);
     const stored = sessionStorage.getItem(storageKey);
-    
+
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -86,13 +92,13 @@ export const useTemporaryExercises = (routineId: number | undefined) => {
       }
     }
   }, [routineId]);
-  
+
   // Save to sessionStorage whenever temporaryExercises changes
   useEffect(() => {
     if (!routineId) return;
-    
+
     const storageKey = getStorageKey(routineId);
-    
+
     if (temporaryExercises.length > 0) {
       sessionStorage.setItem(storageKey, JSON.stringify(temporaryExercises));
       console.log("Saved temporary exercises to storage:", temporaryExercises.length);
@@ -100,52 +106,52 @@ export const useTemporaryExercises = (routineId: number | undefined) => {
       sessionStorage.removeItem(storageKey);
     }
   }, [temporaryExercises, routineId]);
-  
+
   const addTemporaryExercises = useCallback((exercises: any[]) => {
     const formattedExercises: TemporaryExercise[] = exercises.map(exercise => {
       const formatted = formatExerciseWithValidSets(exercise);
       console.log(`Adding temporary exercise ${formatted.id} with ${formatted.sets.length} sets:`, formatted.sets);
       return formatted;
     });
-    
+
     setTemporaryExercises(prev => {
       const existingIds = prev.map(ex => ex.id);
       const newExercises = formattedExercises.filter(ex => !existingIds.includes(ex.id));
-      
+
       if (newExercises.length === 0) {
         console.log("No new exercises to add (duplicates filtered)");
         return prev;
       }
-      
+
       console.log("Adding temporary exercises:", newExercises.length);
       return [...prev, ...newExercises];
     });
   }, []);
-  
+
   const clearTemporaryExercises = useCallback(() => {
     if (!routineId) return;
-    
+
     const storageKey = getStorageKey(routineId);
     sessionStorage.removeItem(storageKey);
     setTemporaryExercises([]);
     console.log("Cleared temporary exercises");
   }, [routineId]);
-  
+
   const updateTemporaryExercise = useCallback((
     exerciseIndex: number,
     setIndex: number,
-    field: 'weight' | 'reps',
+    field: 'weight' | 'reps' | 'rir' | 'partial_reps',
     value: string
   ) => {
     const numValue = value === '' ? null : Number(value);
-    
+
     setTemporaryExercises(prev => {
       const updated = [...prev];
       if (updated[exerciseIndex] && updated[exerciseIndex].sets[setIndex]) {
         updated[exerciseIndex] = {
           ...updated[exerciseIndex],
-          sets: updated[exerciseIndex].sets.map((set, i) => 
-            i === setIndex 
+          sets: updated[exerciseIndex].sets.map((set, i) =>
+            i === setIndex
               ? { ...set, [field]: numValue }
               : set
           )
@@ -155,7 +161,7 @@ export const useTemporaryExercises = (routineId: number | undefined) => {
       return updated;
     });
   }, []);
-  
+
   const updateTemporaryExerciseNotes = useCallback((exerciseIndex: number, notes: string) => {
     setTemporaryExercises(prev => {
       const updated = [...prev];
@@ -168,21 +174,21 @@ export const useTemporaryExercises = (routineId: number | undefined) => {
       return updated;
     });
   }, []);
-  
+
   const addTemporaryExerciseSet = useCallback((exerciseIndex: number) => {
     setTemporaryExercises(prev => {
       const updated = [...prev];
       if (updated[exerciseIndex]) {
         const exercise = updated[exerciseIndex];
         const lastSet = exercise.sets[exercise.sets.length - 1];
-        
+
         const newSet = createValidSet(exercise.sets.length + 1);
         // Copy weight and reps from last set if available
         if (lastSet) {
           newSet.weight = lastSet.weight;
           newSet.reps = lastSet.reps;
         }
-        
+
         updated[exerciseIndex] = {
           ...exercise,
           sets: [...exercise.sets, newSet]
@@ -192,7 +198,7 @@ export const useTemporaryExercises = (routineId: number | undefined) => {
       return updated;
     });
   }, []);
-  
+
   return {
     temporaryExercises,
     addTemporaryExercises,

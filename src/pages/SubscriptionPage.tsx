@@ -13,6 +13,7 @@ import { CancelConfirmDialog } from '@/components/subscription/CancelConfirmDial
 import { PromoCodeInput } from '@/components/subscription/PromoCodeInput';
 import { PromoCodePricing } from '@/components/subscription/PromoCodePricing';
 import { usePromoCodePricing } from '@/hooks/useRevenueCatSubscription';
+import { Capacitor } from '@capacitor/core';
 
 import { PaymentFailureAlert } from '@/components/subscription/PaymentFailureAlert';
 import { supabase } from '@/integrations/supabase/client';
@@ -474,8 +475,8 @@ const SubscriptionPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Promo Code Input - Only for non-premium users */}
-        {!isPremium && (
+        {/* Promo Code Input - Only for non-premium users AND not iOS */}
+        {!isPremium && Capacitor.getPlatform() !== 'ios' && (
           <div className="space-y-4">
             <PromoCodeInput onCodeApplied={reloadPricing} />
 
@@ -593,12 +594,16 @@ const SubscriptionPage: React.FC = () => {
           )}
 
         {/* Footer Info */}
-        <div className="text-center text-xs text-muted-foreground space-y-2 pt-4">
+        <div className="text-center text-xs text-muted-foreground space-y-2 pt-4 pb-8">
           <div className="flex items-center justify-center gap-1">
             <Crown className="h-3 w-3 text-yellow-500" />
             <span>Los pagos se procesan de forma segura</span>
           </div>
           <p>Cancela en cualquier momento desde la configuración de tu cuenta.</p>
+          <div className="flex justify-center gap-4 mt-3 text-xs">
+            <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-gray-900">Términos de Uso</a>
+            <a href="https://gatofit.app/privacy" target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-gray-900">Política de Privacidad</a>
+          </div>
         </div>
       </div>
 

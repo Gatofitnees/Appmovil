@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { FoodLogEntry } from '@/hooks/useFoodLog';
 import { EditableIngredient } from './EditableIngredient';
 import { MacroEditModal } from './MacroEditModal';
+import { NumericInput } from '@/components/ui/numeric-input';
 
 interface Ingredient {
   name: string;
@@ -260,9 +261,8 @@ export const FoodEditDialog: React.FC<FoodEditDialogProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground">Calorías</label>
-                  <Input
-                    type="number"
-                    value={formData.calories_consumed}
+                  <NumericInput
+                    value={formData.calories_consumed || ''}
                     onChange={(e) => setFormData(prev => ({ ...prev, calories_consumed: Number(e.target.value) }))}
                     className="mt-1"
                   />
@@ -270,9 +270,9 @@ export const FoodEditDialog: React.FC<FoodEditDialogProps> = ({
 
                 <div>
                   <label className="text-xs text-muted-foreground">Proteínas (g)</label>
-                  <Input
-                    type="number"
-                    value={formData.protein_g_consumed}
+                  <NumericInput
+                    allowDecimals
+                    value={formData.protein_g_consumed === 0 ? '' : formData.protein_g_consumed}
                     onChange={(e) => setFormData(prev => ({ ...prev, protein_g_consumed: Number(e.target.value) }))}
                     className="mt-1"
                   />
@@ -280,9 +280,9 @@ export const FoodEditDialog: React.FC<FoodEditDialogProps> = ({
 
                 <div>
                   <label className="text-xs text-muted-foreground">Carbohidratos (g)</label>
-                  <Input
-                    type="number"
-                    value={formData.carbs_g_consumed}
+                  <NumericInput
+                    allowDecimals
+                    value={formData.carbs_g_consumed === 0 ? '' : formData.carbs_g_consumed}
                     onChange={(e) => setFormData(prev => ({ ...prev, carbs_g_consumed: Number(e.target.value) }))}
                     className="mt-1"
                   />
@@ -290,9 +290,9 @@ export const FoodEditDialog: React.FC<FoodEditDialogProps> = ({
 
                 <div>
                   <label className="text-xs text-muted-foreground">Grasas (g)</label>
-                  <Input
-                    type="number"
-                    value={formData.fat_g_consumed}
+                  <NumericInput
+                    allowDecimals
+                    value={formData.fat_g_consumed === 0 ? '' : formData.fat_g_consumed}
                     onChange={(e) => setFormData(prev => ({ ...prev, fat_g_consumed: Number(e.target.value) }))}
                     className="mt-1"
                   />

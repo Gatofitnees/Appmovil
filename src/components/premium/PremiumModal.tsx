@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Crown, Check, Lock, Sparkles, Zap, Star, TrendingUp } from 'lucide-react';
+import { X, Crown, Check, Lock, Sparkles, Zap, Star, TrendingUp, Users } from 'lucide-react';
 import Button from '@/components/Button';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,86 @@ import { PromoCodeInput } from '@/components/subscription/PromoCodeInput';
 import gatoFlexionesVideo from '@/assets/lottie/gato flexiones.mp4';
 import { useToast } from '@/hooks/use-toast';
 import { Capacitor } from '@capacitor/core';
+
+// Removed Wreath SVGs per user request
+
+const TESTIMONIALS = [
+  {
+    name: 'Amanda',
+    flag: '🇲🇽',
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop',
+    progress: '90 kg → 83 kg en 2 meses',
+    text: '"He bajado 7 kg y en ningún momento sentí que estaba \'a dieta\'. Me encanta la interfaz y cómo me da consejos inteligentes sin abrumar."'
+  },
+  {
+    name: 'Carlos',
+    flag: '🇨🇴',
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop',
+    progress: '65 kg → 69 kg en 3 meses',
+    text: '"Gatofit me ayudó a ganar 4 kg de masa muscular. Las rutinas son excelentes, súper claras y es muy fácil registrar mi progreso."'
+  },
+  {
+    name: 'Camila',
+    flag: '🇦🇷',
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',
+    progress: 'Logró constancia',
+    text: '"Es la primera vez que logro mantener la constancia en el gimnasio. Los programas guiados me quitaron la ansiedad de no saber qué hacer."'
+  }
+];
+
+const TestimonialCarousel = () => {
+  const [counter, setCounter] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCounter((c) => c + 1);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const n = TESTIMONIALS.length;
+  const period = 2 * n - 2;
+  const c = counter % period;
+  const index = c < n ? c : period - c;
+
+  return (
+    <div className="w-full relative overflow-hidden rounded-[24px] border border-gray-100 bg-white shadow-sm min-h-[210px]">
+      <div
+        className="flex transition-transform duration-700 ease-in-out h-full absolute inset-0"
+        style={{ transform: `translateX(-${index * 100}%)` }}
+      >
+        {TESTIMONIALS.map((t, i) => (
+          <div
+            key={i}
+            className="w-full h-full shrink-0 p-5 lg:p-6"
+          >
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover bg-gray-100" />
+                <div>
+                  <div className="font-bold text-gray-900 flex items-center gap-2 text-base">
+                    {t.name} <span className="text-sm">{t.flag}</span>
+                  </div>
+                  <div className="text-[13px] font-semibold text-gray-400">
+                    {t.progress}
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-800 text-[15px] font-medium leading-snug">
+                {t.text}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-10">
+        {TESTIMONIALS.map((_, i) => (
+          <div key={i} className={cn("h-1.5 rounded-full transition-all duration-500", i === index ? "w-4 bg-gray-800" : "w-1.5 bg-gray-200")} />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 interface PremiumModalProps {
   isOpen: boolean;
@@ -73,7 +153,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { purchaseProduct, isLoading: isPurchasing } = useInAppPurchase();
+  const { purchaseProduct, restorePurchases, isLoading: isPurchasing } = useInAppPurchase();
   const { isPremium, subscription } = useSubscription();
   const { toast } = useToast();
 
@@ -326,7 +406,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                         <div className="inline-block px-3 py-1 rounded-full bg-primary text-white text-xs font-bold">
                           Más popular
                         </div>
-                        {hasPromoCode && (
+                        {Capacitor.getPlatform() !== 'ios' && hasPromoCode && (
                           <div className="inline-block px-3 py-1 rounded-full bg-green-500 text-white text-xs font-bold shadow-sm animate-in fade-in zoom-in duration-300">
                             {promoCode ? `Código aplicado: ${promoCode}` : 'Código de descuento activo'}
                           </div>
@@ -335,26 +415,30 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                     )}
                   </div>
 
-                  <div className="flex items-baseline justify-between">
+                  <div className="flex items-baseline justify-between mb-2">
                     <div>
                       <div className="text-lg font-bold text-gray-900">Prueba gratuita de</div>
                       <div className="text-lg font-bold text-gray-900">3 días</div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-3xl font-black text-gray-900">
-                        {getMonthlyPrice()}
+                    <div className="text-right flex flex-col items-end">
+                      <div className="flex items-center gap-2">
+                        <span className="line-through text-gray-400 text-sm">$89.99</span>
+                        <div className="text-3xl font-black text-gray-900">
+                          {yearlyPrice}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500">por mes</div>
+                      <div className="text-sm text-gray-500 font-semibold uppercase tracking-wider">
+                        año
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="line-through text-gray-400">$59.99/año</span>
-                    <span className="text-primary font-semibold">→ {yearlyPrice}/año</span>
+                  <div className="flex items-center gap-2 text-sm bg-primary/10 w-fit px-3 py-1 rounded-full text-primary font-medium">
+                    Equivale a <span className="font-bold">{getMonthlyPrice()}</span> por mes
                   </div>
 
-                  <div className="text-xs text-gray-500">
-                    Solo pagando anualmente
+                  <div className="text-xs text-gray-500 mt-2">
+                    Se cobrará al finalizar la prueba de 3 días
                   </div>
                 </div>
               </button>
@@ -409,10 +493,12 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
               {showAllPlans ? 'Mostrar menos planes ▲' : 'Mostrar más planes ▼'}
             </button >
 
-            {/* Promo Code Input - Always visible */}
-            < div className="mt-4" >
-              <PromoCodeInput onCodeApplied={reloadPricing} />
-            </div >
+            {/* Promo Code Input - Hidden on iOS */}
+            {Capacitor.getPlatform() !== 'ios' && (
+              <div className="mt-4">
+                <PromoCodeInput onCodeApplied={reloadPricing} />
+              </div>
+            )}
 
             {/* Features Comparison */}
             < div className="space-y-4" >
@@ -472,34 +558,50 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
               </div>
             </div >
 
-            {/* Social Proof */}
-            < div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-2xl p-6 space-y-4" >
-              <h3 className="text-lg font-bold text-gray-900 text-center">
+            {/* Social Proof Section */}
+            <div className="pt-6 pb-2 space-y-6">
+              <h3 className="text-4xl font-black text-gray-900 text-center tracking-tight leading-none px-2">
                 Historias de éxito de nuestros clientes
               </h3>
 
-              <div className="grid grid-cols-2 gap-8">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                    ))}
+              <TestimonialCarousel />
+
+              {/* Stats with Stars */}
+              <div className="flex justify-center gap-6 sm:gap-10 pt-2 pb-4">
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1 mb-1 text-yellow-500">
+                    <Star className="h-4 w-4 fill-current" />
+                    <Star className="h-5 w-5 fill-current" />
+                    <Star className="h-4 w-4 fill-current" />
                   </div>
-                  <div className="text-3xl font-black text-gray-900 mb-1">4.7</div>
-                  <div className="text-xs text-gray-500">calificación promedio</div>
+                  <div className="text-4xl font-black text-gray-900 leading-none tracking-tight">4.8</div>
+                  <div className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider leading-none">calificación<br />promedio</div>
                 </div>
 
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="w-1 h-6 bg-primary rounded-full"></div>
-                    ))}
+                <div className="w-px bg-gray-200"></div>
+
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1 mb-1 text-primary">
+                    <Users className="h-4 w-4 fill-current opacity-70" />
+                    <Users className="h-5 w-5 fill-current" />
+                    <Users className="h-4 w-4 fill-current opacity-70" />
                   </div>
-                  <div className="text-3xl font-black text-gray-900 mb-1">100K</div>
-                  <div className="text-xs text-gray-500">usuarios globales</div>
+                  <div className="text-4xl font-black text-gray-900 leading-none tracking-tight">100K</div>
+                  <div className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-wider leading-none">usuarios<br />globales</div>
                 </div>
               </div>
-            </div >
+
+              {/* Cancellation Policy & Links */}
+              <div className="text-center space-y-4">
+                <p className="text-[11px] text-gray-400 leading-relaxed px-2">
+                  Tu suscripción anual o mensual se renovará automáticamente por el mismo período, a menos que la canceles al menos 24 horas antes de que termine el periodo actual. Puedes cancelarla en cualquier momento desde la App Store sin costo adicional; seguirá activa hasta que finalice el periodo pagado.
+                </p>
+                <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-[11px] font-bold text-gray-800 pt-2">
+                  <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Términos de uso</a>
+                  <a href="https://gatofit.app/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Aviso de privacidad</a>
+                </div>
+              </div>
+            </div>
 
           </div >
         </div >
@@ -533,9 +635,10 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
             )}
           </button>
 
-          <p className="text-center text-xs text-gray-500 mt-3">
-            🔒 Sin pago ahora. Fácil de cancelar
-          </p>
+          <div className="flex items-center justify-center gap-1.5 mt-2.5 text-xs text-gray-400">
+            <Check className="h-3.5 w-3.5" />
+            <span>Sin pago ahora. Fácil de cancelar.</span>
+          </div>
         </div >
       </div >
     </>

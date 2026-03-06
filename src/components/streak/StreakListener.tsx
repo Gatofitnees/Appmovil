@@ -4,11 +4,13 @@ import { StreakSuccessModal } from "./StreakSuccessModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { startOfWeek, endOfWeek, format } from "date-fns";
+import { useLocalTimezone } from "@/hooks/useLocalTimezone";
 
 export const StreakListener: React.FC = () => {
     console.log('[StreakListener] Render - Checking presence');
     const { streakData } = useStreaks();
     const { user } = useAuth();
+    const { getLocalDateString } = useLocalTimezone();
     const [showModal, setShowModal] = useState(false);
     const [completedDays, setCompletedDays] = useState<number[]>([]);
 
@@ -18,56 +20,31 @@ export const StreakListener: React.FC = () => {
             return;
         };
 
-        const STORAGE_KEY = `gatofit_streak_ack_${user.id}`;
-        const storedValue = localStorage.getItem(STORAGE_KEY);
+        const STORAGE_KEY = `gatofit_streak_ack_date_${user.id}`;
+        const lastAckDate = localStorage.getItem(STORAGE_KEY);
+        const localDate = getLocalDateString(new Date());
 
         console.log('[StreakListener] Check:', {
-            current: streakData.current_streak,
-            stored: storedValue,
-            key: STORAGE_KEY
+            last_activity: streakData.last_activity_date,
+            localDate: localDate,
+            lastAck: lastAckDate
         });
 
-        // First time initialization on this device
-        if (storedValue === null) {
-            console.log('[StreakListener] No stored value found.');
-            // Special case: If streak is 1, it implies a transition from 0 happened today.
-            // We should show the modal even if we don't have prior storage history.
-            if (streakData.current_streak === 1) {
-                console.log('[StreakListener] First streak detected (streak=1)! Showing modal.');
-                setShowModal(true);
-                fetchWeeklyProgress();
-                localStorage.setItem(STORAGE_KEY, '1');
-            } else {
-                console.log('[StreakListener] Initializing streak storage to current (suppressing modal):', streakData.current_streak);
-                localStorage.setItem(STORAGE_KEY, streakData.current_streak.toString());
-            }
-            return;
-        }
-
-        const lastAckStreak = parseInt(storedValue, 10);
-
-        // Check if streak increased (strict increase to avoid showing on same value)
-        if (streakData.current_streak > lastAckStreak) {
-            console.log('[StreakListener] Streak INCREASE DETECTED!', {
-                from: lastAckStreak,
-                to: streakData.current_streak
-            });
+        // Solo mostrar si la última actividad de racha es HOY (local) 
+        // y NO hemos mostrado ya el modal hoy en este dispositivo.
+        if (streakData.last_activity_date === localDate && lastAckDate !== localDate) {
+            console.log('[StreakListener] Activity completed today! Showing modal.');
             setShowModal(true);
             fetchWeeklyProgress();
 
-            // Update storage immediately
-            localStorage.setItem(STORAGE_KEY, streakData.current_streak.toString());
-        } else if (streakData.current_streak < lastAckStreak) {
-            // Handle case where streak breaks/drops (sync storage down)
-            console.log('[StreakListener] Streak dropped, syncing storage down', {
-                from: lastAckStreak,
-                to: streakData.current_streak
-            });
-            localStorage.setItem(STORAGE_KEY, streakData.current_streak.toString());
+            // Update storage immediately so we don't show it again today
+            localStorage.setItem(STORAGE_KEY, localDate);
+        } else if (streakData.last_activity_date !== localDate) {
+            console.log('[StreakListener] No valid newly completed activity for today.');
         } else {
-            console.log('[StreakListener] No change in streak.');
+            console.log('[StreakListener] Modal already shown today.');
         }
-    }, [streakData?.current_streak, user?.id]);
+    }, [streakData?.last_activity_date, user?.id, getLocalDateString]);
 
     const fetchWeeklyProgress = async () => {
         if (!user) return;

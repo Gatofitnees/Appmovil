@@ -38,6 +38,12 @@
 				<string>com.googleusercontent.apps.175681669860-ionmff8fd0d0ob3iohoojtcvs34l7egp</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb1580297423200414</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
@@ -45,6 +51,12 @@
 	<string>175681669860-ionmff8fd0d0ob3iohoojtcvs34l7egp.apps.googleusercontent.com</string>
 	<key>GIDServerClientID</key>
 	<string>175681669860-6r9ejdog30rsm6l5auge5bmdnrak4n6e.apps.googleusercontent.com</string>
+	<key>FacebookAppID</key>
+	<string>1580297423200414</string>
+	<key>FacebookClientToken</key>
+	<string>c2570644eda4b527ffae5ff4a0d961ba</string>
+	<key>FacebookDisplayName</key>
+	<string>Gatofit</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -108,6 +120,8 @@
 	<string>Necesitamos permiso para guardar fotos en tu galería</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Necesitamos acceso a tu galería para seleccionar fotos y subirlas a tu perfil</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Tus datos se usarán para ofrecerte anuncios personalizados y optimizar tu experiencia en la app.</string>
 	<key>UIUserNotificationAlertSetting</key>
 	<string>Enabled</string>
 	<key>UIUserNotificationSoundSetting</key>
@@ -164,127 +178,17 @@
 			</array>
 		</dict>
 	</dict>
-</dict>
-</plist><?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
-	<key>CFBundleDisplayName</key>
-	<string>Gatofit</string>
-	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>$(MARKETING_VERSION)</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.gatofit.app</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.gatofit.app</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.gatofit.app.google</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.175681669860-ionmff8fd0d0ob3iohoojtcvs34l7egp</string>
-			</array>
-		</dict>
-	</array>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>GIDClientID</key>
-	<string>175681669860-ionmff8fd0d0ob3iohoojtcvs34l7egp.apps.googleusercontent.com</string>
-	<key>GIDServerClientID</key>
-	<string>175681669860-6r9ejdog30rsm6l5auge5bmdnrak4n6e.apps.googleusercontent.com</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<false/>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>googleapis.com</key>
-			<dict>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-				<key>NSTemporaryExceptionMinimumTLSVersion</key>
-				<string>TLSv1.2</string>
-			</dict>
-			<key>mwgnpexeymgpzibnkiof.supabase.co</key>
-			<dict>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-				<key>NSTemporaryExceptionMinimumTLSVersion</key>
-				<string>TLSv1.2</string>
-			</dict>
-			<key>supabase.co</key>
-			<dict>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-				<key>NSTemporaryExceptionMinimumTLSVersion</key>
-				<string>TLSv1.2</string>
-			</dict>
-		</dict>
-	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Necesitamos acceso a tu cámara para capturar fotos y videos en tu entrenamiento</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Necesitamos acceso a tu micrófono para grabar videos de entrenamiento</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Necesitamos permiso para guardar fotos en tu galería</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Necesitamos acceso a tu galería para seleccionar fotos y subirlas a tu perfil</string>
-	<key>NSSupportsLiveActivities</key>
-	<true/>
-	<key>Supports Widgets</key>
-	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>armv7</string>
-	</array>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
+
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
 	</array>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
+
+	<key>FacebookAutoLogAppEventsEnabled</key>
+	<true/>
+	<key>FacebookAdvertiserIDCollectionEnabled</key>
+	<true/>
+	<key>FacebookAutoInitEnabled</key>
 	<true/>
 </dict>
 </plist>

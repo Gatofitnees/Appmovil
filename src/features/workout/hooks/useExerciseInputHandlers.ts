@@ -6,11 +6,11 @@ export function useExerciseInputHandlers(
   updateBaseExerciseData: (exerciseId: number, updater: (prev: WorkoutExercise) => WorkoutExercise) => void,
   temporaryExercises: WorkoutExercise[],
   addTemporaryExercises: (exercises: WorkoutExercise[]) => void,
-  updateTemporaryExercise: (exerciseIndex: number, setIndex: number, field: 'weight' | 'reps', value: string) => void,
+  updateTemporaryExercise: (exerciseIndex: number, setIndex: number, field: 'weight' | 'reps' | 'rir' | 'partial_reps', value: string) => void,
   addTemporaryExerciseSet: (exerciseIndex: number) => void,
   baseExerciseCount: number
 ) {
-  const handleInputChange = useCallback((exerciseIndex: number, setIndex: number, field: 'weight' | 'reps', value: string) => {
+  const handleInputChange = useCallback((exerciseIndex: number, setIndex: number, field: 'weight' | 'reps' | 'rir' | 'partial_reps', value: string) => {
     const exercise = allExercises[exerciseIndex];
     if (!exercise) return;
 
@@ -50,7 +50,8 @@ export function useExerciseInputHandlers(
       }
     };
 
-    const parsedValue = parseValue(value, field === 'weight');
+    const isWeight = field === 'weight';
+    const parsedValue = parseValue(value, isWeight);
     console.log(`Parsed value:`, parsedValue);
 
     if (isTemporary) {
@@ -96,6 +97,8 @@ export function useExerciseInputHandlers(
           notes: "",
           previous_weight: null,
           previous_reps: null,
+          rir: null,
+          partial_reps: null,
           target_reps_min: lastSet?.target_reps_min,
           target_reps_max: lastSet?.target_reps_max,
           target_reps_range: lastSet?.target_reps_range

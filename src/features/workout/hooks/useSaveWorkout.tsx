@@ -7,6 +7,7 @@ import { WorkoutExercise } from "../types/workout";
 import { useLocalTimezone } from "@/hooks/useLocalTimezone";
 import { useStreaks } from "@/hooks/useStreaks";
 import { useWorkoutPerformance, PerformanceStats } from "./useWorkoutPerformance";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useSaveWorkout(
   routine: any | null,
@@ -21,6 +22,7 @@ export function useSaveWorkout(
   const [isSaving, setIsSaving] = useState(false);
   const { createLocalTimestamp } = useLocalTimezone();
   const streak = useStreaks();
+  const queryClient = useQueryClient();
 
   // Summary Modal State
   const performance = useWorkoutPerformance();
@@ -148,13 +150,19 @@ export function useSaveWorkout(
           // Convert weight to number for database storage
           const weightAsNumber = convertWeightToNumber(set.weight);
 
+          const rirValue = typeof set.rir === 'string'
+            ? (set.rir === '?' ? null : parseInt(set.rir))
+            : set.rir;
+
           const detail = {
             workout_log_id: workoutLog.id,
             exercise_id: exercise.id,
-            exercise_name_snapshot: exercise.name,
+            exercise_name_snapshot: exercise.name || "",
             set_number: set.set_number,
             weight_kg_used: weightAsNumber,
-            reps_completed: set.reps || null,
+            reps_completed: set.reps !== null ? set.reps : null,
+            rir: (rirValue !== undefined && !isNaN(Number(rirValue))) ? Number(rirValue) : null,
+            partial_reps: set.partial_reps !== null ? set.partial_reps : null,
             notes: exercise.notes || ""
           };
 
@@ -204,6 +212,15 @@ export function useSaveWorkout(
       const stats = await performance.calculatePerformance(exercises, workoutLog.id);
       setSummaryStats(stats);
       setFinalDuration(workoutDuration);
+
+      // Invalidate cache for home screen & streak data so UI reflects new workout immediately
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: ['home_data'] });
+        queryClient.invalidateQueries({ queryKey: ['user_streak', userId] });
+        // Invalidate ALL previous exercise data so ANT column shows the data just logged
+        queryClient.invalidateQueries({ queryKey: ['previous_exercise_data'] });
+      }
 
       // Check daily workouts count to determine XP
       let calculatedXp = 25; // Default base XP

@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useLocalTimezone } from '@/hooks/useLocalTimezone';
 
 export interface UserStreak {
     id: number;
@@ -34,33 +36,40 @@ const StreakContext = createContext<StreakContextType | undefined>(undefined);
 
 export const StreakProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { user } = useAuth();
-    const [streakData, setStreakData] = useState<UserStreak | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
+    const { getLocalDateString } = useLocalTimezone();
 
-    const fetchStreakData = useCallback(async () => {
+    const fetchStreakData = async () => {
+        if (!user) return null;
+
+        const currentLocalDate = getLocalDateString(new Date());
+
+        // Silently evaluate streak state to handle midnight gap resets or freeze consumption
         try {
-            if (!user) {
-                setStreakData(null);
-                return;
-            }
-
-            setIsLoading(true);
-            const { data, error } = await supabase
-                .from('user_streaks')
-                .select('*')
-                .eq('user_id', user.id)
-                .maybeSingle();
-
-            if (error) throw error;
-            setStreakData(data);
-        } catch (err) {
-            setError('Error al cargar datos de racha');
-            console.error('Error fetching streak data:', err);
-        } finally {
-            setIsLoading(false);
+            await supabase.rpc('evaluate_streak_state', {
+                p_user_id: user.id,
+                p_client_date: currentLocalDate
+            });
+        } catch (evaluateError) {
+            console.error('Error in passive streak evaluation:', evaluateError);
         }
-    }, [user]);
+
+        const { data, error } = await supabase
+            .from('user_streaks')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data as UserStreak;
+    };
+
+    const { data: streakData = null, isLoading, isError, refetch } = useQuery({
+        queryKey: ['user_streak', user?.id],
+        queryFn: fetchStreakData,
+        enabled: !!user?.id,
+        staleTime: 5 * 60 * 1000 // Cache for 5 minutes
+    });
 
     const updateStreak = async () => {
         try {
@@ -73,8 +82,8 @@ export const StreakProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
             if (error) throw error;
 
-            // Refresh streak data
-            await fetchStreakData();
+            // Refresh streak data via React Query
+            await queryClient.invalidateQueries({ queryKey: ['user_streak', user.id] });
         } catch (err) {
             console.error('Error updating streak:', err);
         }
@@ -91,7 +100,6 @@ export const StreakProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     useEffect(() => {
         if (user) {
-            fetchStreakData();
             cleanOldEntries();
 
             const channel = supabase
@@ -106,7 +114,7 @@ export const StreakProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                     },
                     (payload) => {
                         console.log('Streak updated via Realtime:', payload);
-                        fetchStreakData();
+                        queryClient.invalidateQueries({ queryKey: ['user_streak', user.id] });
                     }
                 )
                 .subscribe();
@@ -114,8 +122,8 @@ export const StreakProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             // Add visibility change listener to refetch when app comes to foreground
             const handleVisibilityChange = () => {
                 if (document.visibilityState === 'visible') {
-                    console.log('App active, refreshing streak data...');
-                    fetchStreakData();
+                    console.log('App active, invalidating streak data...');
+                    queryClient.invalidateQueries({ queryKey: ['user_streak', user.id] });
                 }
             };
 
@@ -125,18 +133,16 @@ export const StreakProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 supabase.removeChannel(channel);
                 document.removeEventListener('visibilitychange', handleVisibilityChange);
             };
-        } else {
-            setStreakData(null);
         }
-    }, [user, fetchStreakData, cleanOldEntries]);
+    }, [user, cleanOldEntries, queryClient]);
 
     const value = React.useMemo(() => ({
         streakData,
         isLoading,
-        error,
-        refetch: fetchStreakData,
+        error: isError ? 'Error al cargar datos de racha' : null,
+        refetch: async () => { await refetch(); },
         updateStreak
-    }), [streakData, isLoading, error, fetchStreakData]);
+    }), [streakData, isLoading, isError, refetch]);
 
     return (
         <StreakContext.Provider value={value}>

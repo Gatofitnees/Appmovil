@@ -4,6 +4,7 @@ import { ArrowLeft, Save, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -17,9 +18,9 @@ const CreateWeeklyProgramPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { createProgram } = useWeeklyPrograms();
   const { toast } = useToast();
-  
+
   const programType = (searchParams.get('type') as 'simple' | 'advanced') || 'simple';
-  
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [totalWeeks, setTotalWeeks] = useState(1);
@@ -39,15 +40,15 @@ const CreateWeeklyProgramPage: React.FC = () => {
     }
 
     setSaving(true);
-    
+
     try {
       const program = await createProgram(
-        name.trim(), 
-        description.trim() || undefined, 
+        name.trim(),
+        description.trim() || undefined,
         programType,
         programType === 'advanced' ? totalWeeks : 1
       );
-      
+
       if (program) {
         setCreatedProgramId(program.id);
         toast({
@@ -87,13 +88,13 @@ const CreateWeeklyProgramPage: React.FC = () => {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        
+
         <div>
           <h1 className="text-2xl font-bold">
             Nueva Programación {programType === 'simple' ? 'Simple' : 'Avanzada'}
           </h1>
           <p className="text-muted-foreground text-sm">
-            {programType === 'simple' 
+            {programType === 'simple'
               ? 'Crea una programación semanal básica'
               : 'Crea una programación con múltiples semanas'
             }
@@ -132,9 +133,8 @@ const CreateWeeklyProgramPage: React.FC = () => {
             {programType === 'advanced' && (
               <div className="space-y-2">
                 <Label htmlFor="weeks">Número de Semanas</Label>
-                <Input
+                <NumericInput
                   id="weeks"
-                  type="number"
                   min="1"
                   max="52"
                   value={totalWeeks}
@@ -151,15 +151,15 @@ const CreateWeeklyProgramPage: React.FC = () => {
                 {programType === 'simple' ? '📋 Programación Simple' : '⚡ Programación Avanzada'}
               </h4>
               <p className="text-sm text-blue-700">
-                {programType === 'simple' 
+                {programType === 'simple'
                   ? 'Perfecta para rutinas que se repiten cada semana. Ideal para mantener consistencia.'
                   : 'Permite progresión semanal con rutinas diferentes. Ideal para planes de entrenamiento estructurados.'
                 }
               </p>
             </div>
 
-            <Button 
-              onClick={handleSave} 
+            <Button
+              onClick={handleSave}
               disabled={saving || !name.trim()}
               className="w-full"
             >
@@ -177,15 +177,15 @@ const CreateWeeklyProgramPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-4">
-                Tu programación "{name}" ha sido creada correctamente. 
+                Tu programación "{name}" ha sido creada correctamente.
                 Ahora puedes configurar las rutinas para cada día.
               </p>
-              
+
               <div className="flex gap-2">
                 <Button onClick={handleFinish} className="flex-1">
                   Finalizar
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => navigate(`/workout/programs/edit/${createdProgramId}`)}
                   className="flex-1"
@@ -198,7 +198,7 @@ const CreateWeeklyProgramPage: React.FC = () => {
           </Card>
 
           {/* Quick Calendar Preview */}
-          <WeeklyProgramCalendar 
+          <WeeklyProgramCalendar
             routines={routines}
             onAddRoutine={handleAddRoutine}
             onRemoveRoutine={handleRemoveRoutine}

@@ -6,15 +6,22 @@ export interface WorkoutSet {
   notes: string;
   previous_weight: number | null;
   previous_reps: number | null;
+  rir?: number | string | null;
+  partial_reps?: number | null;
   target_reps_min?: number;
   target_reps_max?: number;
   target_reps_range?: string;
+  target_rir?: number | string | null;
+  previous_rir?: number | string | null;
 }
 
 export interface WorkoutExercise {
   id: number;
   name: string;
   sets: WorkoutSet[];
+  image_url?: string;
+  video_url?: string;
+  thumbnail_url?: string;
   muscle_group_main?: string;
   equipment_required?: string;
   notes: string; // Routine creator notes (instructor instructions)
@@ -25,4 +32,5 @@ export interface WorkoutExercise {
 export interface PreviousData {
   weight: number | null;
   reps: number | null;
+  rir?: number | null;
 }

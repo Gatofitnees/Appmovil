@@ -36,32 +36,40 @@ export const SessionStats: React.FC<SessionStatsProps> = ({ session }) => {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-white/5 text-left text-xs uppercase tracking-wider text-muted-foreground">
-              <th className="px-4 py-3 font-medium">Serie</th>
-              <th className="px-4 py-3 font-medium text-center">Peso</th>
-              <th className="px-4 py-3 font-medium text-right">Reps</th>
+              <th className="px-3 py-3 font-medium">Serie</th>
+              <th className="px-3 py-3 font-medium text-center">Peso</th>
+              <th className="px-3 py-3 font-medium text-center">RIR</th>
+              <th className="px-3 py-3 font-medium text-center">+Part</th>
+              <th className="px-3 py-3 font-medium text-right">Reps</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
             {allSets.map((set, index) => (
               <tr key={`${set.set_number}-${index}`} className="hover:bg-white/5 transition-colors">
-                <td className="px-4 py-3 font-medium">
+                <td className="px-3 py-3 font-medium">
                   {index + 1}
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="px-3 py-3 text-center">
                   {set.weight_kg_used ? (
                     <span className="font-bold text-primary">{set.weight_kg_used} kg</span>
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-3 py-3 text-center">
+                  <span className="font-medium text-muted-foreground">{set.rir !== null && set.rir !== undefined ? set.rir : '-'}</span>
+                </td>
+                <td className="px-3 py-3 text-center">
+                  <span className="font-medium text-muted-foreground">{set.partial_reps !== null && set.partial_reps !== undefined ? set.partial_reps : '-'}</span>
+                </td>
+                <td className="px-3 py-3 text-right">
                   <span className="font-medium">{set.reps_completed || 0}</span>
                 </td>
               </tr>
             ))}
             {allSets.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground">
+                <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
                   No hay series registradas
                 </td>
               </tr>
@@ -69,6 +77,6 @@ export const SessionStats: React.FC<SessionStatsProps> = ({ session }) => {
           </tbody>
         </table>
       </div>
-    </div>
+    </div >
   );
 };

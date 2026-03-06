@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Target, Calendar as CalendarIcon, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -195,11 +196,8 @@ const UserInformationPage: React.FC = () => {
 
             <div>
               <Label htmlFor="trainingsPerWeek">Entrenamientos por semana</Label>
-              <Input
+              <NumericInput
                 id="trainingsPerWeek"
-                type="number"
-                min="1"
-                max="7"
                 value={formData.trainings_per_week}
                 onChange={(e) => handleInputChange('trainings_per_week', e.target.value)}
                 placeholder="3"
@@ -224,10 +222,9 @@ const UserInformationPage: React.FC = () => {
 
             <div>
               <Label htmlFor="targetKgPerWeek">Meta kg por semana</Label>
-              <Input
+              <NumericInput
                 id="targetKgPerWeek"
-                type="number"
-                step="0.1"
+                allowDecimals
                 value={formData.target_kg_per_week}
                 onChange={(e) => handleInputChange('target_kg_per_week', e.target.value)}
                 placeholder="0.5"

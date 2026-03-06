@@ -89,13 +89,15 @@ export function useBaseExerciseData({
         const updatedSets = storedExercise.sets.map((set, i) => {
           const prevWeight = previousData[ex.id]?.[i]?.weight || null;
           const prevReps = previousData[ex.id]?.[i]?.reps || null;
+          const prevRir = previousData[ex.id]?.[i]?.rir ?? null;
 
-          console.log(`Set ${i + 1} - Previous: ${prevWeight}kg × ${prevReps}`);
+          console.log(`Set ${i + 1} - Previous: ${prevWeight}kg × ${prevReps}, RIR: ${prevRir}`);
 
           return {
             ...set,
             previous_weight: prevWeight,
             previous_reps: prevReps,
+            previous_rir: prevRir,
             target_reps_min: ex.reps_min || undefined,
             target_reps_max: ex.reps_max || undefined,
             target_reps_range: ex.reps_range || undefined
@@ -107,7 +109,10 @@ export function useBaseExerciseData({
           sets: updatedSets,
           notes: ex.notes || "", // Routine creator notes from database
           user_notes: storedExercise.user_notes || "", // User workout notes from storage
-          rest_between_sets_seconds: ex.rest_between_sets_seconds // Update with current rest time
+          rest_between_sets_seconds: ex.rest_between_sets_seconds, // Update with current rest time
+          image_url: ex.image_url || storedExercise.image_url,
+          video_url: ex.video_url || storedExercise.video_url,
+          thumbnail_url: ex.thumbnail_url || storedExercise.thumbnail_url
         };
         console.log(`Using stored data for exercise ${ex.id} with user inputs preserved`);
       } else {
@@ -117,8 +122,9 @@ export function useBaseExerciseData({
           (_, i) => {
             const prevWeight = previousData[ex.id]?.[i]?.weight || null;
             const prevReps = previousData[ex.id]?.[i]?.reps || null;
+            const prevRir = previousData[ex.id]?.[i]?.rir ?? null;
 
-            console.log(`Fresh set ${i + 1} - Previous: ${prevWeight}kg × ${prevReps}`);
+            console.log(`Fresh set ${i + 1} - Previous: ${prevWeight}kg × ${prevReps}, RIR: ${prevRir}`);
 
             return {
               set_number: i + 1,
@@ -127,6 +133,7 @@ export function useBaseExerciseData({
               notes: "",
               previous_weight: prevWeight,
               previous_reps: prevReps,
+              previous_rir: prevRir,
               target_reps_min: ex.reps_min || undefined,
               target_reps_max: ex.reps_max || undefined,
               target_reps_range: ex.reps_range || undefined
@@ -140,6 +147,9 @@ export function useBaseExerciseData({
           sets: formattedSets,
           muscle_group_main: ex.muscle_group_main,
           equipment_required: ex.equipment_required,
+          image_url: ex.image_url,
+          video_url: ex.video_url,
+          thumbnail_url: ex.thumbnail_url,
           notes: ex.notes || "", // Routine creator notes from database
           user_notes: "", // Initialize user workout notes as empty
           rest_between_sets_seconds: ex.rest_between_sets_seconds
@@ -176,6 +186,7 @@ export function useBaseExerciseData({
             notes: "",
             previous_weight: previousData[ex.id]?.[i]?.weight || null,
             previous_reps: previousData[ex.id]?.[i]?.reps || null,
+            previous_rir: previousData[ex.id]?.[i]?.rir ?? null,
             target_reps_min: ex.reps_min || undefined,
             target_reps_max: ex.reps_max || undefined,
             target_reps_range: ex.reps_range || undefined
@@ -188,6 +199,9 @@ export function useBaseExerciseData({
           sets: formattedSets,
           muscle_group_main: ex.muscle_group_main,
           equipment_required: ex.equipment_required,
+          image_url: ex.image_url,
+          video_url: ex.video_url,
+          thumbnail_url: ex.thumbnail_url,
           notes: ex.notes || "", // Routine creator notes from database
           user_notes: "", // Initialize user workout notes as empty
           rest_between_sets_seconds: ex.rest_between_sets_seconds
