@@ -37,8 +37,8 @@ const ForgotPassword: React.FC = () => {
 
         setLoading(true);
         try {
-            const { data, error } = await supabase.functions.invoke("send-recovery-code", {
-                body: { email }
+            const { error } = await supabase.functions.invoke("send-recovery-code", {
+                body: { email: email.trim().toLowerCase() }
             });
 
             if (error) throw error;
@@ -107,16 +107,22 @@ const ForgotPassword: React.FC = () => {
             return;
         }
 
-        if (newPassword.length < 6) {
-            toast.error({ title: "Error", description: "La contraseña debe tener al menos 6 caracteres" });
+        if (newPassword.length < 8) {
+            toast.error({ title: "Error", description: "La contraseña debe tener al menos 8 caracteres" });
+            return;
+        }
+
+        // Simple check for a number
+        if (!/\d/.test(newPassword)) {
+            toast.error({ title: "Error", description: "La contraseña debe incluir al menos un número" });
             return;
         }
 
         setLoading(true);
         try {
-            const { data, error } = await supabase.functions.invoke("reset-password", {
+            const { error } = await supabase.functions.invoke("reset-password", {
                 body: {
-                    email,
+                    email: email.trim().toLowerCase(),
                     code: otp.join(""),
                     newPassword
                 }

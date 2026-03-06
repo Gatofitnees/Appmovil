@@ -7,65 +7,79 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req: Request) => {
-    if (req.method === "OPTIONS") {
-        return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { email } = await req.json();
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    console.log(`Password reset requested for: ${normalizedEmail}`);
+
+    if (!normalizedEmail) {
+      return new Response(JSON.stringify({ error: "Email is required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
-    try {
-        const { email } = await req.json();
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-        if (!email) {
-            return new Response(JSON.stringify({ error: "Email is required" }), {
-                status: 400,
-                headers: { "Content-Type": "application/json", ...corsHeaders },
-            });
-        }
+    // 1. Check if user exists using the secure RPC function
+    const { data: userData, error: userError } = await supabaseAdmin
+      .rpc("get_user_id_by_email", { email_params: normalizedEmail });
 
-        const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    if (userError) {
+      console.error("Error checking user existence:", userError);
+    }
 
-        // 1. Check if user exists in auth.users
-        // We use service role to check this
-        const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
-        const userExists = users.some(u => u.email === email);
+    const userExists = userData && userData.length > 0;
 
-        if (!userExists) {
-            // For security, we don't reveal if user exists, but we return a generic success
-            console.log(`Password reset requested for non-existent email: ${email}`);
-            return new Response(JSON.stringify({ success: true, message: "If an account exists, a code has been sent." }), {
-                status: 200,
-                headers: { "Content-Type": "application/json", ...corsHeaders },
-            });
-        }
+    if (!userExists) {
+      // For security, we don't reveal if user exists, but we return a generic success
+      console.log(`Email not found in auth.users: ${normalizedEmail}`);
+      return new Response(JSON.stringify({ success: true, message: "If an account exists, a code has been sent." }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-        // 2. Generate 6-digit code
-        const code = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiration
+    const userId = userData[0].id;
+    console.log(`User found (ID: ${userId}). Generating code...`);
 
-        // 3. Store in password_resets
-        const { error: resetError } = await supabaseAdmin
-            .from("password_resets")
-            .upsert({
-                email: email,
-                code: code,
-                expires_at: expiresAt.toISOString(),
-                created_at: new Date().toISOString(),
-            });
+    // 2. Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiration
 
-        if (resetError) {
-            throw resetError;
-        }
+    // 3. Store in password_resets
+    const { error: resetError } = await supabaseAdmin
+      .from("password_resets")
+      .upsert({
+        email: normalizedEmail,
+        code: code,
+        expires_at: expiresAt.toISOString(),
+        created_at: new Date().toISOString(),
+      });
 
-        // 4. Send email via Resend
-        const { error: emailError } = await resend.emails.send({
-            from: "Gatofit <noreply@gatofit.com>",
-            to: [email],
-            subject: `Tu código de recuperación: ${code}`,
-            html: `
+    if (resetError) {
+      console.error("Error storing reset code:", resetError);
+      throw resetError;
+    }
+
+    console.log(`Sending email to ${normalizedEmail} with code ${code}...`);
+
+    // 4. Send email via Resend
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: "Gatofit <noreply@gatofit.com>",
+      to: [normalizedEmail],
+      subject: `Tu código de recuperación: ${code}`,
+      html: `
         <!DOCTYPE html>
         <html>
           <head>
@@ -99,21 +113,24 @@ serve(async (req: Request) => {
           </body>
         </html>
       `,
-        });
+    });
 
-        if (emailError) {
-            throw emailError;
-        }
-
-        return new Response(JSON.stringify({ success: true, message: "Recovery code sent" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-    } catch (error: any) {
-        console.error("Error in send-recovery-code:", error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
+    if (emailError) {
+      console.error("Resend error:", emailError);
+      throw emailError;
     }
+
+    console.log(`Email sent successfully! Message ID: ${emailData?.id}`);
+
+    return new Response(JSON.stringify({ success: true, message: "Recovery code sent" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  } catch (error: any) {
+    console.error("Error in send-recovery-code:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
 });

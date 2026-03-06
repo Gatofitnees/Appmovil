@@ -16,8 +16,9 @@ serve(async (req: Request) => {
 
     try {
         const { email, code, newPassword } = await req.json();
+        const normalizedEmail = email?.trim().toLowerCase();
 
-        if (!email || !code || !newPassword) {
+        if (!normalizedEmail || !code || !newPassword) {
             return new Response(JSON.stringify({ error: "Email, code and new password are required" }), {
                 status: 400,
                 headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -30,7 +31,7 @@ serve(async (req: Request) => {
         const { data: resetData, error: verifyError } = await supabaseAdmin
             .from("password_resets")
             .select("*")
-            .eq("email", email)
+            .eq("email", normalizedEmail)
             .eq("code", code)
             .single();
 
@@ -52,24 +53,26 @@ serve(async (req: Request) => {
         }
 
         // 3. Update user password in Auth
-        // First find the user ID by email
-        const { data: { users }, error: findError } = await supabaseAdmin.auth.admin.listUsers();
-        if (findError) throw findError;
+        // First find the user ID by email using the secure RPC
+        const { data: userData, error: userError } = await supabaseAdmin
+            .rpc("get_user_id_by_email", { email_params: normalizedEmail });
 
-        const user = users.find(u => u.email === email);
-        if (!user) {
+        if (userError || !userData || userData.length === 0) {
             return new Response(JSON.stringify({ error: "Usuario no encontrado" }), {
                 status: 404,
                 headers: { "Content-Type": "application/json", ...corsHeaders },
             });
         }
 
+        const userId = userData[0].id;
+
         const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-            user.id,
+            userId,
             { password: newPassword }
         );
 
         if (updateError) {
+            console.error("Error updating password:", updateError);
             throw updateError;
         }
 
@@ -77,7 +80,7 @@ serve(async (req: Request) => {
         await supabaseAdmin
             .from("password_resets")
             .delete()
-            .eq("email", email);
+            .eq("email", normalizedEmail);
 
         return new Response(JSON.stringify({ success: true, message: "Password updated successfully" }), {
             status: 200,
