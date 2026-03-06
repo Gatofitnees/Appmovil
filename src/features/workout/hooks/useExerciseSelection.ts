@@ -4,6 +4,7 @@ import { useExerciseNavigation } from "./exercise-selection/useExerciseNavigatio
 import { usePaginatedExercises } from "./usePaginatedExercises";
 import { useExerciseFilterOptions } from "./useExerciseFilterOptions";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useExerciseSelection = () => {
   const { muscleGroups, equipmentTypes } = useExerciseFilterOptions();
@@ -22,6 +23,7 @@ export const useExerciseSelection = () => {
     resetSessionStorage
   } = useSelectionStorage();
 
+  const { user } = useAuth();
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const {
@@ -30,7 +32,12 @@ export const useExerciseSelection = () => {
     hasNextPage,
     isFetchingNextPage,
     isLoading: loading,
-  } = usePaginatedExercises({ searchTerm: debouncedSearchTerm, muscleFilters, equipmentFilters });
+  } = usePaginatedExercises({
+    searchTerm: debouncedSearchTerm,
+    muscleFilters,
+    equipmentFilters,
+    userId: user?.id
+  });
 
   const filteredExercises = data?.pages.flatMap(page => page.data) ?? [];
   const totalExerciseCount = data?.pages[0]?.totalCount ?? 0;

@@ -6,19 +6,26 @@ import { Exercise } from '@/features/workout/types';
 const PAGE_SIZE = 10;
 
 const fetchExercises = async ({ pageParam = 0, queryKey }: any) => {
-  const [_key, { searchTerm, muscleFilters, equipmentFilters }] = queryKey;
+  const [_key, { searchTerm, muscleFilters, equipmentFilters, userId }] = queryKey;
 
-  // Get total count of all exercises
+  // Build the basic visibility filter string
+  const visibilityFilter = userId
+    ? `created_by_user_id.is.null,created_by_user_id.eq.${userId}`
+    : `created_by_user_id.is.null`;
+
+  // Get total count of all relevant exercises
   let countQuery = supabase
     .from('exercises')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact', head: true })
+    .or(visibilityFilter);
 
   const { count: totalCount } = await countQuery;
 
   // Get filtered exercises
   let query = supabase
     .from('exercises')
-    .select('*');
+    .select('*')
+    .or(visibilityFilter);
 
   if (searchTerm) {
     const searchCondition = `name.ilike.%${searchTerm}%,muscle_group_main.ilike.%${searchTerm}%`;
@@ -54,7 +61,7 @@ const fetchExercises = async ({ pageParam = 0, queryKey }: any) => {
   };
 };
 
-export const usePaginatedExercises = (filters: { searchTerm: string, muscleFilters: string[], equipmentFilters: string[] }) => {
+export const usePaginatedExercises = (filters: { searchTerm: string, muscleFilters: string[], equipmentFilters: string[], userId?: string }) => {
   return useInfiniteQuery({
     queryKey: ['paginatedExercises', filters],
     queryFn: fetchExercises,
