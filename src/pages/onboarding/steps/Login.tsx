@@ -127,11 +127,7 @@ const Login: React.FC = () => {
   };
 
   const handleForgotPassword = () => {
-    // TODO: Implement forgot password functionality
-    toast.show({
-      title: "Recuperación de contraseña",
-      description: "Próximamente disponible"
-    });
+    navigate("/onboarding/forgot-password");
   };
 
   const handleBack = () => {

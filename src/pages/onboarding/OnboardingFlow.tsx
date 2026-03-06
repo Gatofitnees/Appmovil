@@ -24,6 +24,7 @@ import InitialRecommendation from './steps/InitialRecommendation';
 import FeaturesPreview from "./steps/FeaturesPreview";
 import CreateAccount from "./steps/CreateAccount";
 import Login from "./steps/Login";
+import ForgotPassword from "./ForgotPassword";
 import AppTransition from "./steps/AppTransition";
 
 // Define the structure of the onboarding data
@@ -145,13 +146,14 @@ const OnboardingFlow: React.FC = () => {
     "/onboarding/features-preview": 18,
     "/onboarding/create-account": 19,
     "/onboarding/login": 20,
-    "/onboarding/app-transition": 21,
+    "/onboarding/forgot-password": 21,
+    "/onboarding/app-transition": 22,
   };
 
   const currentPath = location.pathname;
   // Default to 1 if not found, or handle specifically
   const currentStep = stepConfig[currentPath] || 1;
-  const totalSteps = 21;
+  const totalSteps = 22;
   const progressPercentage = (currentStep / totalSteps) * 100;
 
   // Routes where we should NOT show the progress bar (like the final transition or welcome maybe?)
@@ -225,6 +227,7 @@ const OnboardingFlow: React.FC = () => {
                     <Route path="features-preview" element={<FeaturesPreview />} />
                     <Route path="create-account" element={<CreateAccount />} />
                     <Route path="login" element={<Login />} />
+                    <Route path="forgot-password" element={<ForgotPassword />} />
                     <Route path="app-transition" element={<AppTransition />} />
                   </Routes>
                 </motion.div>
